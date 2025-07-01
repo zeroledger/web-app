@@ -1,0 +1,9 @@
+.env.local
+.prettierrc
+.eslintrc.cjs
+.lintstagedrc.cjs
+.editorconfig
+.vscode
+.husky
+.npmrc.template
+scripts

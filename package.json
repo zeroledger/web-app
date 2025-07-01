@@ -1,0 +1,75 @@
+{
+  "name": "web-app",
+  "version": "0.0.2",
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pryx-protocol/web-app.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pryx-protocol/web-app/issues"
+  },
+  "homepage": "https://github.com/pryx-protocol/web-app#readme",
+  "keywords": [
+    "pryx",
+    "ts",
+    "web3",
+    "viem",
+    "payments",
+    "privacy"
+  ],
+  "author": "Dzmitry Lahunouski",
+  "license": "SEE LICENSE IN LICENSE",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    "prepare": "husky",
+    "prettier": "prettier --write src/**/*.ts"
+  },
+  "dependencies": {
+    "@headlessui/react": "^2.2.0",
+    "@heroicons/react": "^2.2.0",
+    "@openzeppelin/merkle-tree": "^1.0.8",
+    "@tailwindcss/vite": "^4.0.12",
+    "axios": "^1.8.3",
+    "browser-level": "^2.0.0",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.9.2",
+    "graphql": "^16.9.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.53.0",
+    "react-router-dom": "^6.26.1",
+    "react-swipeable": "^7.0.2",
+    "react-toastify": "^11.0.5",
+    "socket.io-client": "^4.8.1",
+    "swr": "^2.2.5",
+    "tailwindcss": "^4.0.12",
+    "typewriter-effect": "^2.21.0",
+    "viem": "^2.23.9"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.1.0",
+    "@typescript-eslint/parser": "^8.1.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "9.1.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.9",
+    "husky": "9.1.4",
+    "lint-staged": "15.2.9",
+    "postcss": "^8.4.41",
+    "prettier": "3.3.3",
+    "prettier-plugin-tailwindcss": "0.6.6",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.1",
+    "vite-plugin-node-polyfills": "^0.23.0",
+    "vite-tsconfig-paths": "^5.0.1"
+  }
+}
