@@ -239,9 +239,9 @@ export const VAULT_ABI = [
         type: "uint256",
       },
       {
-        internalType: "bytes32",
+        internalType: "uint256",
         name: "sValue",
-        type: "bytes32",
+        type: "uint256",
       },
     ],
     name: "computePoseidonHash",
@@ -569,9 +569,9 @@ export const VAULT_ABI = [
         type: "uint256",
       },
       {
-        internalType: "bytes32",
+        internalType: "uint256",
         name: "sValue",
-        type: "bytes32",
+        type: "uint256",
       },
     ],
     name: "withdraw",

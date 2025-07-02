@@ -49,10 +49,19 @@ export class ClientController extends EventEmitter {
       ClientServiceEvents.PRIVATE_BALANCE_CHANGE,
       await this.walletService.getBalance(),
     );
-    console.log(`Done`);
   }
 
-  async collaborativeWithdraw() {}
+  async withdraw() {
+    const success = await this.walletService.withdraw();
+
+    if (success) {
+      this.safeEmit(
+        ClientServiceEvents.PRIVATE_BALANCE_CHANGE,
+        await this.walletService.getBalance(),
+      );
+      this.safeEmit(ClientServiceEvents.ONCHAIN_BALANCE_CHANGE);
+    }
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private safeEmit(event: keyof typeof ClientServiceEvents, ...args: any[]) {

@@ -25,9 +25,9 @@ export const WITHDRAW_EXTENSION_ABI = [
             type: "uint256",
           },
           {
-            internalType: "bytes32",
+            internalType: "uint256",
             name: "sValue",
-            type: "bytes32",
+            type: "uint256",
           },
         ],
         internalType: "struct WithdrawItem[]",

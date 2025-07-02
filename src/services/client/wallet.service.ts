@@ -7,6 +7,8 @@ import { Logger } from "@src/utils/logger";
 import { MemoryQueue } from "../queue";
 import { prepareDeposit, deposit } from "@src/utils/vault";
 import { DecoyRecordDto, DecoyRecordsEntity } from "./records.entity";
+import { withdrawBatch } from "@src/utils/extensions/withdraw";
+import { WithdrawItem } from "@src/utils/extensions/withdraw/withdraw.extension";
 
 export class WalletService {
   private readonly address: Address;
@@ -42,7 +44,6 @@ export class WalletService {
 
   deposit(value: bigint) {
     return this.enqueue(async () => {
-      this.logger.log("deposit");
       const { proofData, depositStruct, commitmentData } = await prepareDeposit(
         this.token,
         this.client,
@@ -73,6 +74,40 @@ export class WalletService {
           ),
         ),
       );
+
+      return true;
+    });
+  }
+
+  withdraw() {
+    return this.enqueue(async () => {
+      const records = await this.records.all();
+
+      const withdrawItems: WithdrawItem[] = [];
+      const withdrawItemIds: string[] = [];
+      records.forEach((record) => {
+        if (BigInt(record.value) === 0n) {
+          return;
+        }
+        withdrawItems.push({
+          amount: BigInt(record.value),
+          sValue: BigInt(record.entropy),
+        });
+        withdrawItemIds.push(record.hash);
+      });
+
+      if (withdrawItems.length === 0) {
+        return;
+      }
+
+      await withdrawBatch({
+        client: this.client,
+        contract: this.vault,
+        token: this.token,
+        withdrawItems,
+      });
+
+      await this.records.deleteMany(withdrawItemIds);
 
       return true;
     });

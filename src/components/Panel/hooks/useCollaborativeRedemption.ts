@@ -19,7 +19,7 @@ export function useCollaborativeRedemption() {
     }
     setIsRedeeming(true);
     disableSwipe();
-    await clientController?.collaborativeWithdraw();
+    await clientController?.withdraw();
     setIsRedeeming(false);
     enableSwipe();
   }, [clientController, balance, disableSwipe, enableSwipe]);
