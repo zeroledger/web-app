@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useSwipe } from "./useSwipe";
 import { useContext } from "react";
-import { PryxContext } from "@src/context/pryx.context";
+import { DecoyContext } from "@src/context/decoy.context";
 
 export const useFaucet = () => {
   const [isFauceting, setIsFauceting] = useState(false);
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const { disableSwipe, enableSwipe } = useSwipe();
-  const { clientController } = useContext(PryxContext);
+  const { clientController } = useContext(DecoyContext);
   const handleFaucet = async () => {
     setIsFauceting(true);
     disableSwipe();

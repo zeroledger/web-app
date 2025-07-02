@@ -1,14 +1,14 @@
 import { RouterProvider } from "react-router-dom";
 import { ClientProvider } from "@src/context/client.context";
-import { PryxProvider } from "@src/context/pryx.context";
+import { DecoyProvider } from "@src/context/decoy.context";
 import router from "./router";
 
 function App() {
   return (
     <ClientProvider>
-      <PryxProvider>
+      <DecoyProvider>
         <RouterProvider router={router} />
-      </PryxProvider>
+      </DecoyProvider>
     </ClientProvider>
   );
 }

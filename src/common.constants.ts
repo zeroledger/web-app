@@ -4,17 +4,13 @@ import { optimismSepolia } from "viem/chains";
 export const OnesHash =
   "0x1111111111111111111111111111111111111111111111111111111111111111";
 
-export const DEEP_HASH_APP_PREFIX_KEY = "flank-app";
+export const APP_PREFIX_KEY = "decoy-app";
 
 export const TOKEN_ADDRESS: Address = import.meta.env.VITE_TOKEN_ADDRESS;
 
-export const DEEP_HASH_ADDRESS: Address = import.meta.env.VITE_PRYX_ADDRESS;
-
-export const OPERATOR_URL: Address = import.meta.env.VITE_OPERATOR_URL;
-
-export const COORDINATOR_URL: Address = import.meta.env.VITE_COORDINATOR_URL;
-
 export const FAUCET_URL: Address = import.meta.env.VITE_FAUCET_URL;
+
+export const VAULT_ADDRESS: Address = import.meta.env.VITE_VAULT_ADDRESS;
 
 export const RPC: { [prop: number]: string } = {
   [optimismSepolia.id]: `https://optimism-sepolia.infura.io/v3/${import.meta.env.VITE_INFURA_RPC_KEY}`,

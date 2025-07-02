@@ -1,4 +1,4 @@
-import { PryxContext } from "@src/context/pryx.context";
+import { DecoyContext } from "@src/context/decoy.context";
 import { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
 import { parseUnits } from "viem";
@@ -9,7 +9,7 @@ interface DepositFormData {
 }
 
 export const useDepositModal = () => {
-  const { clientController } = useContext(PryxContext);
+  const { clientController } = useContext(DecoyContext);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isDepositModalLoading, setIsDepositModalLoading] = useState(false);
   const [isDepositModalSuccess, setIsDepositModalSuccess] = useState(false);

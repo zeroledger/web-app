@@ -36,6 +36,7 @@
     "@tailwindcss/vite": "^4.0.12",
     "axios": "^1.8.3",
     "browser-level": "^2.0.0",
+    "circomlibjs": "^0.1.7",
     "clsx": "^2.1.1",
     "framer-motion": "^12.9.2",
     "react": "^18.3.1",
@@ -44,6 +45,7 @@
     "react-router-dom": "^6.26.1",
     "react-swipeable": "^7.0.2",
     "react-toastify": "^11.0.5",
+    "snarkjs": "^0.7.5",
     "socket.io-client": "^4.8.1",
     "swr": "^2.2.5",
     "tailwindcss": "^4.0.12",
@@ -51,8 +53,10 @@
     "viem": "^2.23.9"
   },
   "devDependencies": {
+    "@types/circomlibjs": "^0.1.6",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@types/snarkjs": "^0.7.9",
     "@typescript-eslint/eslint-plugin": "^8.1.0",
     "@typescript-eslint/parser": "^8.1.0",
     "@vitejs/plugin-react": "^4.3.1",

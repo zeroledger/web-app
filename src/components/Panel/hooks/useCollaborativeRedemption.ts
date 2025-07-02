@@ -1,10 +1,10 @@
 import { useCallback, useState, useContext } from "react";
-import { PryxContext } from "@src/context/pryx.context";
+import { DecoyContext } from "@src/context/decoy.context";
 import { WalletContext } from "@src/context/wallet.context";
 import { useSwipe } from "./useSwipe";
 
 export function useCollaborativeRedemption() {
-  const { clientController } = useContext(PryxContext);
+  const { clientController } = useContext(DecoyContext);
   const { balance } = useContext(WalletContext);
   const { disableSwipe, enableSwipe } = useSwipe();
 

@@ -20,7 +20,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { Chain, optimismSepolia } from "viem/chains";
 import { decryptData, encryptData } from "@src/utils/crypt";
 import { OnesHash, RPC, WS_RPC, pollingInterval } from "@src/common.constants";
-import { DEEP_HASH_APP_PREFIX_KEY } from "@src/common.constants";
+import { APP_PREFIX_KEY } from "@src/common.constants";
 import { SocketRpcClient } from "viem/utils";
 import { CustomClient } from "@src/common.types";
 import { DataSource } from "@src/services/db/leveldb.service";
@@ -48,7 +48,7 @@ const defaultClient = createWalletClient({
 
 const voidFn = () => {};
 
-const PKS_STORE_KEY = `${DEEP_HASH_APP_PREFIX_KEY}.encodedPKs`;
+const PKS_STORE_KEY = `${APP_PREFIX_KEY}.encodedPKs`;
 
 const getEncryptedDataJson = () => localStorage.getItem(PKS_STORE_KEY);
 

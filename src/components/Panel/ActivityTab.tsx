@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { formatUnits, Hex, hexToBigInt } from "viem";
 import { shortHex } from "@src/utils/common";
-import { PryxContext } from "@src/context/pryx.context";
+import { DecoyContext } from "@src/context/decoy.context";
 import { WalletContext } from "@src/context/wallet.context";
 import { useContext } from "react";
 import { Transaction } from "@src/services/client/transactions.entity";
@@ -68,7 +68,7 @@ export default function ActivityTab({ active }: { active: boolean }) {
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const { clientController } = useContext(PryxContext);
+  const { clientController } = useContext(DecoyContext);
   const { decimals } = useContext(WalletContext);
 
   useEffect(() => {

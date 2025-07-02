@@ -1,5 +1,5 @@
 import { Hex } from "viem";
-import { ERC_20_WITH_PERMIT_AND_FAUCET_ABI } from "./constants";
+import { ERC_20_WITH_MINT_ABI } from "./constants";
 import { CustomClient } from "@src/common.types";
 
 export type TransferProps = {
@@ -12,7 +12,7 @@ export type TransferProps = {
 export default async function transfer(params: TransferProps) {
   const { request } = await params.client.simulateContract({
     address: params.tokenAddress,
-    abi: ERC_20_WITH_PERMIT_AND_FAUCET_ABI,
+    abi: ERC_20_WITH_MINT_ABI,
     functionName: "transfer",
     args: [params.receiverAddress, params.amount],
   });

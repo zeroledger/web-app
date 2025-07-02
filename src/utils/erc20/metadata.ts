@@ -1,6 +1,6 @@
 import { Address, Hex } from "viem";
 import { CustomClient } from "@src/common.types";
-import { ERC_20_WITH_PERMIT_AND_FAUCET_ABI } from "./constants";
+import { ERC_20_WITH_MINT_ABI } from "./constants";
 
 export type ERC20MetadataParams = {
   tokenAddress: Hex;
@@ -11,7 +11,7 @@ export type ERC20MetadataParams = {
 export default async function metadata(params: ERC20MetadataParams) {
   const contract = {
     address: params.tokenAddress,
-    abi: ERC_20_WITH_PERMIT_AND_FAUCET_ABI,
+    abi: ERC_20_WITH_MINT_ABI,
   };
 
   const [symbol, amount, decimals] = await params.client.multicall({
