@@ -160,9 +160,10 @@ export class ClientController extends EventEmitter {
 
   async start() {
     try {
-      const correlationId = crypto.randomUUID();
-      const balance = await this.setupConnection(correlationId);
-      return balance;
+      // const correlationId = crypto.randomUUID();
+      // const balance = await this.setupConnection(correlationId);
+      // return balance;
+      return 0n;
     } catch (error) {
       this.catchService.catch(error as Error);
     }

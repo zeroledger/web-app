@@ -83,20 +83,26 @@ export const OFFCHAIN_SPENDING_ABI = [
 export class WalletService {
   private readonly address: Address;
   private rpc: ServiceClient<CoordinatorRpc>;
+  private faucetRpc: ServiceClient<FaucetRpc>;
   private logger = new Logger("WalletService");
   constructor(
     private readonly client: CustomClient,
     private readonly contract: Address,
     private readonly token: Address,
     private readonly coordinatorUrl: string,
+    private readonly faucetUrl: string,
     private readonly pryxService: PryxService,
     private readonly recordsEntity: PryxRecordsEntity,
     private readonly coordinatorRpcClient: JsonRpcClient<CoordinatorRpc>,
+    private readonly faucetRpcClient: JsonRpcClient<FaucetRpc>,
     private readonly transactionsEntity: TransactionsEntity,
     private readonly queue: MemoryQueue,
   ) {
     this.address = this.client.account.address;
     this.rpc = this.coordinatorRpcClient.getService(this.coordinatorUrl);
+    this.faucetRpc = this.faucetRpcClient.getService(this.faucetUrl, {
+      namespace: "faucet",
+    });
   }
 
   private async enqueue<T>(fn: () => Promise<T>) {
@@ -601,12 +607,9 @@ export class WalletService {
   }
 
   async faucet(amount: string) {
-    const faucetRpc = (
-      this.coordinatorRpcClient as unknown as JsonRpcClient<FaucetRpc>
-    ).getService(this.coordinatorUrl, { namespace: "faucet" });
     return this.enqueue(() =>
-      faucetRpc.obtainTestTokens(
-        new FaucetRequestDto(this.token, this.address, amount, "0"),
+      this.faucetRpc.obtainTestTokens(
+        new FaucetRequestDto(this.token, this.address, amount, "0.001"),
       ),
     );
   }

@@ -1,17 +1,17 @@
 {
   "name": "web-app",
-  "version": "0.0.2",
+  "version": "0.0.1",
   "description": "",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pryx-protocol/web-app.git"
+    "url": "git+https://github.com/decoy-cash/web-app.git"
   },
   "bugs": {
-    "url": "https://github.com/pryx-protocol/web-app/issues"
+    "url": "https://github.com/decoy-cash/web-app/issues"
   },
-  "homepage": "https://github.com/pryx-protocol/web-app#readme",
+  "homepage": "https://github.com/decoy-cash/web-app#readme",
   "keywords": [
-    "pryx",
+    "decoy",
     "ts",
     "web3",
     "viem",
@@ -38,7 +38,6 @@
     "browser-level": "^2.0.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.9.2",
-    "graphql": "^16.9.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.0",

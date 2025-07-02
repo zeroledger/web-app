@@ -14,6 +14,8 @@ export const OPERATOR_URL: Address = import.meta.env.VITE_OPERATOR_URL;
 
 export const COORDINATOR_URL: Address = import.meta.env.VITE_COORDINATOR_URL;
 
+export const FAUCET_URL: Address = import.meta.env.VITE_FAUCET_URL;
+
 export const RPC: { [prop: number]: string } = {
   [optimismSepolia.id]: `https://optimism-sepolia.infura.io/v3/${import.meta.env.VITE_INFURA_RPC_KEY}`,
 };

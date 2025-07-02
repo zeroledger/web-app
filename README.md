@@ -1,6 +1,4 @@
-[![Quality Gate](https://github.com/pryx-protocol/web-app/actions/workflows/quality-gate.yml/badge.svg)](https://github.com/pryx-protocol/web-app/actions/workflows/quality-gate.yml)
-
-Pryx Web App
+Decoy Web App
 
 ## Installation
 

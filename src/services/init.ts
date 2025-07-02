@@ -5,6 +5,7 @@ import {
   DEEP_HASH_ADDRESS,
   OPERATOR_URL,
   TOKEN_ADDRESS,
+  FAUCET_URL,
 } from "@src/common.constants";
 
 import { JsonRpcClient } from "./rpc";
@@ -12,7 +13,7 @@ import { MemoryQueue } from "./queue";
 import { ClientController } from "./client/client.controller";
 import { DataSource } from "./db/leveldb.service";
 import { PryxRecordsEntity } from "./pryx/pryx.entity";
-import { CoordinatorRpc } from "./client/client.dto";
+import { CoordinatorRpc, FaucetRpc } from "./client/client.dto";
 import { WalletService } from "./client/wallet.service";
 import { PryxService } from "./pryx/pryx.service";
 import { CustomClient } from "@src/common.types";
@@ -41,6 +42,11 @@ export const create = (axiosInstance: Axios, client: CustomClient, pk: Hex) => {
     client.account.address,
   );
 
+  const faucetRpcClient = new JsonRpcClient<FaucetRpc>(
+    axiosInstance,
+    client.account.address,
+  );
+
   const transactionsEntity = new TransactionsEntity(dataSource);
 
   _clientController = new ClientController(
@@ -53,9 +59,11 @@ export const create = (axiosInstance: Axios, client: CustomClient, pk: Hex) => {
       DEEP_HASH_ADDRESS,
       TOKEN_ADDRESS,
       COORDINATOR_URL,
+      FAUCET_URL,
       new PryxService(client, DEEP_HASH_ADDRESS),
       pryxRecordsEntity,
       coordinatorRpcClient,
+      faucetRpcClient,
       transactionsEntity,
       queue,
     ),
