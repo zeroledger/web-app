@@ -113,7 +113,9 @@ export class WalletService {
     });
   }
 
-  send() {}
+  send() {
+    this.logger.log("send");
+  }
 
   async faucet(amount: string) {
     return this.enqueue(() =>
