@@ -1,8 +1,9 @@
 import { CustomClient } from "@src/common.types";
 import { Address, Hex } from "viem";
+import { Proof } from "@src/utils/prover";
 
 export type DepositCommitmentParamsStruct = {
-  poseidonHash: string;
+  poseidonHash: bigint;
   owner: Address;
   encryptedData: Hex;
 };
@@ -10,7 +11,11 @@ export type DepositCommitmentParamsStruct = {
 export type DepositStruct = {
   token: Address;
   total_deposit_amount: bigint;
-  depositCommitmentParams: DepositCommitmentParamsStruct[];
+  depositCommitmentParams: [
+    DepositCommitmentParamsStruct,
+    DepositCommitmentParamsStruct,
+    DepositCommitmentParamsStruct,
+  ];
   fee: bigint;
   feeRecipient: Address;
 };
@@ -19,17 +24,17 @@ export type DepositParams = {
   depositStruct: DepositStruct;
   client: CustomClient;
   contract: Address;
-  proof: BigIntString[];
+  proof: Proof;
 };
 
 export type DepositProofData = {
   proofInput: {
-    hashes: BigIntString[];
-    totalAmount: BigIntString;
-    amounts: BigIntString[];
-    sValues: BigIntString[];
+    hashes: bigint[];
+    totalAmount: bigint;
+    amounts: bigint[];
+    sValues: bigint[];
   };
-  calldata_proof: BigIntString[];
+  calldata_proof: Proof;
 };
 
 export type DepositData = {
@@ -41,9 +46,9 @@ export type DepositData = {
 };
 
 export type CommitmentData = {
-  amounts: BigIntString[];
-  sValues: BigIntString[];
-  hashes: BigIntString[];
+  amounts: bigint[];
+  sValues: bigint[];
+  hashes: bigint[];
   depositCommitmentParams: [
     DepositCommitmentParamsStruct,
     DepositCommitmentParamsStruct,

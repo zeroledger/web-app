@@ -23,6 +23,33 @@ import spend161Zkey from "@src/assets/spend_161/spend_161.zkey?url";
 
 const toBytesBuff = (buff: ArrayBuffer) => new Uint8Array(buff);
 
+export type Proof = [
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
+];
+
 type CircuitType =
   | "deposit"
   | "spend11"
@@ -140,13 +167,16 @@ class Prover {
     // calldata is a string like: '[proofArray][pubSignalsArray]'
     const match = calldata.match(/\[(.*?)\]\[(.*?)\]/);
     if (!match) throw new Error("Invalid calldata format");
-    const proofArr: string[] = match[1]
+    const proofArr = match[1]
       .split(",")
-      .map((val: string) => val.trim().replace(/"/g, ""));
+      .map((val: string) => BigInt(val.trim().replace(/"/g, "")));
     const pubSignalsArr: string[] = match[2]
       .split(",")
       .map((val: string) => val.trim().replace(/"/g, ""));
-    return { calldata_proof: proofArr, calldata_pubSignals: pubSignalsArr };
+    return {
+      calldata_proof: proofArr as Proof,
+      calldata_pubSignals: pubSignalsArr,
+    };
   }
 }
 

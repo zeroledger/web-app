@@ -12,6 +12,9 @@ export const FAUCET_URL: Address = import.meta.env.VITE_FAUCET_URL;
 
 export const VAULT_ADDRESS: Address = import.meta.env.VITE_VAULT_ADDRESS;
 
+export const WITHDRAW_EXTENSION_ADDRESS: Address = import.meta.env
+  .VITE_WITHDRAW_EXTENSION_ADDRESS;
+
 export const RPC: { [prop: number]: string } = {
   [optimismSepolia.id]: `https://optimism-sepolia.infura.io/v3/${import.meta.env.VITE_INFURA_RPC_KEY}`,
 };

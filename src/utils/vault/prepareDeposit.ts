@@ -10,6 +10,7 @@ import {
   DepositProofData,
   DepositStruct,
 } from "./types";
+import { shuffle } from "@src/utils/common";
 
 export const mockEncryptedData = toHex(randomBytes(32));
 
@@ -31,17 +32,17 @@ async function generateCommitmentData(
   individualAmounts: bigint[],
   userAddress: Address,
 ): Promise<CommitmentData> {
-  const amounts: BigIntString[] = [];
-  const sValues: BigIntString[] = [];
-  const hashes: BigIntString[] = [];
+  const amounts: bigint[] = [];
+  const sValues: bigint[] = [];
+  const hashes: bigint[] = [];
 
   for (let i = 0; i < 3; i++) {
-    amounts.push(individualAmounts[i].toString());
-    const sValue = toHex(randomBytes(32));
+    const sValue = BigInt(toHex(randomBytes(32)));
     sValues.push(sValue);
+    amounts.push(individualAmounts[i]);
 
     const hash = await computePoseidon({
-      amount: amounts[i],
+      amount: individualAmounts[i],
       entropy: sValue,
     });
     hashes.push(hash);
@@ -73,10 +74,10 @@ async function generateCommitmentData(
 }
 
 export async function generateDepositProof(
-  hashes: BigIntString[],
-  totalAmount: BigIntString,
-  amounts: BigIntString[],
-  sValues: BigIntString[],
+  hashes: bigint[],
+  totalAmount: bigint,
+  amounts: bigint[],
+  sValues: bigint[],
 ): Promise<DepositProofData> {
   const proofInput = {
     hashes,
@@ -94,7 +95,7 @@ export async function generateDepositProof(
     publicSignals,
   );
 
-  return { proofInput, calldata_proof: calldata_proof as BigIntString[] };
+  return { proofInput, calldata_proof };
 }
 
 export default async function prepareDeposit(
@@ -102,10 +103,12 @@ export default async function prepareDeposit(
   client: CustomClient,
   value: bigint,
 ) {
+  const firstAmount = value / 2n;
+  const secondAmount = value - firstAmount;
   const depositData: DepositData = {
     depositAmount: value,
     fee: 0n,
-    individualAmounts: [value, 0n, 0n],
+    individualAmounts: shuffle([firstAmount, secondAmount, 0n]),
     user: client.account.address,
     feeRecipient: zeroAddress,
   };
@@ -117,7 +120,7 @@ export default async function prepareDeposit(
 
   const proofData = await generateDepositProof(
     commitmentData.hashes,
-    depositData.depositAmount.toString(),
+    depositData.depositAmount,
     commitmentData.amounts,
     commitmentData.sValues,
   );

@@ -579,4 +579,4 @@ export const VAULT_ABI = [
     stateMutability: "nonpayable",
     type: "function",
   },
-];
+] as const;

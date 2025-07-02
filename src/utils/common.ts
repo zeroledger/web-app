@@ -77,3 +77,22 @@ export const toViemSignature = (serializedSignature: Hex) => {
   ];
   return { r, s, v: hexToBigInt(v), yParity: undefined };
 };
+
+export function shuffle<T>(array: T[]): T[] {
+  const result = [...array];
+  let currentIndex = result.length;
+
+  // While there remain elements to shuffle...
+  while (currentIndex != 0) {
+    // Pick a remaining element...
+    const randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+
+    // And swap it with the current element.
+    [result[currentIndex], result[randomIndex]] = [
+      result[randomIndex],
+      result[currentIndex],
+    ];
+  }
+  return result;
+}

@@ -6,6 +6,14 @@ export class DecoyRecordDto {
     public readonly value: BigIntString,
     public readonly entropy: BigIntString,
   ) {}
+
+  static from(hash: bigint, value: bigint, entropy: bigint) {
+    return new DecoyRecordDto(
+      hash.toString(),
+      value.toString(),
+      entropy.toString(),
+    );
+  }
 }
 
 const lockEntityKey = {

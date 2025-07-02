@@ -37,7 +37,6 @@ export class WalletService {
 
   async getBalance() {
     const records = await this.records.all();
-    console.log(records);
     return records.reduce((acc, record) => acc + BigInt(record.value), 0n);
   }
 
@@ -66,13 +65,12 @@ export class WalletService {
       });
 
       await this.records.saveMany(
-        depositStruct.depositCommitmentParams.map(
-          (param, index) =>
-            new DecoyRecordDto(
-              param.poseidonHash,
-              commitmentData.amounts[index],
-              commitmentData.sValues[index],
-            ),
+        depositStruct.depositCommitmentParams.map((param, index) =>
+          DecoyRecordDto.from(
+            param.poseidonHash,
+            commitmentData.amounts[index],
+            commitmentData.sValues[index],
+          ),
         ),
       );
 
