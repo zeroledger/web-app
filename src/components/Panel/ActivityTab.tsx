@@ -4,7 +4,9 @@ import { shortHex } from "@src/utils/common";
 import { DecoyContext } from "@src/context/decoy.context";
 import { WalletContext } from "@src/context/wallet.context";
 import { useContext } from "react";
-import { Transaction } from "@src/services/client/transactions.entity";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Transaction = any;
 
 const formatDate = (timestamp: number) => {
   return new Date(timestamp).toLocaleDateString();
@@ -147,15 +149,17 @@ export default function ActivityTab({ active }: { active: boolean }) {
                       tx.spentMaskedNoteDigests.length > 0 && (
                         <div className={idsContainerStyle}>
                           <span>Spend notes:</span>
-                          {tx.spentMaskedNoteDigests?.map((noteId, idx) => (
-                            <a
-                              key={idx}
-                              href={`#${noteId}`}
-                              className={disabledLinkStyle}
-                            >
-                              {shortHex(noteId)}
-                            </a>
-                          ))}
+                          {tx.spentMaskedNoteDigests?.map(
+                            (noteId: Hex, idx: number) => (
+                              <a
+                                key={idx}
+                                href={`#${noteId}`}
+                                className={disabledLinkStyle}
+                              >
+                                {shortHex(noteId)}
+                              </a>
+                            ),
+                          )}
                         </div>
                       )}
                     {tx.sendMaskedNoteDigest && (
