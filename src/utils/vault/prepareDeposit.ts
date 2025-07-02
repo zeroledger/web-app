@@ -1,43 +1,15 @@
 import { randomBytes } from "@noble/hashes/utils";
 import { CustomClient } from "@src/common.types";
 import { computePoseidon } from "@src/utils/poseidon";
-import { Address, Hex, toHex, zeroAddress } from "viem";
+import { Address, toHex, zeroAddress } from "viem";
 import { prover } from "@src/utils/prover";
-
-export interface DepositProofData {
-  proofInput: {
-    hashes: string[];
-    totalAmount: string;
-    amounts: string[];
-    sValues: string[];
-  };
-  calldata_proof: string[];
-}
-
-export interface DepositData {
-  depositAmount: bigint;
-  fee: bigint;
-  individualAmounts: bigint[];
-  user: Address;
-  feeRecipient: Address;
-}
-
-export interface DepositCommitmentParamsStruct {
-  poseidonHash: string;
-  owner: Address;
-  encryptedData: Hex;
-}
-
-export interface CommitmentData {
-  amounts: string[];
-  sValues: string[];
-  hashes: string[];
-  depositCommitmentParams: [
-    DepositCommitmentParamsStruct,
-    DepositCommitmentParamsStruct,
-    DepositCommitmentParamsStruct,
-  ];
-}
+import {
+  CommitmentData,
+  DepositCommitmentParamsStruct,
+  DepositData,
+  DepositProofData,
+  DepositStruct,
+} from "./types";
 
 export const mockEncryptedData = toHex(randomBytes(32));
 
@@ -45,7 +17,7 @@ async function createDepositStruct(
   token: Address,
   data: DepositData,
   commitmentData: CommitmentData,
-) {
+): Promise<DepositStruct> {
   return {
     token,
     total_deposit_amount: data.depositAmount,
@@ -59,9 +31,9 @@ async function generateCommitmentData(
   individualAmounts: bigint[],
   userAddress: Address,
 ): Promise<CommitmentData> {
-  const amounts: string[] = [];
-  const sValues: string[] = [];
-  const hashes: string[] = [];
+  const amounts: BigIntString[] = [];
+  const sValues: BigIntString[] = [];
+  const hashes: BigIntString[] = [];
 
   for (let i = 0; i < 3; i++) {
     amounts.push(individualAmounts[i].toString());
@@ -101,10 +73,10 @@ async function generateCommitmentData(
 }
 
 export async function generateDepositProof(
-  hashes: string[],
-  totalAmount: string,
-  amounts: string[],
-  sValues: string[],
+  hashes: BigIntString[],
+  totalAmount: BigIntString,
+  amounts: BigIntString[],
+  sValues: BigIntString[],
 ): Promise<DepositProofData> {
   const proofInput = {
     hashes,
@@ -122,7 +94,7 @@ export async function generateDepositProof(
     publicSignals,
   );
 
-  return { proofInput, calldata_proof };
+  return { proofInput, calldata_proof: calldata_proof as BigIntString[] };
 }
 
 export default async function prepareDeposit(
@@ -159,5 +131,6 @@ export default async function prepareDeposit(
   return {
     proofData,
     depositStruct,
+    commitmentData,
   };
 }

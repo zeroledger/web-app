@@ -46,12 +46,12 @@ const WalletProvider: React.FC<{ children?: ReactNode }> = ({ children }) => {
     if (symbol && connected && clientController) {
       setBalance(offchainBalance);
       clientController?.on(
-        ClientServiceEvents.OFFCHAIN_BALANCE_CHANGE,
+        ClientServiceEvents.PRIVATE_BALANCE_CHANGE,
         setBalance,
       );
       return () => {
         clientController?.off(
-          ClientServiceEvents.OFFCHAIN_BALANCE_CHANGE,
+          ClientServiceEvents.PRIVATE_BALANCE_CHANGE,
           setBalance,
         );
       };

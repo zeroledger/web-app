@@ -5,7 +5,7 @@ import { EventEmitter } from "node:events";
 import { WalletService } from "./wallet.service";
 
 export const ClientServiceEvents = {
-  OFFCHAIN_BALANCE_CHANGE: "OFFCHAIN_BALANCE_CHANGE",
+  PRIVATE_BALANCE_CHANGE: "PRIVATE_BALANCE_CHANGE",
   ONCHAIN_BALANCE_CHANGE: "ONCHAIN_BALANCE_CHANGE",
 } as const;
 
@@ -19,7 +19,12 @@ export class ClientController extends EventEmitter {
 
   async start() {
     try {
-      return 0n;
+      // get onchain transactions from indexer
+      // (deposits, withdrawals, transfers)
+      // decrypt outputs dedicated for this client and update records
+      // save deposits, withdrawals, transfers in decrypted form
+      // return balance
+      return await this.walletService.getBalance();
     } catch (error) {
       this.catchService.catch(error as Error);
     }
@@ -30,7 +35,7 @@ export class ClientController extends EventEmitter {
 
     if (success) {
       this.safeEmit(
-        ClientServiceEvents.OFFCHAIN_BALANCE_CHANGE,
+        ClientServiceEvents.PRIVATE_BALANCE_CHANGE,
         await this.walletService.getBalance(),
       );
       this.safeEmit(ClientServiceEvents.ONCHAIN_BALANCE_CHANGE);
@@ -41,7 +46,7 @@ export class ClientController extends EventEmitter {
     this.logger.log(value, recipient);
 
     this.safeEmit(
-      ClientServiceEvents.OFFCHAIN_BALANCE_CHANGE,
+      ClientServiceEvents.PRIVATE_BALANCE_CHANGE,
       await this.walletService.getBalance(),
     );
     console.log(`Done`);

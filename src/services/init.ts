@@ -12,6 +12,8 @@ import { ClientController } from "./client/client.controller";
 import { FaucetRpc } from "./client/client.dto";
 import { WalletService } from "./client/wallet.service";
 import { CustomClient } from "@src/common.types";
+import { DecoyRecordsEntity } from "./client/records.entity";
+import { DataSource } from "./db/leveldb.service";
 
 let _client: CustomClient | undefined;
 let _pk: Hex | undefined;
@@ -35,6 +37,8 @@ export const create = (axiosInstance: Axios, client: CustomClient, pk: Hex) => {
     client.account.address,
   );
 
+  const records = new DecoyRecordsEntity(new DataSource());
+
   _clientController = new ClientController(
     new WalletService(
       client,
@@ -43,6 +47,7 @@ export const create = (axiosInstance: Axios, client: CustomClient, pk: Hex) => {
       FAUCET_URL,
       faucetRpcClient,
       queue,
+      records,
     ),
   );
 
