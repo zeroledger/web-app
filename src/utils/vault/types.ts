@@ -45,7 +45,7 @@ export type DepositData = {
   feeRecipient: Address;
 };
 
-export type CommitmentData = {
+export type DepositCommitmentData = {
   amounts: bigint[];
   sValues: bigint[];
   hashes: bigint[];
@@ -54,4 +54,36 @@ export type CommitmentData = {
     DepositCommitmentParamsStruct,
     DepositCommitmentParamsStruct,
   ];
+};
+
+export type SpendInput = {
+  input_amounts: bigint[];
+  input_sValues: bigint[];
+  inputs_hashes: bigint[];
+  output_amounts: bigint[];
+  output_sValues: bigint[];
+  outputs_hashes: bigint[];
+  fee: bigint;
+};
+
+export type SpendParams = {
+  transactionStruct: TransactionStruct;
+  client: CustomClient;
+  contract: Address;
+  proof: Proof;
+};
+
+export type OutputsOwnersStruct = {
+  owner: Address;
+  indexes: number[];
+};
+
+export type TransactionStruct = {
+  token: Address;
+  inputsPoseidonHashes: bigint[];
+  outputsPoseidonHashes: bigint[];
+  encryptedData: Hex[];
+  outputsOwners: OutputsOwnersStruct[];
+  fee: bigint;
+  feeRecipient: Address;
 };

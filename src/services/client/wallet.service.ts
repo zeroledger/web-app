@@ -5,7 +5,13 @@ import { JsonRpcClient, ServiceClient } from "../rpc";
 import { CustomClient } from "@src/common.types";
 import { Logger } from "@src/utils/logger";
 import { MemoryQueue } from "../queue";
-import { prepareDeposit, deposit } from "@src/utils/vault";
+import {
+  prepareDeposit,
+  deposit,
+  isUserRegistered,
+  prepareSpend,
+  spend,
+} from "@src/utils/vault";
 import { DecoyRecordDto, DecoyRecordsEntity } from "./records.entity";
 import { withdrawBatch } from "@src/utils/extensions/withdraw";
 import { WithdrawItem } from "@src/utils/extensions/withdraw/withdraw.extension";
@@ -44,11 +50,8 @@ export class WalletService {
 
   deposit(value: bigint) {
     return this.enqueue(async () => {
-      const { proofData, depositStruct, commitmentData } = await prepareDeposit(
-        this.token,
-        this.client,
-        value,
-      );
+      const { proofData, depositStruct, depositCommitmentData } =
+        await prepareDeposit(this.token, this.client, value);
 
       const transfer = {
         tokenAddress: depositStruct.token,
@@ -69,8 +72,8 @@ export class WalletService {
         depositStruct.depositCommitmentParams.map((param, index) =>
           DecoyRecordDto.from(
             param.poseidonHash,
-            commitmentData.amounts[index],
-            commitmentData.sValues[index],
+            depositCommitmentData.amounts[index],
+            depositCommitmentData.sValues[index],
           ),
         ),
       );
@@ -91,7 +94,7 @@ export class WalletService {
         }
         withdrawItems.push({
           amount: BigInt(record.value),
-          sValue: BigInt(record.entropy),
+          sValue: BigInt(record.sValue),
         });
         withdrawItemIds.push(record.hash);
       });
@@ -113,8 +116,55 @@ export class WalletService {
     });
   }
 
-  send() {
-    this.logger.log("send");
+  send(value: bigint, receiver: Address) {
+    return this.enqueue(async () => {
+      const isRegistered = await isUserRegistered(
+        this.address,
+        this.vault,
+        this.client,
+      );
+      if (!isRegistered) {
+        this.logger.error("User is not registered");
+        // throw new Error("User is not registered");
+      }
+
+      const records = await this.records.all();
+      this.logger.log(`records: ${JSON.stringify(records)}`);
+      const { proofData, transactionStruct } = await prepareSpend(
+        records,
+        this.token,
+        value,
+        this.address,
+        receiver,
+      );
+
+      await spend({
+        transactionStruct,
+        client: this.client,
+        contract: this.vault,
+        proof: proofData.calldata_proof,
+      });
+
+      await this.records.deleteMany(
+        proofData.proofInput.inputs_hashes.map((hash) => hash.toString()),
+      );
+
+      const newRecords = transactionStruct.outputsOwners.flatMap((owner) => {
+        if (owner.owner === this.address) {
+          return owner.indexes.map((index) => {
+            const hash = proofData.proofInput.outputs_hashes[index];
+            const amount = proofData.proofInput.output_amounts[index];
+            const sValue = proofData.proofInput.output_sValues[index];
+            return DecoyRecordDto.from(hash, amount, sValue);
+          });
+        }
+        return [];
+      });
+
+      await this.records.saveMany(newRecords);
+
+      return true;
+    });
   }
 
   async faucet(amount: string) {

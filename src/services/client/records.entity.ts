@@ -4,15 +4,20 @@ export class DecoyRecordDto {
   constructor(
     public readonly hash: BigIntString,
     public readonly value: BigIntString,
-    public readonly entropy: BigIntString,
+    public readonly sValue: BigIntString,
   ) {}
 
-  static from(hash: bigint, value: bigint, entropy: bigint) {
+  static from(hash: bigint, value: bigint, sValue: bigint) {
     return new DecoyRecordDto(
       hash.toString(),
       value.toString(),
-      entropy.toString(),
+      sValue.toString(),
     );
+  }
+
+  static of(json: string) {
+    const data = JSON.parse(json) as DecoyRecordDto;
+    return new DecoyRecordDto(data.hash, data.value, data.sValue);
   }
 }
 
@@ -29,7 +34,7 @@ export class DecoyRecordsEntity {
     if (!data) {
       throw new Error("NOTE_NOT_FOUND");
     }
-    return JSON.parse(data) as DecoyRecordDto;
+    return DecoyRecordDto.of(data);
   }
 
   async findMany(hashes: BigIntString[]): Promise<DecoyRecordDto[]> {
@@ -38,7 +43,7 @@ export class DecoyRecordsEntity {
     if (!data) {
       throw new Error("NOTE_NOT_FOUND");
     }
-    return data.map((item) => JSON.parse(item) as DecoyRecordDto);
+    return data.map((item) => DecoyRecordDto.of(item));
   }
 
   async saveMany(items: DecoyRecordDto[]) {
@@ -75,7 +80,7 @@ export class DecoyRecordsEntity {
   async all() {
     const store = this.dataSource.getEntityLevel(lockEntityKey);
     const data = (await store.values().all()) as string[];
-    return data.map((item) => JSON.parse(item) as DecoyRecordDto);
+    return data.map((item) => DecoyRecordDto.of(item));
   }
 
   async clear() {

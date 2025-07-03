@@ -580,3 +580,81 @@ export const VAULT_ABI = [
     type: "function",
   },
 ] as const;
+
+export const REGISTRY_ABI = [
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "user",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "bytes",
+        name: "encryptionPubKey",
+        type: "bytes",
+      },
+    ],
+    name: "EncryptionPubKeySet",
+    type: "event",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    name: "encryptionPubKeys",
+    outputs: [
+      {
+        internalType: "bytes",
+        name: "pubKey",
+        type: "bytes",
+      },
+      {
+        internalType: "bool",
+        name: "active",
+        type: "bool",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "user",
+        type: "address",
+      },
+    ],
+    name: "getEncryptionPubKey",
+    outputs: [
+      {
+        internalType: "bytes",
+        name: "",
+        type: "bytes",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "bytes",
+        name: "encryptionPubKey",
+        type: "bytes",
+      },
+    ],
+    name: "register",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+] as const;

@@ -4,7 +4,7 @@ import { computePoseidon } from "@src/utils/poseidon";
 import { Address, toHex, zeroAddress } from "viem";
 import { prover } from "@src/utils/prover";
 import {
-  CommitmentData,
+  DepositCommitmentData,
   DepositCommitmentParamsStruct,
   DepositData,
   DepositProofData,
@@ -12,26 +12,26 @@ import {
 } from "./types";
 import { shuffle } from "@src/utils/common";
 
-export const mockEncryptedData = toHex(randomBytes(32));
+export const mockEncryptedData = toHex(randomBytes(2));
 
 async function createDepositStruct(
   token: Address,
   data: DepositData,
-  commitmentData: CommitmentData,
+  depositCommitmentData: DepositCommitmentData,
 ): Promise<DepositStruct> {
   return {
     token,
     total_deposit_amount: data.depositAmount,
-    depositCommitmentParams: commitmentData.depositCommitmentParams,
+    depositCommitmentParams: depositCommitmentData.depositCommitmentParams,
     fee: data.fee,
     feeRecipient: data.feeRecipient,
   };
 }
 
-async function generateCommitmentData(
+async function generateDepositCommitmentData(
   individualAmounts: bigint[],
   userAddress: Address,
-): Promise<CommitmentData> {
+): Promise<DepositCommitmentData> {
   const amounts: bigint[] = [];
   const sValues: bigint[] = [];
   const hashes: bigint[] = [];
@@ -113,27 +113,27 @@ export default async function prepareDeposit(
     feeRecipient: zeroAddress,
   };
 
-  const commitmentData = await generateCommitmentData(
+  const depositCommitmentData = await generateDepositCommitmentData(
     depositData.individualAmounts,
     depositData.user,
   );
 
   const proofData = await generateDepositProof(
-    commitmentData.hashes,
+    depositCommitmentData.hashes,
     depositData.depositAmount,
-    commitmentData.amounts,
-    commitmentData.sValues,
+    depositCommitmentData.amounts,
+    depositCommitmentData.sValues,
   );
 
   const depositStruct = await createDepositStruct(
     token,
     depositData,
-    commitmentData,
+    depositCommitmentData,
   );
 
   return {
     proofData,
     depositStruct,
-    commitmentData,
+    depositCommitmentData,
   };
 }

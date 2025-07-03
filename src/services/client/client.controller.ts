@@ -43,12 +43,14 @@ export class ClientController extends EventEmitter {
   }
 
   async send(value: bigint, recipient: Address) {
-    this.logger.log(value, recipient);
+    const success = await this.walletService.send(value, recipient);
 
-    this.safeEmit(
-      ClientServiceEvents.PRIVATE_BALANCE_CHANGE,
-      await this.walletService.getBalance(),
-    );
+    if (success) {
+      this.safeEmit(
+        ClientServiceEvents.PRIVATE_BALANCE_CHANGE,
+        await this.walletService.getBalance(),
+      );
+    }
   }
 
   async withdraw() {

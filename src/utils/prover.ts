@@ -50,7 +50,7 @@ export type Proof = [
   bigint,
 ];
 
-type CircuitType =
+export type CircuitType =
   | "deposit"
   | "spend11"
   | "spend12"
@@ -181,3 +181,22 @@ class Prover {
 }
 
 export const prover = new Prover();
+
+export function getCircuitType(
+  inputCount: number,
+  outputCount: number,
+): CircuitType {
+  if (inputCount === 1 && outputCount === 1) return "spend11";
+  if (inputCount === 1 && outputCount === 2) return "spend12";
+  if (inputCount === 1 && outputCount === 3) return "spend13";
+  if (inputCount === 2 && outputCount === 1) return "spend21";
+  if (inputCount === 2 && outputCount === 2) return "spend22";
+  if (inputCount === 2 && outputCount === 3) return "spend23";
+  if (inputCount === 3 && outputCount === 1) return "spend31";
+  if (inputCount === 3 && outputCount === 2) return "spend32";
+  if (inputCount === 16 && outputCount === 1) return "spend161";
+
+  throw new Error(
+    `Unsupported circuit type: ${inputCount} inputs, ${outputCount} outputs`,
+  );
+}
