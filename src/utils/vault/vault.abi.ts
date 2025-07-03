@@ -580,6 +580,16 @@ export const VAULT_ABI = [
         name: "items",
         type: "tuple[]",
       },
+      {
+        internalType: "uint256",
+        name: "fee",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "feeRecipient",
+        type: "address",
+      },
     ],
     name: "withdraw",
     outputs: [],
