@@ -1,6 +1,6 @@
-import { WITHDRAW_EXTENSION_ABI } from "./withdraw.extension.abi";
 import { CustomClient } from "@src/common.types";
 import { Address } from "viem";
+import { VAULT_ABI } from "./vault.abi";
 
 export type WithdrawItem = {
   amount: bigint;
@@ -14,11 +14,11 @@ export type WithdrawParams = {
   withdrawItems: WithdrawItem[];
 };
 
-export default async function withdrawBatch(params: WithdrawParams) {
+export default async function withdraw(params: WithdrawParams) {
   const { request } = await params.client.simulateContract({
     address: params.contract,
-    abi: WITHDRAW_EXTENSION_ABI,
-    functionName: "withdrawBatch",
+    abi: VAULT_ABI,
+    functionName: "withdraw",
     args: [params.token, params.withdrawItems],
   });
   const txHash = await params.client.writeContract(request);

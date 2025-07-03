@@ -564,14 +564,21 @@ export const VAULT_ABI = [
         type: "address",
       },
       {
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "sValue",
-        type: "uint256",
+        components: [
+          {
+            internalType: "uint256",
+            name: "amount",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "sValue",
+            type: "uint256",
+          },
+        ],
+        internalType: "struct WithdrawItem[]",
+        name: "items",
+        type: "tuple[]",
       },
     ],
     name: "withdraw",

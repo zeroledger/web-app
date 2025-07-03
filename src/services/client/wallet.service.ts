@@ -11,9 +11,9 @@ import {
   isUserRegistered,
   prepareSpend,
   spend,
+  withdraw,
 } from "@src/utils/vault";
 import { DecoyRecordDto, DecoyRecordsEntity } from "./records.entity";
-import { withdrawBatch } from "@src/utils/extensions/withdraw";
 import { WithdrawItem } from "@src/utils/extensions/withdraw/withdraw.extension";
 
 export class WalletService {
@@ -103,7 +103,7 @@ export class WalletService {
         return;
       }
 
-      await withdrawBatch({
+      await withdraw({
         client: this.client,
         contract: this.vault,
         token: this.token,
