@@ -1,4 +1,4 @@
-import { Address } from "viem";
+import { Address, zeroAddress } from "viem";
 import { FaucetRpc, FaucetRequestDto } from "../client/client.dto";
 import { approve } from "@src/utils/erc20";
 import { JsonRpcClient, ServiceClient } from "../rpc";
@@ -12,9 +12,9 @@ import {
   prepareSpend,
   spend,
   withdraw,
+  WithdrawItem,
 } from "@src/utils/vault";
 import { DecoyRecordDto, DecoyRecordsEntity } from "./records.entity";
-import { WithdrawItem } from "@src/utils/extensions/withdraw/withdraw.extension";
 
 export class WalletService {
   private readonly address: Address;
@@ -82,6 +82,58 @@ export class WalletService {
     });
   }
 
+  partialWithdraw(value: bigint) {
+    return this.enqueue(async () => {
+      const isRegistered = await isUserRegistered(
+        this.address,
+        this.vault,
+        this.client,
+      );
+      if (!isRegistered) {
+        this.logger.error("User PEPK is not registered");
+        // throw new Error("User is not registered");
+      }
+
+      const records = await this.records.all();
+      this.logger.log(`records: ${JSON.stringify(records)}`);
+      const { proofData, transactionStruct } = await prepareSpend(
+        records,
+        this.token,
+        0n,
+        this.address,
+        this.address,
+        [{ owner: this.address, amount: value }],
+      );
+
+      await spend({
+        transactionStruct,
+        client: this.client,
+        contract: this.vault,
+        proof: proofData.calldata_proof,
+      });
+
+      await this.records.deleteMany(
+        proofData.proofInput.inputs_hashes.map((hash) => hash.toString()),
+      );
+
+      const newRecords = transactionStruct.outputsOwners.flatMap((owner) => {
+        if (owner.owner === this.address) {
+          return owner.indexes.map((index) => {
+            const hash = proofData.proofInput.outputs_hashes[index];
+            const amount = proofData.proofInput.output_amounts[index];
+            const sValue = proofData.proofInput.output_sValues[index];
+            return DecoyRecordDto.from(hash, amount, sValue);
+          });
+        }
+        return [];
+      });
+
+      await this.records.saveMany(newRecords);
+
+      return true;
+    });
+  }
+
   withdraw() {
     return this.enqueue(async () => {
       const records = await this.records.all();
@@ -124,7 +176,18 @@ export class WalletService {
         this.client,
       );
       if (!isRegistered) {
-        this.logger.error("User is not registered");
+        this.logger.error("Sender PEPK is not registered");
+        // throw new Error("User is not registered");
+      }
+
+      const isReceiverRegistered = await isUserRegistered(
+        receiver,
+        this.vault,
+        this.client,
+      );
+
+      if (!isReceiverRegistered) {
+        this.logger.error("Receiver PEPK is not registered");
         // throw new Error("User is not registered");
       }
 
@@ -136,6 +199,7 @@ export class WalletService {
         value,
         this.address,
         receiver,
+        [{ owner: zeroAddress, amount: 0n }],
       );
 
       await spend({

@@ -414,14 +414,21 @@ export const VAULT_ABI = [
             type: "tuple[]",
           },
           {
-            internalType: "uint240",
-            name: "fee",
-            type: "uint240",
-          },
-          {
-            internalType: "address",
-            name: "feeRecipient",
-            type: "address",
+            components: [
+              {
+                internalType: "address",
+                name: "owner",
+                type: "address",
+              },
+              {
+                internalType: "uint240",
+                name: "amount",
+                type: "uint240",
+              },
+            ],
+            internalType: "struct PublicOutput[]",
+            name: "publicOutputs",
+            type: "tuple[]",
           },
         ],
         internalType: "struct Transaction",

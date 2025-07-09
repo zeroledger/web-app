@@ -84,6 +84,10 @@ export type TransactionStruct = {
   outputsPoseidonHashes: bigint[];
   encryptedData: Hex[];
   outputsOwners: OutputsOwnersStruct[];
-  fee: bigint;
-  feeRecipient: Address;
+  publicOutputs: PublicOutput[];
+};
+
+export type PublicOutput = {
+  amount: bigint;
+  owner: Address;
 };

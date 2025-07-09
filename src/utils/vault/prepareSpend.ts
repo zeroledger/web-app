@@ -1,28 +1,18 @@
-/**
- * Algorithm:
- * inputs: {token, amount, receiver, fee, feeRecipient, encryptedData, decryptedCommitments}
- * outputs: { proofData, transactionStruct, commitmentData }
- *
- * 1. Find commitments so that sum of amounts is equal or more than amount. Max amount of commitments is 3.
- * 2. Create outputHashes, outputAmounts, outputSValues. If there is a change for spender outputHashes.length is 2, otherwise 1.
- * 3. Create commitmentData.
- * 4. Define circuit type based on input and output amounts.
- * 5. Generate proof for the circuit.
- * 6. Create transactionStruct.
- * 7. Return proofData, transactionStruct, commitmentData.
- */
-
 import { randomBytes } from "@noble/hashes/utils";
 import { computePoseidon } from "@src/utils/poseidon";
 import { CircuitType, getCircuitType, prover } from "@src/utils/prover";
-import { Address, toHex, zeroAddress } from "viem";
-import { SpendInput, TransactionStruct, OutputsOwnersStruct } from "./types";
+import { Address, toHex } from "viem";
+import {
+  SpendInput,
+  TransactionStruct,
+  OutputsOwnersStruct,
+  PublicOutput,
+} from "./types";
 import { DecoyRecordDto } from "@src/services/client/records.entity";
 import { logStringify } from "../common";
 
 export const mockEncryptedData = toHex(randomBytes(2));
 
-// Step 1: Find commitments that sum to >= amount (max 3)
 function findCommitments(commitments: DecoyRecordDto[], amount: bigint) {
   // Sort commitments by amount in descending order
   const sortedCommitments = [...commitments]
@@ -66,7 +56,6 @@ function findCommitments(commitments: DecoyRecordDto[], amount: bigint) {
   };
 }
 
-// Step 2: Create output hashes, amounts, and sValues
 async function createOutputs(amount: bigint, totalInputAmount: bigint) {
   const hasChange = totalInputAmount > amount;
   const changeAmount = hasChange ? totalInputAmount - amount : 0n;
@@ -75,7 +64,6 @@ async function createOutputs(amount: bigint, totalInputAmount: bigint) {
   const outputAmounts: bigint[] = [];
   const outputSValues: bigint[] = [];
 
-  // Create receiver output
   const receiverSValue = BigInt(toHex(randomBytes(32)));
   const receiverHash = await computePoseidon({
     amount,
@@ -129,8 +117,7 @@ function createTransactionStruct(
   outputHashes: bigint[],
   spender: Address,
   receiver: Address,
-  fee: bigint,
-  feeRecipient: Address,
+  publicOutputs: PublicOutput[],
 ): TransactionStruct {
   const outputsOwners: OutputsOwnersStruct[] = [
     {
@@ -152,8 +139,7 @@ function createTransactionStruct(
     outputsPoseidonHashes: outputHashes,
     encryptedData: outputHashes.map(() => mockEncryptedData),
     outputsOwners,
-    fee,
-    feeRecipient,
+    publicOutputs,
   };
 }
 
@@ -163,10 +149,16 @@ export default async function prepareSpend(
   amount: bigint,
   spender: Address,
   receiver: Address,
+  publicOutputs: PublicOutput[],
 ) {
+  const publicOutputsAmount = publicOutputs.reduce(
+    (acc, curr) => acc + curr.amount,
+    0n,
+  );
+
   const { selectedCommitments, totalAmount } = findCommitments(
     commitments,
-    amount,
+    amount + publicOutputsAmount,
   );
 
   console.log(
@@ -179,7 +171,7 @@ export default async function prepareSpend(
 
   const { outputHashes, outputAmounts, outputSValues } = await createOutputs(
     amount,
-    totalAmount,
+    totalAmount - publicOutputsAmount,
   );
 
   const proofInput = {
@@ -189,7 +181,7 @@ export default async function prepareSpend(
     output_amounts: outputAmounts,
     output_sValues: outputSValues,
     outputs_hashes: outputHashes,
-    fee: 0n,
+    fee: publicOutputsAmount,
   };
 
   const circuitType = getCircuitType(
@@ -209,8 +201,7 @@ export default async function prepareSpend(
     outputHashes,
     spender,
     receiver,
-    proofInput.fee,
-    zeroAddress,
+    publicOutputs,
   );
 
   return {
