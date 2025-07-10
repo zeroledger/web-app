@@ -64,9 +64,10 @@ export default function WalletTab() {
         isLoading={isModalLoading}
         isSuccess={isModalSuccess}
         isError={isModalError}
-        onSend={handleSend}
+        onSpend={handleSend}
         onBack={handleBack}
         formMethods={form}
+        type="Payment"
       />
     </div>
   );

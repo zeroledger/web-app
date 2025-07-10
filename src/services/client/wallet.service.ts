@@ -82,15 +82,15 @@ export class WalletService {
     });
   }
 
-  partialWithdraw(value: bigint) {
+  partialWithdraw(value: bigint, recipient: Address) {
     return this.enqueue(async () => {
       const isRegistered = await isUserRegistered(
-        this.address,
+        recipient,
         this.vault,
         this.client,
       );
       if (!isRegistered) {
-        this.logger.error("User PEPK is not registered");
+        this.logger.error("Recipient PEPK is not registered");
         // throw new Error("User is not registered");
       }
 
@@ -102,7 +102,7 @@ export class WalletService {
         0n,
         this.address,
         this.address,
-        [{ owner: this.address, amount: value }],
+        [{ owner: recipient, amount: value }],
       );
 
       await spend({
@@ -134,7 +134,7 @@ export class WalletService {
     });
   }
 
-  withdraw() {
+  withdraw(recipient: Address) {
     return this.enqueue(async () => {
       const records = await this.records.all();
 
@@ -152,7 +152,7 @@ export class WalletService {
       });
 
       if (withdrawItems.length === 0) {
-        return;
+        return false;
       }
 
       await withdraw({
@@ -160,6 +160,7 @@ export class WalletService {
         contract: this.vault,
         token: this.token,
         withdrawItems,
+        recipient,
       });
 
       await this.records.deleteMany(withdrawItemIds);
@@ -168,7 +169,7 @@ export class WalletService {
     });
   }
 
-  send(value: bigint, receiver: Address) {
+  send(value: bigint, recipient: Address) {
     return this.enqueue(async () => {
       const isRegistered = await isUserRegistered(
         this.address,
@@ -180,14 +181,14 @@ export class WalletService {
         // throw new Error("User is not registered");
       }
 
-      const isReceiverRegistered = await isUserRegistered(
-        receiver,
+      const isRecipientRegistered = await isUserRegistered(
+        recipient,
         this.vault,
         this.client,
       );
 
-      if (!isReceiverRegistered) {
-        this.logger.error("Receiver PEPK is not registered");
+      if (!isRecipientRegistered) {
+        this.logger.error("Recipient PEPK is not registered");
         // throw new Error("User is not registered");
       }
 
@@ -198,7 +199,7 @@ export class WalletService {
         this.token,
         value,
         this.address,
-        receiver,
+        recipient,
         [{ owner: zeroAddress, amount: 0n }],
       );
 

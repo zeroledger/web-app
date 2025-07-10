@@ -7,17 +7,18 @@ import { ClientContext } from "@src/context/client.context";
 import { parseUnits } from "viem";
 import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
 
-interface PaymentFormData {
+interface SpendFormData {
   recipient: string;
   amount: string;
 }
 
-interface PaymentFormProps {
-  formMethods: UseFormReturn<PaymentFormData>;
+interface SpendFormProps {
+  formMethods: UseFormReturn<SpendFormData>;
   onEnter: (e: React.KeyboardEvent<HTMLElement>) => void;
+  type: "Payment" | "Withdraw";
 }
 
-export const PaymentForm = ({ formMethods, onEnter }: PaymentFormProps) => {
+export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
   const {
     register,
     formState: { errors, isSubmitting },
@@ -55,7 +56,8 @@ export const PaymentForm = ({ formMethods, onEnter }: PaymentFormProps) => {
             },
             validate: (value) => {
               if (
-                value.toLowerCase() === client.account.address.toLowerCase()
+                value.toLowerCase() === client.account.address.toLowerCase() &&
+                type === "Payment"
               ) {
                 return "Cannot send to your own address";
               }
@@ -102,7 +104,10 @@ export const PaymentForm = ({ formMethods, onEnter }: PaymentFormProps) => {
         </div>
       </Field>
       <div className="py-4">
-        <MobileConfirmButton disabled={isSubmitting} label="Confirm Payment" />
+        <MobileConfirmButton
+          disabled={isSubmitting}
+          label={`Confirm ${type}`}
+        />
       </div>
     </div>
   );

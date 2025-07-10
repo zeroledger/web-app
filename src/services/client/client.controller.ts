@@ -53,20 +53,16 @@ export class ClientController extends EventEmitter {
     }
   }
 
-  async withdraw() {
-    const success = await this.walletService.withdraw();
+  async withdraw(value: bigint, recipient: Address) {
+    const balance = await this.walletService.getBalance();
 
-    if (success) {
-      this.safeEmit(
-        ClientServiceEvents.PRIVATE_BALANCE_CHANGE,
-        await this.walletService.getBalance(),
-      );
-      this.safeEmit(ClientServiceEvents.ONCHAIN_BALANCE_CHANGE);
+    let success = false;
+
+    if (balance > value) {
+      success = await this.walletService.partialWithdraw(value, recipient);
+    } else {
+      success = await this.walletService.withdraw(recipient);
     }
-  }
-
-  async partialWithdraw(value: bigint) {
-    const success = await this.walletService.partialWithdraw(value);
 
     if (success) {
       this.safeEmit(

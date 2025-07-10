@@ -5,9 +5,9 @@ import { SuccessMessage } from "@src/components/Modals/SuccessMessage";
 import { ErrorMessage } from "@src/components/Modals/ErrorMessage";
 import { UseFormReturn } from "react-hook-form";
 import { useDynamicHeight } from "@src/hooks/useDynamicHeight";
-import { PaymentForm } from "./PaymentForm";
+import { SpendForm } from "./SpendForm";
 
-interface PaymentFormData {
+interface SpendFormData {
   recipient: string;
   amount: string;
 }
@@ -17,9 +17,10 @@ interface SendModalProps {
   isLoading: boolean;
   isSuccess: boolean;
   isError: boolean;
-  onSend: (data: PaymentFormData) => void;
+  onSpend: (data: SpendFormData) => void;
   onBack: () => void;
-  formMethods: UseFormReturn<PaymentFormData>;
+  formMethods: UseFormReturn<SpendFormData>;
+  type: "Payment" | "Withdraw";
 }
 
 export default function SendModal({
@@ -27,9 +28,10 @@ export default function SendModal({
   isLoading,
   isSuccess,
   isError,
-  onSend,
+  onSpend,
   onBack,
   formMethods,
+  type,
 }: SendModalProps) {
   const { handleSubmit } = formMethods;
 
@@ -38,7 +40,7 @@ export default function SendModal({
   const onEnter = (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit(onSend)();
+      handleSubmit(onSpend)();
     }
   };
 
@@ -84,16 +86,20 @@ export default function SendModal({
           )}
           {isSuccess && (
             <div className="flex-1 flex items-center justify-center animate-fade-in">
-              <SuccessMessage message="Payment Successful!" />
+              <SuccessMessage message={`${type} Successful!`} />
             </div>
           )}
           {!isLoading && !isSuccess && !isError && (
             <form
-              onSubmit={handleSubmit(onSend)}
+              onSubmit={handleSubmit(onSpend)}
               onKeyDown={onEnter}
               className="flex-1 flex flex-col items-center justify-center"
             >
-              <PaymentForm formMethods={formMethods} onEnter={onEnter} />
+              <SpendForm
+                formMethods={formMethods}
+                onEnter={onEnter}
+                type={type}
+              />
             </form>
           )}
         </div>

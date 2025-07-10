@@ -12,6 +12,7 @@ export type WithdrawParams = {
   contract: Address;
   token: Address;
   withdrawItems: WithdrawItem[];
+  recipient: Address;
 };
 
 export default async function withdraw(params: WithdrawParams) {
@@ -19,7 +20,13 @@ export default async function withdraw(params: WithdrawParams) {
     address: params.contract,
     abi: VAULT_ABI,
     functionName: "withdraw",
-    args: [params.token, params.withdrawItems, 0n, zeroAddress],
+    args: [
+      params.token,
+      params.withdrawItems,
+      params.recipient,
+      0n,
+      zeroAddress,
+    ],
   });
   const txHash = await params.client.writeContract(request);
   const receipt = await params.client.waitForTransactionReceipt({
