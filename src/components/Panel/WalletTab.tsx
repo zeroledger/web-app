@@ -1,5 +1,5 @@
 import { primaryButtonStyle } from "../Button";
-import SendModal from "./SendModal";
+import { SpendModal } from "@src/components/Modals/SpendModal";
 import { ShareIcon } from "./ShareIcon";
 import { shortHex } from "@src/utils/common";
 import { useSendModal } from "./hooks/useSendModal";
@@ -59,7 +59,7 @@ export default function WalletTab() {
         </button>
       </div>
 
-      <SendModal
+      <SpendModal
         isOpen={isModalOpen}
         isLoading={isModalLoading}
         isSuccess={isModalSuccess}

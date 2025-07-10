@@ -5,7 +5,7 @@ import { useContext } from "react";
 import { WalletContext } from "@src/context/wallet.context";
 import { ClientContext } from "@src/context/client.context";
 import { parseUnits } from "viem";
-import { MobileConfirmButton } from "./MobileConfirmButton";
+import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
 
 interface PaymentFormData {
   recipient: string;

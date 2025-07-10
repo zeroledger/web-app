@@ -1,12 +1,12 @@
+import { useContext } from "react";
+import { UseFormReturn } from "react-hook-form";
 import clsx from "clsx";
 import { Loader } from "@src/components/Loader";
-import { BackButton } from "../SendModal/BackButton";
-import { SuccessMessage } from "../SendModal/SuccessMessage";
-import { DepositForm } from "./DepositForm";
-import { UseFormReturn } from "react-hook-form";
-import { useContext } from "react";
+import { BackButton } from "@src/components/Buttons/BackButton";
+import { SuccessMessage } from "@src/components/Modals/SuccessMessage";
 import { WalletContext } from "@src/context/wallet.context";
-import { ErrorMessage } from "../SendModal/ErrorMessage";
+import { ErrorMessage } from "@src/components/Modals/ErrorMessage";
+import { DepositForm } from "./DepositForm";
 
 interface DepositFormData {
   amount: string;

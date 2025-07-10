@@ -1,11 +1,11 @@
 import clsx from "clsx";
 import { Loader } from "@src/components/Loader";
-import { BackButton } from "./BackButton";
-import { SuccessMessage } from "./SuccessMessage";
-import { PaymentForm } from "./PaymentForm";
-import { ErrorMessage } from "./ErrorMessage";
+import { BackButton } from "@src/components/Buttons/BackButton";
+import { SuccessMessage } from "@src/components/Modals/SuccessMessage";
+import { ErrorMessage } from "@src/components/Modals/ErrorMessage";
 import { UseFormReturn } from "react-hook-form";
 import { useDynamicHeight } from "@src/hooks/useDynamicHeight";
+import { PaymentForm } from "./PaymentForm";
 
 interface PaymentFormData {
   recipient: string;

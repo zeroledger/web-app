@@ -1,7 +1,7 @@
 import { Field, Label, Input } from "@headlessui/react";
 import clsx from "clsx";
 import { UseFormReturn } from "react-hook-form";
-import { MobileConfirmButton } from "../SendModal/MobileConfirmButton";
+import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
 
 interface DepositFormData {
   amount: string;

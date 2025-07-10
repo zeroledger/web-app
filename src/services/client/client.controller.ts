@@ -65,6 +65,18 @@ export class ClientController extends EventEmitter {
     }
   }
 
+  async partialWithdraw(value: bigint) {
+    const success = await this.walletService.partialWithdraw(value);
+
+    if (success) {
+      this.safeEmit(
+        ClientServiceEvents.PRIVATE_BALANCE_CHANGE,
+        await this.walletService.getBalance(),
+      );
+      this.safeEmit(ClientServiceEvents.ONCHAIN_BALANCE_CHANGE);
+    }
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private safeEmit(event: keyof typeof ClientServiceEvents, ...args: any[]) {
     try {

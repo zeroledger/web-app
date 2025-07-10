@@ -1,6 +1,6 @@
 import clsx from "clsx";
-import { BackButton } from "./SendModal/BackButton";
-import { MobileConfirmButton } from "./SendModal/MobileConfirmButton";
+import { BackButton } from "@src/components/Buttons/BackButton";
+import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
 
 interface PruneConfirmModalProps {
   isOpen: boolean;

@@ -1,14 +1,15 @@
-import { useDepositModal } from "./hooks/useDepositModal";
-import DepositModal from "./DepositModal";
-import { useCollaborativeRedemption } from "./hooks/useCollaborativeRedemption";
-import { usePruneModal } from "./hooks/usePruneModal";
-import { useFaucet } from "./hooks/useFaucet";
-import PruneConfirmModal from "./PruneConfirmModal";
+import { DepositModal } from "@src/components/Modals/DepositModal";
+import { PruneModal } from "@src/components/Modals/PruneModal";
 import { ArrowIcon } from "@src/components/svg/ArrowIcon";
 import { QuestionIcon } from "@src/components/svg/QuestionIcon";
 import { TrashIcon } from "@src/components/svg/TrashIcon";
 import { FaucetIcon } from "@src/components/svg/FaucetIcon";
 import { Loader } from "@src/components/Loader";
+
+import { useCollaborativeRedemption } from "./hooks/useCollaborativeRedemption";
+import { usePruneModal } from "./hooks/usePruneModal";
+import { useDepositModal } from "./hooks/useDepositModal";
+import { useFaucet } from "./hooks/useFaucet";
 
 export default function MenuTab() {
   const {
@@ -108,7 +109,7 @@ export default function MenuTab() {
         isError={isDepositModalError}
       />
 
-      <PruneConfirmModal
+      <PruneModal
         isOpen={isPruneModalOpen}
         onConfirm={handlePrune}
         onCancel={onPruneModalClose}
