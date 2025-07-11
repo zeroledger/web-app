@@ -1,19 +1,6 @@
-import { CustomClient } from "@src/common.types";
-import { Address, zeroAddress } from "viem";
+import { zeroAddress } from "viem";
 import { VAULT_ABI } from "./vault.abi";
-
-export type WithdrawItem = {
-  amount: bigint;
-  sValue: bigint;
-};
-
-export type WithdrawParams = {
-  client: CustomClient;
-  contract: Address;
-  token: Address;
-  withdrawItems: WithdrawItem[];
-  recipient: Address;
-};
+import { WithdrawParams } from "./types";
 
 export default async function withdraw(params: WithdrawParams) {
   const { request } = await params.client.simulateContract({

@@ -1,6 +1,6 @@
 import { DataSource } from "../db/leveldb.service";
 
-export class DecoyRecordDto {
+export class LedgerRecordDto {
   constructor(
     public readonly hash: BigIntString,
     public readonly value: BigIntString,
@@ -8,7 +8,7 @@ export class DecoyRecordDto {
   ) {}
 
   static from(hash: bigint, value: bigint, sValue: bigint) {
-    return new DecoyRecordDto(
+    return new LedgerRecordDto(
       hash.toString(),
       value.toString(),
       sValue.toString(),
@@ -16,8 +16,8 @@ export class DecoyRecordDto {
   }
 
   static of(json: string) {
-    const data = JSON.parse(json) as DecoyRecordDto;
-    return new DecoyRecordDto(data.hash, data.value, data.sValue);
+    const data = JSON.parse(json) as LedgerRecordDto;
+    return new LedgerRecordDto(data.hash, data.value, data.sValue);
   }
 }
 
@@ -28,25 +28,25 @@ const lockEntityKey = {
 export class DecoyRecordsEntity {
   constructor(readonly dataSource: DataSource) {}
 
-  async findOne(hash: BigIntString): Promise<DecoyRecordDto> {
+  async findOne(hash: BigIntString): Promise<LedgerRecordDto> {
     const store = this.dataSource.getEntityLevel(lockEntityKey);
     const data = (await store.get(hash)) as string | undefined;
     if (!data) {
       throw new Error("NOTE_NOT_FOUND");
     }
-    return DecoyRecordDto.of(data);
+    return LedgerRecordDto.of(data);
   }
 
-  async findMany(hashes: BigIntString[]): Promise<DecoyRecordDto[]> {
+  async findMany(hashes: BigIntString[]): Promise<LedgerRecordDto[]> {
     const store = this.dataSource.getEntityLevel(lockEntityKey);
     const data = (await store.getMany(hashes)) as string[] | undefined;
     if (!data) {
       throw new Error("NOTE_NOT_FOUND");
     }
-    return data.map((item) => DecoyRecordDto.of(item));
+    return data.map((item) => LedgerRecordDto.of(item));
   }
 
-  async saveMany(items: DecoyRecordDto[]) {
+  async saveMany(items: LedgerRecordDto[]) {
     const batch = items.map((item) => ({
       type: "put" as const,
       sublevel: this.dataSource.getEntityLevel(lockEntityKey),
@@ -57,7 +57,7 @@ export class DecoyRecordsEntity {
     return this.dataSource.db.batch(batch);
   }
 
-  async save(data: DecoyRecordDto) {
+  async save(data: LedgerRecordDto) {
     const store = this.dataSource.getEntityLevel(lockEntityKey);
     await store.put(data.hash, JSON.stringify(data));
   }
@@ -80,7 +80,7 @@ export class DecoyRecordsEntity {
   async all() {
     const store = this.dataSource.getEntityLevel(lockEntityKey);
     const data = (await store.values().all()) as string[];
-    return data.map((item) => DecoyRecordDto.of(item));
+    return data.map((item) => LedgerRecordDto.of(item));
   }
 
   async clear() {

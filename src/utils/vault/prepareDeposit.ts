@@ -11,8 +11,7 @@ import {
   DepositStruct,
 } from "./types";
 import { shuffle } from "@src/utils/common";
-
-export const mockEncryptedData = toHex(randomBytes(2));
+import { encrypt } from "./encryption";
 
 async function createDepositStruct(
   token: Address,
@@ -56,17 +55,17 @@ async function generateDepositCommitmentData(
     {
       poseidonHash: hashes[0],
       owner: userAddress,
-      encryptedData: mockEncryptedData,
+      encryptedData: encrypt({ amount: amounts[0], sValue: sValues[0] }),
     },
     {
       poseidonHash: hashes[1],
       owner: userAddress,
-      encryptedData: mockEncryptedData,
+      encryptedData: encrypt({ amount: amounts[1], sValue: sValues[1] }),
     },
     {
       poseidonHash: hashes[2],
       owner: userAddress,
-      encryptedData: mockEncryptedData,
+      encryptedData: encrypt({ amount: amounts[2], sValue: sValues[2] }),
     },
   ];
 

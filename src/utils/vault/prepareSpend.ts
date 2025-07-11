@@ -8,12 +8,11 @@ import {
   OutputsOwnersStruct,
   PublicOutput,
 } from "./types";
-import { DecoyRecordDto } from "@src/services/client/records.entity";
+import { LedgerRecordDto } from "@src/services/client/records.entity";
 import { logStringify } from "../common";
+import { encrypt } from "./encryption";
 
-export const mockEncryptedData = toHex(randomBytes(2));
-
-function findCommitments(commitments: DecoyRecordDto[], amount: bigint) {
+function findCommitments(commitments: LedgerRecordDto[], amount: bigint) {
   // Sort commitments by amount in descending order
   const sortedCommitments = [...commitments]
     .map((c) => ({
@@ -114,6 +113,8 @@ async function generateSpendProof(
 function createTransactionStruct(
   token: Address,
   inputHashes: bigint[],
+  outputAmounts: bigint[],
+  outputSValues: bigint[],
   outputHashes: bigint[],
   spender: Address,
   receiver: Address,
@@ -137,14 +138,19 @@ function createTransactionStruct(
     token,
     inputsPoseidonHashes: inputHashes,
     outputsPoseidonHashes: outputHashes,
-    encryptedData: outputHashes.map(() => mockEncryptedData),
+    encryptedData: outputHashes.map((_, index) =>
+      encrypt({
+        amount: outputAmounts[index],
+        sValue: outputSValues[index],
+      }),
+    ),
     outputsOwners,
     publicOutputs,
   };
 }
 
 export default async function prepareSpend(
-  commitments: DecoyRecordDto[],
+  commitments: LedgerRecordDto[],
   token: Address,
   amount: bigint,
   spender: Address,
@@ -198,6 +204,8 @@ export default async function prepareSpend(
   const transactionStruct = createTransactionStruct(
     token,
     proofInput.inputs_hashes,
+    outputAmounts,
+    outputSValues,
     outputHashes,
     spender,
     receiver,

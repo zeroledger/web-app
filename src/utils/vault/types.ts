@@ -1,6 +1,7 @@
 import { CustomClient } from "@src/common.types";
-import { Address, Hex } from "viem";
+import { Address, Hex, Log } from "viem";
 import { Proof } from "@src/utils/prover";
+import { VAULT_ABI_EVENTS } from "./vault.abi";
 
 export type DepositCommitmentParamsStruct = {
   poseidonHash: bigint;
@@ -91,3 +92,25 @@ export type PublicOutput = {
   amount: bigint;
   owner: Address;
 };
+
+export type CommitmentStruct = {
+  amount: bigint;
+  sValue: bigint;
+};
+
+export type WithdrawParams = {
+  client: CustomClient;
+  contract: Address;
+  token: Address;
+  withdrawItems: CommitmentStruct[];
+  recipient: Address;
+};
+
+export type VaultEvent = Log<
+  bigint,
+  number,
+  boolean,
+  (typeof VAULT_ABI_EVENTS)[number],
+  undefined,
+  typeof VAULT_ABI_EVENTS
+>;

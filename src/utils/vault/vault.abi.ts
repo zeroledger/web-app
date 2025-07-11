@@ -86,6 +86,12 @@ export const VAULT_ABI = [
         name: "poseidonHash",
         type: "uint256",
       },
+      {
+        indexed: false,
+        internalType: "bytes",
+        name: "encryptedData",
+        type: "bytes",
+      },
     ],
     name: "CommitmentCreated",
     type: "event",
@@ -113,25 +119,6 @@ export const VAULT_ABI = [
       },
     ],
     name: "CommitmentRemoved",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "uint256",
-        name: "poseidonHash",
-        type: "uint256",
-      },
-      {
-        indexed: true,
-        internalType: "bytes",
-        name: "encryptedData",
-        type: "bytes",
-      },
-    ],
-    name: "EncryptedMetadata",
     type: "event",
   },
   {
@@ -200,6 +187,37 @@ export const VAULT_ABI = [
       },
     ],
     name: "TransactionSpent",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "user",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "token",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "total",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "fee",
+        type: "uint256",
+      },
+    ],
+    name: "Withdrawal",
     type: "event",
   },
   {
@@ -607,6 +625,21 @@ export const VAULT_ABI = [
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
+  },
+] as const;
+
+export const VAULT_ABI_EVENTS = VAULT_ABI.filter(
+  (item) => item.type === "event",
+);
+
+export const COMMITMENTS_ABI = [
+  {
+    name: "amount",
+    type: "uint256",
+  },
+  {
+    name: "sValue",
+    type: "uint256",
   },
 ] as const;
 
