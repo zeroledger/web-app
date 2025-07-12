@@ -10,7 +10,7 @@ import { ClientContext } from "@src/context/client.context";
 import { type ClientController } from "@src/services/client.controller";
 import { create } from "@src/services/init";
 
-const DecoyContext = createContext<{
+const ControllerContext = createContext<{
   clientController?: ClientController;
   balance: bigint;
   isConnecting: boolean;
@@ -23,7 +23,9 @@ const DecoyContext = createContext<{
 });
 const axiosInstance = axios.create();
 
-const DecoyProvider: React.FC<{ children?: ReactNode }> = ({ children }) => {
+const ControllerProvider: React.FC<{ children?: ReactNode }> = ({
+  children,
+}) => {
   const { client, pk } = useContext(ClientContext);
 
   const [clientController, setClientController] = useState<
@@ -52,7 +54,7 @@ const DecoyProvider: React.FC<{ children?: ReactNode }> = ({ children }) => {
   }, [client, pk]);
 
   return (
-    <DecoyContext.Provider
+    <ControllerContext.Provider
       value={{
         clientController,
         isConnecting,
@@ -62,8 +64,8 @@ const DecoyProvider: React.FC<{ children?: ReactNode }> = ({ children }) => {
       }}
     >
       {children}
-    </DecoyContext.Provider>
+    </ControllerContext.Provider>
   );
 };
 
-export { DecoyContext, DecoyProvider };
+export { ControllerContext, ControllerProvider };

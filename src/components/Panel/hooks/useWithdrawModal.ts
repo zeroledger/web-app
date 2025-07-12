@@ -1,7 +1,7 @@
 import { useState, useContext } from "react";
 import { useForm } from "react-hook-form";
 import { Address, parseUnits } from "viem";
-import { DecoyContext } from "@src/context/decoy.context";
+import { ControllerContext } from "@src/context/controller.context";
 import { useSwipe } from "./useSwipe";
 
 interface WithdrawFormData {
@@ -10,7 +10,7 @@ interface WithdrawFormData {
 }
 
 export const useWithdrawModal = (decimals: number) => {
-  const { clientController } = useContext(DecoyContext);
+  const { clientController } = useContext(ControllerContext);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalLoading, setIsModalLoading] = useState(false);
   const [isModalSuccess, setIsModalSuccess] = useState(false);

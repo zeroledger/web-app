@@ -4,7 +4,7 @@ import { optimismSepolia } from "viem/chains";
 export const OnesHash =
   "0x1111111111111111111111111111111111111111111111111111111111111111";
 
-export const APP_PREFIX_KEY = "decoy-app";
+export const APP_PREFIX_KEY = "zeroledger-app";
 
 export const TOKEN_ADDRESS: Address = import.meta.env.VITE_TOKEN_ADDRESS;
 

@@ -1,4 +1,4 @@
-import { DecoyContext } from "@src/context/decoy.context";
+import { ControllerContext } from "@src/context/controller.context";
 import { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
 import { parseUnits } from "viem";
@@ -9,7 +9,7 @@ interface DepositFormData {
 }
 
 export const useDepositModal = () => {
-  const { clientController } = useContext(DecoyContext);
+  const { clientController } = useContext(ControllerContext);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isDepositModalLoading, setIsDepositModalLoading] = useState(false);
   const [isDepositModalSuccess, setIsDepositModalSuccess] = useState(false);

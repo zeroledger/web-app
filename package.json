@@ -4,14 +4,14 @@
   "description": "",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/decoy-cash/web-app.git"
+    "url": "git+https://github.com/zeroledger/web-app.git"
   },
   "bugs": {
-    "url": "https://github.com/decoy-cash/web-app/issues"
+    "url": "https://github.com/zeroledger/web-app/issues"
   },
-  "homepage": "https://github.com/decoy-cash/web-app#readme",
+  "homepage": "https://github.com/zeroledger/web-app#readme",
   "keywords": [
-    "decoy",
+    "zeroledger",
     "ts",
     "web3",
     "viem",

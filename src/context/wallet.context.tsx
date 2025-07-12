@@ -7,7 +7,7 @@ import {
 } from "react";
 import { ClientServiceEvents } from "@src/services/client.controller";
 import { useMetadata } from "@src/hooks/erc20";
-import { DecoyContext } from "./decoy.context";
+import { ControllerContext } from "./controller.context";
 import { TOKEN_ADDRESS } from "@src/common.constants";
 
 const WalletContext = createContext<{
@@ -33,7 +33,7 @@ const WalletProvider: React.FC<{ children?: ReactNode }> = ({ children }) => {
     connected,
     error,
     balance: offchainBalance,
-  } = useContext(DecoyContext);
+  } = useContext(ControllerContext);
   const [balance, setBalance] = useState(offchainBalance);
   const {
     data: metadata,

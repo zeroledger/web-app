@@ -1,14 +1,14 @@
 import { RouterProvider } from "react-router-dom";
 import { ClientProvider } from "@src/context/client.context";
-import { DecoyProvider } from "@src/context/decoy.context";
+import { ControllerProvider } from "@src/context/controller.context";
 import router from "./router";
 
 function App() {
   return (
     <ClientProvider>
-      <DecoyProvider>
+      <ControllerProvider>
         <RouterProvider router={router} />
-      </DecoyProvider>
+      </ControllerProvider>
     </ClientProvider>
   );
 }

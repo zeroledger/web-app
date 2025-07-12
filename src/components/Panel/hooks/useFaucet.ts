@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useSwipe } from "./useSwipe";
 import { useContext } from "react";
-import { DecoyContext } from "@src/context/decoy.context";
+import { ControllerContext } from "@src/context/controller.context";
 
 export const useFaucet = () => {
   const [isFauceting, setIsFauceting] = useState(false);
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const { disableSwipe, enableSwipe } = useSwipe();
-  const { clientController } = useContext(DecoyContext);
+  const { clientController } = useContext(ControllerContext);
   const handleFaucet = async () => {
     setIsFauceting(true);
     disableSwipe();

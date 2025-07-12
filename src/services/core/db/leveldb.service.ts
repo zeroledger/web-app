@@ -1,14 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
 import { BrowserLevel } from "browser-level";
 import { getEntityKey } from "./leveldb.utils";
+import { APP_PREFIX_KEY } from "@src/common.constants";
 
 export class DataSource {
   readonly db: BrowserLevel;
 
   constructor() {
-    this.db = new BrowserLevel(`zeroledger.${import.meta.env.MODE}`, {
-      valueEncoding: "utf8",
-    });
+    this.db = new BrowserLevel(
+      `${APP_PREFIX_KEY}.source.${import.meta.env.MODE}`,
+      {
+        valueEncoding: "utf8",
+      },
+    );
   }
 
   getEntityLevel(entity: Function | { name: string }) {

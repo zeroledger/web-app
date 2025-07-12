@@ -1,4 +1,4 @@
-Decoy Web App
+ZeroLedger Web App
 
 ## Installation
 

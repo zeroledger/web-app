@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { formatUnits, Hex, hexToBigInt } from "viem";
 import { shortHex } from "@src/utils/common";
-import { DecoyContext } from "@src/context/decoy.context";
+import { ControllerContext } from "@src/context/controller.context";
 import { WalletContext } from "@src/context/wallet.context";
 import { useContext } from "react";
 
@@ -70,7 +70,7 @@ export default function ActivityTab({ active }: { active: boolean }) {
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const { clientController } = useContext(DecoyContext);
+  const { clientController } = useContext(ControllerContext);
   const { decimals } = useContext(WalletContext);
 
   useEffect(() => {
