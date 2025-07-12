@@ -5,7 +5,7 @@ import { metadata } from "@src/utils/erc20";
 import { ClientContext } from "@src/context/client.context";
 import { swrKeyForClient } from "@src/utils/swrKey";
 import { DecoyContext } from "@src/context/decoy.context";
-import { ClientServiceEvents } from "@src/services/client/client.controller";
+import { ClientServiceEvents } from "@src/services/client.controller";
 
 export default function useMetadata(token: Address) {
   const { client } = useContext(ClientContext);

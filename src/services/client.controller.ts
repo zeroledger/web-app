@@ -1,8 +1,8 @@
 import { Address } from "viem";
 import { Logger } from "@src/utils/logger";
-import { catchService } from "../catch/catch.service";
+import { catchService } from "@src/services/core/catch.service";
 import { EventEmitter } from "node:events";
-import { WalletService } from "./wallet.service";
+import { WalletService } from "@src/services/wallet.service";
 
 export const ClientServiceEvents = {
   PRIVATE_BALANCE_CHANGE: "PRIVATE_BALANCE_CHANGE",

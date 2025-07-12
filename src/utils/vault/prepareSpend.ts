@@ -7,53 +7,10 @@ import {
   TransactionStruct,
   OutputsOwnersStruct,
   PublicOutput,
+  SelectedCommitmentRecord,
 } from "./types";
-import { LedgerRecordDto } from "@src/services/client/records.entity";
 import { logStringify } from "../common";
 import { encrypt } from "./encryption";
-
-function findCommitments(commitments: LedgerRecordDto[], amount: bigint) {
-  // Sort commitments by amount in descending order
-  const sortedCommitments = [...commitments]
-    .map((c) => ({
-      amount: BigInt(c.value),
-      sValue: BigInt(c.sValue),
-      hash: BigInt(c.hash),
-    }))
-    .sort((a, b) => {
-      if (a.amount === b.amount) {
-        return 0;
-      }
-      return a.amount > b.amount ? -1 : 1;
-    });
-
-  let selectedCommitments: Array<{
-    amount: bigint;
-    sValue: bigint;
-    hash: bigint;
-  }> = [];
-
-  let i = 0;
-  let accumulatedAmount = 0n;
-
-  while (i < sortedCommitments.length && accumulatedAmount < amount) {
-    accumulatedAmount = 0n;
-    selectedCommitments = [];
-    for (let j = i; j < 3; j++) {
-      if (accumulatedAmount >= amount) {
-        break;
-      }
-      accumulatedAmount += sortedCommitments[j].amount;
-      selectedCommitments.push(sortedCommitments[j]);
-    }
-    i++;
-  }
-
-  return {
-    selectedCommitments,
-    totalAmount: accumulatedAmount,
-  };
-}
 
 async function createOutputs(amount: bigint, totalInputAmount: bigint) {
   const hasChange = totalInputAmount > amount;
@@ -150,50 +107,32 @@ function createTransactionStruct(
 }
 
 export default async function prepareSpend(
-  commitments: LedgerRecordDto[],
+  commitments: SelectedCommitmentRecord[],
   token: Address,
-  amount: bigint,
+  totalMovingAmount: bigint,
+  privateSpendAmount: bigint,
+  publicSpendAmount: bigint,
   spender: Address,
   receiver: Address,
   publicOutputs: PublicOutput[],
 ) {
-  const publicOutputsAmount = publicOutputs.reduce(
-    (acc, curr) => acc + curr.amount,
-    0n,
-  );
-
-  const { selectedCommitments, totalAmount } = findCommitments(
-    commitments,
-    amount + publicOutputsAmount,
-  );
-
-  console.log(
-    `selectedCommitments: ${logStringify(selectedCommitments)} with totalAmount: ${totalAmount}`,
-  );
-
-  if (selectedCommitments.length === 0) {
-    throw new Error("No commitments found to cover the requested amount");
-  }
-
+  const totalMovingPrivatelyAmounts = totalMovingAmount - publicSpendAmount;
   const { outputHashes, outputAmounts, outputSValues } = await createOutputs(
-    amount,
-    totalAmount - publicOutputsAmount,
+    privateSpendAmount,
+    totalMovingPrivatelyAmounts,
   );
 
   const proofInput = {
-    input_amounts: selectedCommitments.map((c) => c.amount),
-    input_sValues: selectedCommitments.map((c) => c.sValue),
-    inputs_hashes: selectedCommitments.map((c) => c.hash),
+    input_amounts: commitments.map((c) => c.value),
+    input_sValues: commitments.map((c) => c.sValue),
+    inputs_hashes: commitments.map((c) => c.hash),
     output_amounts: outputAmounts,
     output_sValues: outputSValues,
     outputs_hashes: outputHashes,
-    fee: publicOutputsAmount,
+    fee: publicSpendAmount,
   };
 
-  const circuitType = getCircuitType(
-    selectedCommitments.length,
-    outputHashes.length,
-  );
+  const circuitType = getCircuitType(commitments.length, outputHashes.length);
 
   console.log(
     `circuitType: ${circuitType} with proofInput: ${logStringify(proofInput)}`,

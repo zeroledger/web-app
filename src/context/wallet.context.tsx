@@ -5,7 +5,7 @@ import {
   useState,
   useEffect,
 } from "react";
-import { ClientServiceEvents } from "@src/services/client/client.controller";
+import { ClientServiceEvents } from "@src/services/client.controller";
 import { useMetadata } from "@src/hooks/erc20";
 import { DecoyContext } from "./decoy.context";
 import { TOKEN_ADDRESS } from "@src/common.constants";

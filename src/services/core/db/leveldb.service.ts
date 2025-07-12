@@ -6,7 +6,7 @@ export class DataSource {
   readonly db: BrowserLevel;
 
   constructor() {
-    this.db = new BrowserLevel(`decoy.${import.meta.env.MODE}`, {
+    this.db = new BrowserLevel(`zeroledger.${import.meta.env.MODE}`, {
       valueEncoding: "utf8",
     });
   }

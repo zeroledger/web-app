@@ -6,14 +6,17 @@ import {
   VAULT_ADDRESS,
 } from "@src/common.constants";
 
-import { JsonRpcClient } from "./rpc";
-import { MemoryQueue } from "./queue";
-import { ClientController } from "./client/client.controller";
-import { FaucetRpc } from "./client/client.dto";
-import { WalletService } from "./client/wallet.service";
+import { JsonRpcClient } from "@src/services/core/rpc";
+import { MemoryQueue } from "@src/services/core/queue";
+import { FaucetRpc } from "@src/services/core/faucet.dto";
+import { ClientController } from "@src/services/client.controller";
+import { WalletService } from "@src/services/wallet.service";
 import { CustomClient } from "@src/common.types";
-import { DecoyRecordsEntity } from "./client/records.entity";
-import { DataSource } from "./db/leveldb.service";
+import {
+  CommitmentsHistoryService,
+  CommitmentsService,
+} from "@src/services/ledger";
+import { DataSource } from "./core/db/leveldb.service";
 
 let _client: CustomClient | undefined;
 let _pk: Hex | undefined;
@@ -37,7 +40,12 @@ export const create = (axiosInstance: Axios, client: CustomClient, pk: Hex) => {
     client.account.address,
   );
 
-  const records = new DecoyRecordsEntity(new DataSource());
+  const zeroLEdgerDataSource = new DataSource();
+
+  const commitmentsService = new CommitmentsService(zeroLEdgerDataSource);
+  const commitmentsHistoryService = new CommitmentsHistoryService(
+    zeroLEdgerDataSource,
+  );
 
   _clientController = new ClientController(
     new WalletService(
@@ -47,7 +55,8 @@ export const create = (axiosInstance: Axios, client: CustomClient, pk: Hex) => {
       FAUCET_URL,
       faucetRpcClient,
       queue,
-      records,
+      commitmentsService,
+      commitmentsHistoryService,
     ),
   );
 

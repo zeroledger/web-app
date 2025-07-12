@@ -1,10 +1,10 @@
 import { Address, zeroAddress } from "viem";
-import { FaucetRpc, FaucetRequestDto } from "../client/client.dto";
+import { FaucetRpc, FaucetRequestDto } from "@src/services/core/faucet.dto";
 import { approve } from "@src/utils/erc20";
-import { JsonRpcClient, ServiceClient } from "../rpc";
+import { JsonRpcClient, ServiceClient } from "@src/services/core/rpc";
 import { CustomClient } from "@src/common.types";
 import { Logger } from "@src/utils/logger";
-import { MemoryQueue } from "../queue";
+import { MemoryQueue } from "@src/services/core/queue";
 import {
   prepareDeposit,
   deposit,
@@ -17,7 +17,11 @@ import {
   type VaultEvent,
   decrypt,
 } from "@src/utils/vault";
-import { LedgerRecordDto, DecoyRecordsEntity } from "./records.entity";
+import {
+  LedgerRecordDto,
+  CommitmentsService,
+  CommitmentsHistoryService,
+} from "@src/services/ledger";
 import { delay, logStringify } from "@src/utils/common";
 
 type VaultEventsHandler = {
@@ -39,7 +43,8 @@ export class WalletService {
     private readonly faucetUrl: string,
     private readonly faucetRpcClient: JsonRpcClient<FaucetRpc>,
     private readonly queue: MemoryQueue,
-    private readonly records: DecoyRecordsEntity,
+    private readonly commitmentsService: CommitmentsService,
+    private readonly commitmentsHistoryService: CommitmentsHistoryService,
   ) {
     this.address = this.client.account.address;
     this.faucetRpc = this.faucetRpcClient.getService(this.faucetUrl, {
@@ -56,8 +61,8 @@ export class WalletService {
   }
 
   async getBalance() {
-    const records = await this.records.all();
-    return records.reduce((acc, record) => acc + BigInt(record.value), 0n);
+    const commitments = await this.commitmentsService.all();
+    return commitments.reduce((acc, c) => acc + BigInt(c.value), 0n);
   }
 
   deposit(value: bigint) {
@@ -80,7 +85,7 @@ export class WalletService {
         proof: proofData.calldata_proof,
       });
 
-      await this.records.saveMany(
+      await this.commitmentsService.saveMany(
         depositStruct.depositCommitmentParams.map((param, index) =>
           LedgerRecordDto.from(
             param.poseidonHash,
@@ -106,15 +111,24 @@ export class WalletService {
         // throw new Error("User is not registered");
       }
 
-      const records = await this.records.all();
-      this.logger.log(`records: ${JSON.stringify(records)}`);
+      const publicOutputs = [{ owner: recipient, amount: value }];
+
+      const { selectedCommitmentRecords, totalAmount } =
+        await this.commitmentsService.findCommitments(value);
+
+      if (selectedCommitmentRecords.length === 0) {
+        throw new Error("No commitments found to cover the requested amount");
+      }
+
       const { proofData, transactionStruct } = await prepareSpend(
-        records,
+        selectedCommitmentRecords,
         this.token,
+        totalAmount,
         0n,
+        value,
         this.address,
         this.address,
-        [{ owner: recipient, amount: value }],
+        publicOutputs,
       );
 
       await spend({
@@ -124,7 +138,7 @@ export class WalletService {
         proof: proofData.calldata_proof,
       });
 
-      await this.records.deleteMany(
+      await this.commitmentsService.deleteMany(
         proofData.proofInput.inputs_hashes.map((hash) => hash.toString()),
       );
 
@@ -140,7 +154,7 @@ export class WalletService {
         return [];
       });
 
-      await this.records.saveMany(newRecords);
+      await this.commitmentsService.saveMany(newRecords);
 
       return true;
     });
@@ -148,19 +162,19 @@ export class WalletService {
 
   withdraw(recipient: Address) {
     return this.enqueue(async () => {
-      const records = await this.records.all();
+      const commitments = await this.commitmentsService.all();
 
       const withdrawItems: CommitmentStruct[] = [];
       const withdrawItemIds: string[] = [];
-      records.forEach((record) => {
-        if (BigInt(record.value) === 0n) {
+      commitments.forEach((c) => {
+        if (BigInt(c.value) === 0n) {
           return;
         }
         withdrawItems.push({
-          amount: BigInt(record.value),
-          sValue: BigInt(record.sValue),
+          amount: BigInt(c.value),
+          sValue: BigInt(c.sValue),
         });
-        withdrawItemIds.push(record.hash);
+        withdrawItemIds.push(c.hash);
       });
 
       if (withdrawItems.length === 0) {
@@ -175,7 +189,7 @@ export class WalletService {
         recipient,
       });
 
-      await this.records.deleteMany(withdrawItemIds);
+      await this.commitmentsService.deleteMany(withdrawItemIds);
 
       return true;
     });
@@ -204,15 +218,24 @@ export class WalletService {
         // throw new Error("User is not registered");
       }
 
-      const records = await this.records.all();
-      this.logger.log(`records: ${JSON.stringify(records)}`);
+      const publicOutputs = [{ owner: zeroAddress, amount: 0n }];
+
+      const { selectedCommitmentRecords, totalAmount } =
+        await this.commitmentsService.findCommitments(value);
+
+      if (selectedCommitmentRecords.length === 0) {
+        throw new Error("No commitments found to cover the requested amount");
+      }
+
       const { proofData, transactionStruct } = await prepareSpend(
-        records,
+        selectedCommitmentRecords,
         this.token,
+        totalAmount,
         value,
+        0n,
         this.address,
         recipient,
-        [{ owner: zeroAddress, amount: 0n }],
+        publicOutputs,
       );
 
       await spend({
@@ -222,7 +245,7 @@ export class WalletService {
         proof: proofData.calldata_proof,
       });
 
-      await this.records.deleteMany(
+      await this.commitmentsService.deleteMany(
         proofData.proofInput.inputs_hashes.map((hash) => hash.toString()),
       );
 
@@ -238,7 +261,7 @@ export class WalletService {
         return [];
       });
 
-      await this.records.saveMany(newRecords);
+      await this.commitmentsService.saveMany(newRecords);
 
       return true;
     });
@@ -281,12 +304,14 @@ export class WalletService {
           event.eventName === "CommitmentCreated" &&
           event.args.owner === this.address &&
           event.args.encryptedData &&
-          !(await this.records.findOne(event.args.poseidonHash!.toString()))
+          !(await this.commitmentsService.findOne(
+            event.args.poseidonHash!.toString(),
+          ))
         ) {
           // add commitment to LedgerRecordDto
           const commitment = decrypt(event.args.encryptedData);
           this.logger.log(`commitment: ${logStringify(commitment)}`);
-          await this.records.save(
+          await this.commitmentsService.save(
             LedgerRecordDto.from(
               event.args.poseidonHash!,
               commitment.amount,
@@ -299,35 +324,15 @@ export class WalletService {
         if (
           event.eventName === "CommitmentRemoved" &&
           event.args.owner === this.address &&
-          (await this.records.findOne(event.args.poseidonHash!.toString()))
+          (await this.commitmentsService.findOne(
+            event.args.poseidonHash!.toString(),
+          ))
         ) {
           // remove commitment from LedgerRecordDto
-          await this.records.delete(event.args.poseidonHash!.toString());
+          await this.commitmentsService.delete(
+            event.args.poseidonHash!.toString(),
+          );
           handler.onCommitmentRemoved?.(event);
-          return;
-        }
-        if (
-          event.eventName === "Withdrawal" &&
-          event.args.user === this.address
-        ) {
-          // add withdrawal to transaction history
-          handler.onWithdrawal?.(event);
-          return;
-        }
-        if (
-          event.eventName === "TokenDeposited" &&
-          event.args.user === this.address
-        ) {
-          // add deposit to transaction history
-          handler.onTokenDeposited?.(event);
-          return;
-        }
-        if (
-          event.eventName === "TransactionSpent" &&
-          event.args.owner === this.address
-        ) {
-          // add withdrawal to transaction history
-          handler.onTransactionSpent?.(event);
           return;
         }
       }),

@@ -23,7 +23,7 @@ import { OnesHash, RPC, WS_RPC, pollingInterval } from "@src/common.constants";
 import { APP_PREFIX_KEY } from "@src/common.constants";
 import { SocketRpcClient } from "viem/utils";
 import { CustomClient } from "@src/common.types";
-import { DataSource } from "@src/services/db/leveldb.service";
+import { DataSource } from "@src/services/core/db/leveldb.service";
 
 type EncryptedAccountsStore = Record<
   string,

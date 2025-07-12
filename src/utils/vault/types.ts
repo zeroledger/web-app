@@ -114,3 +114,9 @@ export type VaultEvent = Log<
   undefined,
   typeof VAULT_ABI_EVENTS
 >;
+
+export type SelectedCommitmentRecord = {
+  value: bigint;
+  sValue: bigint;
+  hash: bigint;
+};

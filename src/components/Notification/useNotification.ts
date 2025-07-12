@@ -1,5 +1,5 @@
 import { toast } from "react-toastify";
-import { catchService } from "@src/services/catch/catch.service";
+import { catchService } from "@src/services/core/catch.service";
 import { useEffect } from "react";
 
 const errorNotificationListener = (message: string) =>
