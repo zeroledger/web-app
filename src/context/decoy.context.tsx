@@ -7,7 +7,7 @@ import {
 } from "react";
 import axios from "axios";
 import { ClientContext } from "@src/context/client.context";
-import { type ClientController } from "@src/services/client/client.controller";
+import { type ClientController } from "@src/services/client.controller";
 import { create } from "@src/services/init";
 
 const DecoyContext = createContext<{
