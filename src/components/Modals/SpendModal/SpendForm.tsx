@@ -25,14 +25,14 @@ export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
     clearErrors,
     setValue,
   } = formMethods;
-  const { balance, decimals } = useContext(WalletContext);
+  const { privateBalance, decimals } = useContext(WalletContext);
   const { client } = useContext(ClientContext);
 
   const validateAmount = (value: string) => {
     if (!value) return "Amount is required";
     const amount = parseUnits(value, decimals);
     if (amount <= 0n) return "Amount must be greater than 0";
-    if (amount > balance) return "Insufficient balance";
+    if (amount > privateBalance) return "Insufficient balance";
     return true;
   };
 
