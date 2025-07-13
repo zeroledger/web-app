@@ -22,8 +22,8 @@ export const formatValue = (
   return value as string;
 };
 
-export const shortHex = (hash?: Hex) =>
-  `${hash?.substring(0, 6)}...${hash?.substring(hash?.length - 4)}`;
+export const shortString = (str?: string) =>
+  `${str?.substring(0, 6)}...${str?.substring(str?.length - 4)}`;
 
 export const logStringify = (value: unknown) =>
   JSON.stringify(

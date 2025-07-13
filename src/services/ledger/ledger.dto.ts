@@ -1,4 +1,4 @@
-import { Hash } from "viem";
+import { Hash, Hex, toHex } from "viem";
 
 export class LedgerRecordDto {
   constructor(
@@ -22,9 +22,12 @@ export class LedgerRecordDto {
 }
 
 export class HistoryRecordDto {
+  public readonly id: Hex;
   constructor(
     public readonly status: "spend" | "added",
-    public readonly transactionHash: Hash,
+    public readonly transactionHash: Hash | null,
     public readonly record: LedgerRecordDto,
-  ) {}
+  ) {
+    this.id = `${toHex(BigInt(this.record.hash))}:${status}`;
+  }
 }

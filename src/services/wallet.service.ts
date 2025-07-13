@@ -1,4 +1,5 @@
 import { Address, zeroAddress } from "viem";
+import { EventEmitter } from "node:events";
 import { FaucetRpc, FaucetRequestDto } from "@src/services/core/faucet.dto";
 import { approve } from "@src/utils/erc20";
 import { JsonRpcClient, ServiceClient } from "@src/services/core/rpc";
@@ -21,21 +22,22 @@ import {
   LedgerRecordDto,
   CommitmentsService,
   CommitmentsHistoryService,
+  HistoryRecordDto,
 } from "@src/services/ledger";
 import { delay, logStringify } from "@src/utils/common";
+import { catchService } from "@src/services/core/catch.service";
 
-type VaultEventsHandler = {
-  onCommitmentCreated?: (event: VaultEvent) => void;
-  onCommitmentRemoved?: (event: VaultEvent) => void;
-  onWithdrawal?: (event: VaultEvent) => void;
-  onTokenDeposited?: (event: VaultEvent) => void;
-  onTransactionSpent?: (event: VaultEvent) => void;
-};
+export const ClientServiceEvents = {
+  PRIVATE_BALANCE_CHANGE: "PRIVATE_BALANCE_CHANGE",
+  ONCHAIN_BALANCE_CHANGE: "ONCHAIN_BALANCE_CHANGE",
+} as const;
 
-export class WalletService {
+export class WalletService extends EventEmitter {
   private readonly address: Address;
   private faucetRpc: ServiceClient<FaucetRpc>;
   private logger = new Logger("WalletService");
+  private catchService = catchService;
+
   constructor(
     private readonly client: CustomClient,
     private readonly vault: Address,
@@ -46,18 +48,59 @@ export class WalletService {
     private readonly commitmentsService: CommitmentsService,
     private readonly commitmentsHistoryService: CommitmentsHistoryService,
   ) {
+    super();
     this.address = this.client.account.address;
     this.faucetRpc = this.faucetRpcClient.getService(this.faucetUrl, {
       namespace: "faucet",
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private safeEmit(event: keyof typeof ClientServiceEvents, ...args: any[]) {
+    try {
+      this.emit(event, ...args);
+    } catch (error) {
+      this.catchService.catch(error as Error);
+    }
+  }
+
   private async enqueue<T>(fn: () => Promise<T>) {
     const [err, result] = await this.queue.schedule("walletService", fn);
     if (err) {
-      throw err;
+      this.catchService.catch(err);
     }
     return result;
+  }
+
+  private async updateBothBalances() {
+    this.safeEmit(
+      ClientServiceEvents.PRIVATE_BALANCE_CHANGE,
+      await this.getBalance(),
+    );
+    this.safeEmit(ClientServiceEvents.ONCHAIN_BALANCE_CHANGE);
+  }
+
+  async getTransactions() {
+    try {
+      return await this.commitmentsHistoryService.all();
+    } catch (error) {
+      this.catchService.catch(error as Error);
+      return [];
+    }
+  }
+
+  async start() {
+    try {
+      // get onchain transactions from indexer
+      // (deposits, withdrawals, transfers)
+      // decrypt outputs dedicated for this client and update records
+      // save deposits, withdrawals, transfers in decrypted form
+      // return balance
+      this.subscribeOnVaultEvents();
+      return await this.getBalance();
+    } catch (error) {
+      this.catchService.catch(error as Error);
+    }
   }
 
   async getBalance() {
@@ -67,7 +110,7 @@ export class WalletService {
 
   deposit(value: bigint) {
     return this.enqueue(async () => {
-      const { proofData, depositStruct, depositCommitmentData } =
+      const { proofData, depositStruct /* depositCommitmentData */ } =
         await prepareDeposit(this.token, this.client, value);
 
       const transfer = {
@@ -84,16 +127,6 @@ export class WalletService {
         contract: this.vault,
         proof: proofData.calldata_proof,
       });
-
-      await this.commitmentsService.saveMany(
-        depositStruct.depositCommitmentParams.map((param, index) =>
-          LedgerRecordDto.from(
-            param.poseidonHash,
-            depositCommitmentData.amounts[index],
-            depositCommitmentData.sValues[index],
-          ),
-        ),
-      );
 
       return true;
     });
@@ -138,24 +171,6 @@ export class WalletService {
         proof: proofData.calldata_proof,
       });
 
-      await this.commitmentsService.deleteMany(
-        proofData.proofInput.inputs_hashes.map((hash) => hash.toString()),
-      );
-
-      const newRecords = transactionStruct.outputsOwners.flatMap((owner) => {
-        if (owner.owner === this.address) {
-          return owner.indexes.map((index) => {
-            const hash = proofData.proofInput.outputs_hashes[index];
-            const amount = proofData.proofInput.output_amounts[index];
-            const sValue = proofData.proofInput.output_sValues[index];
-            return LedgerRecordDto.from(hash, amount, sValue);
-          });
-        }
-        return [];
-      });
-
-      await this.commitmentsService.saveMany(newRecords);
-
       return true;
     });
   }
@@ -188,8 +203,6 @@ export class WalletService {
         withdrawItems,
         recipient,
       });
-
-      await this.commitmentsService.deleteMany(withdrawItemIds);
 
       return true;
     });
@@ -245,24 +258,6 @@ export class WalletService {
         proof: proofData.calldata_proof,
       });
 
-      await this.commitmentsService.deleteMany(
-        proofData.proofInput.inputs_hashes.map((hash) => hash.toString()),
-      );
-
-      const newRecords = transactionStruct.outputsOwners.flatMap((owner) => {
-        if (owner.owner === this.address) {
-          return owner.indexes.map((index) => {
-            const hash = proofData.proofInput.outputs_hashes[index];
-            const amount = proofData.proofInput.output_amounts[index];
-            const sValue = proofData.proofInput.output_sValues[index];
-            return LedgerRecordDto.from(hash, amount, sValue);
-          });
-        }
-        return [];
-      });
-
-      await this.commitmentsService.saveMany(newRecords);
-
       return true;
     });
   }
@@ -275,64 +270,59 @@ export class WalletService {
     );
   }
 
-  subscribeOnVaultEvents(
-    handler: VaultEventsHandler,
-    onError: (error: Error) => void,
-  ) {
+  subscribeOnVaultEvents() {
     const handlerWrapper = async (events: VaultEvent[]) => {
-      try {
-        await this.enqueue(async () => {
-          // artificially slow down event processing to increase stability of rpc interactions
-          // @todo remove when migrate to fallback rpc logic
-          await delay(500);
-          await this.handleIncomingEvents(events, handler);
-        });
-      } catch (error) {
-        onError(error as Error);
-      }
+      await this.enqueue(async () => {
+        // artificially slow down event processing to increase stability of rpc interactions
+        // @todo remove when migrate to fallback rpc logic
+        await delay(500);
+        await this.handleIncomingEvents(events);
+      });
     };
     watchVault(this.client, this.vault, handlerWrapper);
   }
 
-  private async handleIncomingEvents(
-    events: VaultEvent[],
-    handler: VaultEventsHandler,
-  ) {
+  private async handleIncomingEvents(events: VaultEvent[]) {
     await Promise.all(
       events.map(async (event: VaultEvent) => {
         if (
           event.eventName === "CommitmentCreated" &&
           event.args.owner === this.address &&
-          event.args.encryptedData &&
-          !(await this.commitmentsService.findOne(
-            event.args.poseidonHash!.toString(),
-          ))
+          event.args.encryptedData
         ) {
           // add commitment to LedgerRecordDto
           const commitment = decrypt(event.args.encryptedData);
           this.logger.log(`commitment: ${logStringify(commitment)}`);
-          await this.commitmentsService.save(
-            LedgerRecordDto.from(
-              event.args.poseidonHash!,
-              commitment.amount,
-              commitment.sValue,
-            ),
+          const ledgerRecord = LedgerRecordDto.from(
+            event.args.poseidonHash!,
+            commitment.amount,
+            commitment.sValue,
           );
-          handler.onCommitmentCreated?.(event);
+          await this.commitmentsService.save(ledgerRecord);
+          await this.commitmentsHistoryService.add(
+            new HistoryRecordDto("added", event.transactionHash, ledgerRecord),
+          );
+          await this.updateBothBalances();
           return;
         }
         if (
           event.eventName === "CommitmentRemoved" &&
-          event.args.owner === this.address &&
-          (await this.commitmentsService.findOne(
-            event.args.poseidonHash!.toString(),
-          ))
+          event.args.owner === this.address
         ) {
           // remove commitment from LedgerRecordDto
-          await this.commitmentsService.delete(
+          const ledgerRecord = await this.commitmentsService.delete(
             event.args.poseidonHash!.toString(),
           );
-          handler.onCommitmentRemoved?.(event);
+          if (ledgerRecord) {
+            await this.commitmentsHistoryService.add(
+              new HistoryRecordDto(
+                "spend",
+                event.transactionHash,
+                ledgerRecord,
+              ),
+            );
+          }
+          await this.updateBothBalances();
           return;
         }
       }),

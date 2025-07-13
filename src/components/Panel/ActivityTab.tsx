@@ -1,27 +1,17 @@
 import { useEffect, useState } from "react";
-import { formatUnits, Hex, hexToBigInt } from "viem";
-import { shortHex } from "@src/utils/common";
-import { ControllerContext } from "@src/context/controller.context";
+import { formatUnits } from "viem";
+import { shortString } from "@src/utils/common";
 import { WalletContext } from "@src/context/wallet.context";
 import { useContext } from "react";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Transaction = any;
-
-const formatDate = (timestamp: number) => {
-  return new Date(timestamp).toLocaleDateString();
-};
+import { HistoryRecordDto } from "@src/services/ledger";
 
 const formatAmount = (
-  amount: Hex,
-  type: Transaction["label"],
+  amount: bigint,
+  type: HistoryRecordDto["status"],
   decimals: number,
 ) => {
-  const prefix =
-    type === "Incoming Transaction" || type === "Deposit Transaction"
-      ? "+"
-      : "-";
-  const amountNumber = formatUnits(hexToBigInt(amount), decimals);
+  const prefix = type === "added" ? "+" : "-";
+  const amountNumber = formatUnits(amount, decimals);
   return `${prefix} $${amountNumber}`;
 };
 
@@ -35,53 +25,27 @@ function TransactionSkeleton() {
   );
 }
 
-function CommonTransactionMetadataSection({
-  tx,
-  decimals,
-}: {
-  tx: Transaction;
-  decimals: number;
-}) {
-  return (
-    <>
-      <div>{formatAmount(tx.amount, tx.label, decimals)}</div>
-      <div className="text-xs text-white/60">{formatDate(tx.date)}</div>
-      {tx.txHash && (
-        <div className="text-xs text-white/70">
-          Round transaction:{" "}
-          <a
-            href={`https://sepolia-optimism.etherscan.io/tx/${tx.txHash}`}
-            className={linkStyle}
-            target="_blank"
-          >
-            {shortHex(tx.txHash)}
-          </a>
-        </div>
-      )}
-    </>
-  );
-}
-
-const disabledLinkStyle = "text-white/70 cursor-default";
+// const disabledLinkStyle = "text-white/70 cursor-default";
 const linkStyle = "underline text-blue-300 hover:text-blue-400";
-const idsContainerStyle = "flex flex-wrap text-xs gap-1 text-white/70";
+// const idsContainerStyle = "flex flex-wrap text-xs gap-1 text-white/70";
 
 export default function ActivityTab({ active }: { active: boolean }) {
   const [loading, setLoading] = useState(true);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<HistoryRecordDto[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const { clientController } = useContext(ControllerContext);
-  const { decimals } = useContext(WalletContext);
+  const { decimals, walletService } = useContext(WalletContext);
 
   useEffect(() => {
     const loadTransactions = async () => {
-      if (!clientController) return;
+      if (!walletService) return;
 
       setLoading(true);
       setError(null);
       try {
-        const txs = await clientController.getTransactions();
-        setTransactions(txs);
+        const txs = await walletService.getTransactions();
+        if (txs) {
+          setTransactions(txs);
+        }
       } catch (error) {
         console.error("Failed to load transactions:", error);
         setError("Failed to load transactions");
@@ -93,7 +57,7 @@ export default function ActivityTab({ active }: { active: boolean }) {
     if (active) {
       loadTransactions();
     }
-  }, [clientController, active]);
+  }, [walletService, active]);
 
   return (
     <div className="h-full pt-4">
@@ -117,107 +81,30 @@ export default function ActivityTab({ active }: { active: boolean }) {
                 key={idx}
                 className="bg-white/5 rounded-lg p-4 text-white/90 shadow"
               >
-                {tx.label === "Incoming Transaction" ? (
-                  <div className="space-y-1 flex flex-col">
-                    <div className="font-semibold">{tx.label}</div>
-                    <div className="text-base">{`From: ${shortHex(tx.from)}`}</div>
-                    <CommonTransactionMetadataSection
-                      tx={tx}
-                      decimals={decimals}
-                    />
-                    <div className="text-xs text-white/70">
-                      Incoming note:{" "}
+                <div className="space-y-1 flex flex-col">
+                  <div className="font-semibold">{tx.status.toUpperCase()}</div>
+                  {tx.transactionHash ? (
+                    <div className="text-sm">
+                      {`Transaction: `}
                       <a
-                        href={`#${tx.maskedNoteDigest}`}
-                        className={disabledLinkStyle}
+                        href={`https://sepolia-optimism.etherscan.io/tx/${tx.transactionHash}`}
+                        className={linkStyle}
+                        target="_blank"
                       >
-                        {shortHex(tx.maskedNoteDigest)}
+                        {shortString(tx.transactionHash)}
                       </a>
                     </div>
+                  ) : (
+                    "Error loading transaction hash"
+                  )}
+
+                  <div>
+                    {formatAmount(BigInt(tx.record.value), tx.status, decimals)}
                   </div>
-                ) : tx.label === "Spend Transaction" ? (
-                  <div className="space-y-1">
-                    <div className="font-semibold">{tx.label}</div>
-                    {tx.recipient && (
-                      <div className="text-base">{`To: ${shortHex(tx.recipient)}`}</div>
-                    )}
-                    <CommonTransactionMetadataSection
-                      tx={tx}
-                      decimals={decimals}
-                    />
-                    {tx.spentMaskedNoteDigests &&
-                      tx.spentMaskedNoteDigests.length > 0 && (
-                        <div className={idsContainerStyle}>
-                          <span>Spend notes:</span>
-                          {tx.spentMaskedNoteDigests?.map(
-                            (noteId: Hex, idx: number) => (
-                              <a
-                                key={idx}
-                                href={`#${noteId}`}
-                                className={disabledLinkStyle}
-                              >
-                                {shortHex(noteId)}
-                              </a>
-                            ),
-                          )}
-                        </div>
-                      )}
-                    {tx.sendMaskedNoteDigest && (
-                      <div className={idsContainerStyle}>
-                        <span>Send note:</span>
-                        <a
-                          href={`#${tx.sendMaskedNoteDigest}`}
-                          className={disabledLinkStyle}
-                        >
-                          {shortHex(tx.sendMaskedNoteDigest)}
-                        </a>
-                      </div>
-                    )}
-                    <div className={idsContainerStyle}>
-                      <span>Change note:</span>
-                      <a
-                        href={`#${tx.changeMaskedNoteDigest}`}
-                        className={disabledLinkStyle}
-                      >
-                        {shortHex(tx.changeMaskedNoteDigest)}
-                      </a>
-                    </div>
+                  <div className="text-xs text-white/60">
+                    {`Poseidon commitment: uint254(${shortString(tx.record.hash)}n)`}
                   </div>
-                ) : tx.label === "Deposit Transaction" ? (
-                  <div className="space-y-1 flex flex-col">
-                    <div className="font-semibold">{tx.label}</div>
-                    <CommonTransactionMetadataSection
-                      tx={tx}
-                      decimals={decimals}
-                    />
-                    <div className="text-xs text-white/70">
-                      Deposit note:{" "}
-                      <a
-                        href={`#${tx.maskedNoteDigest}`}
-                        className={disabledLinkStyle}
-                      >
-                        {shortHex(tx.maskedNoteDigest)}
-                      </a>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-1 flex flex-col">
-                    <div className="font-semibold">{tx.label}</div>
-                    <CommonTransactionMetadataSection
-                      tx={tx}
-                      decimals={decimals}
-                    />
-                    <div className="text-xs text-white/70">
-                      Deposit note:{" "}
-                      <a
-                        href={`#${tx.maskedNoteDigest}`}
-                        className={disabledLinkStyle}
-                      >
-                        {shortHex(tx.maskedNoteDigest)}
-                      </a>
-                    </div>
-                  </div>
-                )}
+                </div>
               </li>
             ))
           )}

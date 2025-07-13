@@ -102,7 +102,8 @@ export default async function prepareDeposit(
   client: CustomClient,
   value: bigint,
 ) {
-  const firstAmount = value / 2n;
+  const random = BigInt(Math.ceil(Math.random() * 3));
+  const firstAmount = value / random;
   const secondAmount = value - firstAmount;
   const depositData: DepositData = {
     depositAmount: value,

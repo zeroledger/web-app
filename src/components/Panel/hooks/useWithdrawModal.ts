@@ -1,7 +1,7 @@
 import { useState, useContext } from "react";
 import { useForm } from "react-hook-form";
 import { Address, parseUnits } from "viem";
-import { ControllerContext } from "@src/context/controller.context";
+import { WalletContext } from "@src/context/wallet.context";
 import { useSwipe } from "./useSwipe";
 
 interface WithdrawFormData {
@@ -10,7 +10,7 @@ interface WithdrawFormData {
 }
 
 export const useWithdrawModal = (decimals: number) => {
-  const { clientController } = useContext(ControllerContext);
+  const { walletService, privateBalance } = useContext(WalletContext);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalLoading, setIsModalLoading] = useState(false);
   const [isModalSuccess, setIsModalSuccess] = useState(false);
@@ -37,10 +37,12 @@ export const useWithdrawModal = (decimals: number) => {
   const handleWithdraw = async (data: WithdrawFormData) => {
     setIsModalLoading(true);
     try {
-      await clientController?.withdraw(
-        parseUnits(data.amount, decimals),
-        data.recipient as Address,
-      );
+      const amount = parseUnits(data.amount, decimals);
+      if (amount === privateBalance) {
+        await walletService?.withdraw(data.recipient as Address);
+      } else {
+        await walletService?.partialWithdraw(amount, data.recipient as Address);
+      }
       setIsModalLoading(false);
       setIsModalSuccess(true);
       setTimeout(() => {

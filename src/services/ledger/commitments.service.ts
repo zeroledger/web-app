@@ -9,6 +9,15 @@ const recordEntityKey = {
 export default class CommitmentsService {
   constructor(readonly dataSource: DataSource) {}
 
+  async findOneSafe(hash: BigIntString): Promise<LedgerRecordDto | null> {
+    const store = this.dataSource.getEntityLevel(recordEntityKey);
+    const data = (await store.get(hash)) as string | undefined;
+    if (!data) {
+      return null;
+    }
+    return LedgerRecordDto.of(data);
+  }
+
   async findOne(hash: BigIntString): Promise<LedgerRecordDto> {
     const store = this.dataSource.getEntityLevel(recordEntityKey);
     const data = (await store.get(hash)) as string | undefined;
@@ -45,7 +54,9 @@ export default class CommitmentsService {
 
   async delete(hash: BigIntString) {
     const store = this.dataSource.getEntityLevel(recordEntityKey);
+    const commitment = await this.findOneSafe(hash);
     await store.del(hash);
+    return commitment;
   }
 
   async deleteMany(hashes: BigIntString[]) {

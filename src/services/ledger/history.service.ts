@@ -1,6 +1,6 @@
-import { type Hash } from "viem";
 import { DataSource } from "@src/services/core/db/leveldb.service";
 import { HistoryRecordDto } from "./ledger.dto";
+import { Hex } from "viem";
 
 export const messageBusEntityKey = {
   name: `commitments_history`,
@@ -20,10 +20,10 @@ type Batch = (
 
 export class Node {
   constructor(
-    public id: Hash,
+    public id: Hex,
     public data: HistoryRecordDto,
-    public prevId?: Hash,
-    public nextId?: Hash,
+    public prevId?: Hex,
+    public nextId?: Hex,
   ) {}
 
   stringify() {
@@ -44,14 +44,14 @@ export default class CommitmentsHistoryService {
   private _store: ReturnType<DataSource["getEntityLevel"]>;
 
   private async _getHeadNode() {
-    return this._getMessageNode("headId");
+    return this._getNode("headId");
   }
 
   private async _getTailNode() {
-    return this._getMessageNode("tailId");
+    return this._getNode("tailId");
   }
 
-  private async _getMessageNode(key: string) {
+  private async _getNode(key: string) {
     const source = await this._store.get(key);
     if (!source) {
       return;
@@ -59,12 +59,12 @@ export default class CommitmentsHistoryService {
     return Node.of(source);
   }
 
-  async addMessage(message: HistoryRecordDto) {
-    const id = message.transactionHash;
+  async add(historyRecord: HistoryRecordDto) {
+    const id = historyRecord.id;
     if (await this.has(id)) {
       return false;
     }
-    const node = new Node(id, message);
+    const node = new Node(id, historyRecord);
 
     const [headNode, tailNode] = await Promise.all([
       this._getHeadNode(),
@@ -115,21 +115,21 @@ export default class CommitmentsHistoryService {
     return true;
   }
 
-  async cleanMessages() {
+  async clean() {
     await this._store.clear();
   }
 
-  async has(transactionHash: Hash) {
-    const source = await this._store.get(transactionHash);
+  async has(id: Hex) {
+    const source = await this._store.get(id);
     if (!source) {
       return false;
     }
     return true;
   }
 
-  async each(fn: (msg: HistoryRecordDto) => Promise<void> | void) {
+  async each(fn: (historyRecord: HistoryRecordDto) => Promise<void> | void) {
     /**
-     * store to filter duplicated messages of head and tail
+     * store to filter duplicated historyRecord of head and tail
      */
     const duplicates: Record<string, true> = {};
 
@@ -143,12 +143,14 @@ export default class CommitmentsHistoryService {
       }
       node =
         node.nextId && node.id != tail?.id
-          ? await this._getMessageNode(node.nextId)
+          ? await this._getNode(node.nextId)
           : undefined;
     }
   }
 
-  async eachRevert(fn: (msg: HistoryRecordDto) => Promise<void> | void) {
+  async eachRevert(
+    fn: (historyRecord: HistoryRecordDto) => Promise<void> | void,
+  ) {
     /**
      * store to filter duplicated messages of head and tail
      */
@@ -164,15 +166,15 @@ export default class CommitmentsHistoryService {
       }
       node =
         node.prevId && node.id != head?.id
-          ? await this._getMessageNode(node.prevId)
+          ? await this._getNode(node.prevId)
           : undefined;
     }
   }
 
   async all() {
     const historyRecords: HistoryRecordDto[] = [];
-    await this.eachRevert((msg) => {
-      historyRecords.push(msg);
+    await this.eachRevert((historyRecord) => {
+      historyRecords.push(historyRecord);
     });
     return historyRecords;
   }

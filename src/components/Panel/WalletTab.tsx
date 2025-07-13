@@ -1,7 +1,7 @@
 import { primaryButtonStyle } from "../Button";
 import { SpendModal } from "@src/components/Modals/SpendModal";
 import { ShareIcon } from "./ShareIcon";
-import { shortHex } from "@src/utils/common";
+import { shortString } from "@src/utils/common";
 import { useSendModal } from "./hooks/useSendModal";
 import { useCopyAddress } from "./hooks/useCopyAddress";
 import { formatUnits } from "viem";
@@ -10,7 +10,8 @@ import { useContext } from "react";
 
 export default function WalletTab() {
   const { showCopiedTooltip, handleCopyAddress, address } = useCopyAddress();
-  const { balance, isLoading, error, decimals } = useContext(WalletContext);
+  const { privateBalance, isLoading, error, decimals } =
+    useContext(WalletContext);
   const {
     isModalOpen,
     isModalLoading,
@@ -24,13 +25,15 @@ export default function WalletTab() {
 
   return (
     <div className="flex flex-col items-center justify-center h-full px-4 pt-4">
-      <div className="text-2xl font-bold text-white mb-4">Balance (USD)</div>
+      <div className="text-2xl font-bold text-white mb-4">Private Balance:</div>
       {error && <div className="text-white">{error.message}</div>}
       {isLoading && (
         <div className="w-48 h-12 bg-gray-700 rounded-lg animate-pulse" />
       )}
       {!isLoading && !error && (
-        <div className="text-4xl h-12 font-extrabold text-white">{`$${formatUnits(balance, decimals)}`}</div>
+        <>
+          <div className="text-4xl h-12 font-extrabold text-white">{`$${formatUnits(privateBalance, decimals)}`}</div>
+        </>
       )}
       <div className="flex items-center gap-2 mt-2 mb-4 relative">
         <a
@@ -39,7 +42,7 @@ export default function WalletTab() {
           rel="noopener noreferrer"
           className="text-lg text-gray-300 hover:text-gray-200 transition-colors"
         >
-          {shortHex(address)}
+          {shortString(address)}
         </a>
         <div className="relative">
           <ShareIcon onClick={handleCopyAddress} />

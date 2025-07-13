@@ -17,18 +17,14 @@ export function SwipeProvider({ children }: { children: ReactNode }) {
     () => ({
       isSwipeEnabled,
       disableSwipe: () => {
-        console.log("[SwipeContext] Disabling swipe");
         setIsSwipeEnabled(false);
       },
       enableSwipe: () => {
-        console.log("[SwipeContext] Enabling swipe");
         setIsSwipeEnabled(true);
       },
     }),
     [isSwipeEnabled],
   );
-
-  console.log("[SwipeContext] Current swipe state:", isSwipeEnabled);
 
   return (
     <SwipeContext.Provider value={value}>{children}</SwipeContext.Provider>

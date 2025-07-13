@@ -4,69 +4,117 @@ import {
   ReactNode,
   useState,
   useEffect,
+  useCallback,
 } from "react";
-import { ClientServiceEvents } from "@src/services/client.controller";
-import { useMetadata } from "@src/hooks/erc20";
-import { ControllerContext } from "./controller.context";
+import axios from "axios";
+import { ClientContext } from "@src/context/client.context";
+import { create } from "@src/services/init";
+import {
+  ClientServiceEvents,
+  WalletService,
+} from "@src/services/wallet.service";
 import { TOKEN_ADDRESS } from "@src/common.constants";
+import useSWR from "swr";
+import { swrKeyForClient } from "@src/utils/swrKey";
+import { metadata } from "@src/utils/erc20";
 
 const WalletContext = createContext<{
-  onchainBalance: bigint;
-  balance: bigint;
+  walletService: WalletService | undefined;
+  publicBalance: bigint;
+  privateBalance: bigint;
   isLoading: boolean;
   error: Error | null;
   symbol: string;
   decimals: number;
+  loaded: boolean;
 }>({
-  onchainBalance: 0n,
-  balance: 0n,
+  walletService: undefined,
+  publicBalance: 0n,
+  privateBalance: 0n,
   isLoading: false,
   error: null,
   symbol: "",
   decimals: 0,
+  loaded: false,
 });
 
+const axiosInstance = axios.create();
+
 const WalletProvider: React.FC<{ children?: ReactNode }> = ({ children }) => {
+  const { client, pk } = useContext(ClientContext);
+
+  const [walletService, setWalletService] = useState<
+    WalletService | undefined
+  >();
+
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState<Error>();
+  const [privateBalance, setPrivateBalance] = useState<bigint>(0n);
+
+  const fetcher = useCallback(
+    () =>
+      metadata({
+        tokenAddress: TOKEN_ADDRESS,
+        client,
+      }),
+    [client],
+  );
+
   const {
-    clientController,
-    isConnecting,
-    connected,
-    error,
-    balance: offchainBalance,
-  } = useContext(ControllerContext);
-  const [balance, setBalance] = useState(offchainBalance);
-  const {
-    data: metadata,
+    data: onchainWalletData,
     isLoading: isMetadataLoading,
     error: metadataError,
-  } = useMetadata(TOKEN_ADDRESS);
-  const [symbol, onchainBalance, decimals] = metadata ?? ["", 0n, 0];
+    mutate,
+  } = useSWR(["/metadata", swrKeyForClient(client)], fetcher);
+
+  const [symbol, publicBalance, decimals] = onchainWalletData ?? ["", 0n, 0];
 
   useEffect(() => {
-    if (symbol && connected && clientController) {
-      setBalance(offchainBalance);
-      clientController?.on(
+    const walletService = create(axiosInstance, client, pk);
+    setWalletService(walletService);
+    setIsConnecting(true);
+    walletService
+      ?.start()
+      .then((value) => {
+        setPrivateBalance(value!);
+        setLoaded(true);
+        setIsConnecting(false);
+      })
+      .catch((error) => {
+        setError(error);
+        setIsConnecting(false);
+      });
+  }, [client, pk]);
+
+  useEffect(() => {
+    if (symbol && loaded && walletService) {
+      walletService?.on(
         ClientServiceEvents.PRIVATE_BALANCE_CHANGE,
-        setBalance,
+        setPrivateBalance,
       );
+      walletService?.on(ClientServiceEvents.ONCHAIN_BALANCE_CHANGE, mutate);
       return () => {
-        clientController?.off(
+        walletService?.off(ClientServiceEvents.ONCHAIN_BALANCE_CHANGE, mutate);
+        walletService?.off(
           ClientServiceEvents.PRIVATE_BALANCE_CHANGE,
-          setBalance,
+          setPrivateBalance,
         );
       };
     }
-  }, [clientController, symbol, connected, offchainBalance]);
+  }, [walletService, symbol, loaded, privateBalance, mutate]);
 
   return (
     <WalletContext.Provider
       value={{
-        onchainBalance,
-        balance,
+        walletService,
+        publicBalance,
+        privateBalance,
         isLoading: isMetadataLoading || isConnecting,
         error: metadataError || error,
         symbol,
         decimals,
+        loaded,
       }}
     >
       {children}
