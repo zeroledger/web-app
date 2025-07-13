@@ -29,9 +29,153 @@ function TransactionSkeleton() {
 const linkStyle = "underline text-blue-300 hover:text-blue-400";
 // const idsContainerStyle = "flex flex-wrap text-xs gap-1 text-white/70";
 
+type GroupedTransactions = Record<
+  string,
+  {
+    incomings: HistoryRecordDto[];
+    outgoings: HistoryRecordDto[];
+  }
+>;
+
+function TransactionGroup({
+  txHash,
+  transactions,
+  decimals,
+}: {
+  txHash: string;
+  transactions: {
+    incomings: HistoryRecordDto[];
+    outgoings: HistoryRecordDto[];
+  };
+  decimals: number;
+}) {
+  const isUnknown = txHash === "unknown";
+  const { incomings, outgoings } = transactions;
+
+  // Calculate total: incomings (positive) + outgoings (negative)
+  const totalIncomings = incomings.reduce(
+    (sum, tx) => sum + BigInt(tx.record.value),
+    0n,
+  );
+  const totalOutgoings = outgoings.reduce(
+    (sum, tx) => sum + BigInt(tx.record.value),
+    0n,
+  );
+  const total = totalIncomings - totalOutgoings;
+
+  const formatTotal = (amount: bigint, decimals: number) => {
+    const prefix = amount >= 0n ? "+" : "-";
+    const amountNumber = formatUnits(amount >= 0n ? amount : -amount, decimals);
+    return `${prefix} $${amountNumber}`;
+  };
+
+  return (
+    <li className="bg-white/5 rounded-lg p-4 text-white/90 shadow">
+      <div className="space-y-3">
+        {/* Transaction Hash Header */}
+        <div className="border-b border-white/10 pb-2">
+          {isUnknown ? (
+            <div className="font-semibold text-white/70">
+              Unknown Transaction
+            </div>
+          ) : (
+            <div className="text-sm">
+              {`Transaction: `}
+              <a
+                href={`https://sepolia-optimism.etherscan.io/tx/${txHash}`}
+                className={linkStyle}
+                target="_blank"
+              >
+                {shortString(txHash)}
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* Total Section */}
+        {(incomings.length > 0 || outgoings.length > 0) && (
+          <div className="space-y-2 pt-2 border-t border-white/10">
+            <div className="text-xs font-medium text-white/70 uppercase tracking-wide">
+              Total
+            </div>
+            <div
+              className={`pl-4 border-l-2 ${total >= 0n ? "border-green-400/30" : "border-red-400/30"}`}
+            >
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <div className="text-base font-semibold">
+                    {formatTotal(total, decimals)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Incomings Section */}
+        {incomings.length > 0 && (
+          <div className="space-y-2">
+            <div className="text-xs font-medium text-white/70 uppercase tracking-wide">
+              Incomings ({incomings.length})
+            </div>
+            {incomings.map((tx, idx) => (
+              <div key={idx} className="pl-4 border-l-2 border-green-400/30">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs font-semibold">
+                      {formatAmount(
+                        BigInt(tx.record.value),
+                        tx.status,
+                        decimals,
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-white/60">
+                    {`Poseidon commitment: uint254(${shortString(tx.record.hash)}n)`}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Outgoings Section */}
+        {outgoings.length > 0 && (
+          <div className="space-y-2">
+            <div className="text-xs font-medium text-white/70 uppercase tracking-wide">
+              Outgoings ({outgoings.length})
+            </div>
+            {outgoings.map((tx, idx) => (
+              <div key={idx} className="pl-4 border-l-2 border-red-400/30">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs font-semibold">
+                      {formatAmount(
+                        BigInt(tx.record.value),
+                        tx.status,
+                        decimals,
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-white/60">
+                    {`Poseidon commitment: uint254(${shortString(tx.record.hash)}n)`}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </li>
+  );
+}
+
 export default function ActivityTab({ active }: { active: boolean }) {
   const [loading, setLoading] = useState(true);
-  const [transactions, setTransactions] = useState<HistoryRecordDto[]>([]);
+  const [groupedTransactions, setGroupedTransactions] =
+    useState<GroupedTransactions>({});
   const [error, setError] = useState<string | null>(null);
   const { decimals, walletService } = useContext(WalletContext);
 
@@ -44,7 +188,7 @@ export default function ActivityTab({ active }: { active: boolean }) {
       try {
         const txs = await walletService.getTransactions();
         if (txs) {
-          setTransactions(txs);
+          setGroupedTransactions(txs);
         }
       } catch (error) {
         console.error("Failed to load transactions:", error);
@@ -59,6 +203,8 @@ export default function ActivityTab({ active }: { active: boolean }) {
     }
   }, [walletService, active]);
 
+  const transactionGroups = Object.entries(groupedTransactions);
+
   return (
     <div className="h-full pt-4">
       <div className="h-full overflow-y-auto px-4">
@@ -71,41 +217,18 @@ export default function ActivityTab({ active }: { active: boolean }) {
             <div className="h-full flex items-center justify-center text-red-400">
               {error}
             </div>
-          ) : transactions.length === 0 ? (
+          ) : transactionGroups.length === 0 ? (
             <div className="h-full flex items-center justify-center text-white/70">
               No transactions yet
             </div>
           ) : (
-            transactions.map((tx, idx) => (
-              <li
-                key={idx}
-                className="bg-white/5 rounded-lg p-4 text-white/90 shadow"
-              >
-                <div className="space-y-1 flex flex-col">
-                  <div className="font-semibold">{tx.status.toUpperCase()}</div>
-                  {tx.transactionHash ? (
-                    <div className="text-sm">
-                      {`Transaction: `}
-                      <a
-                        href={`https://sepolia-optimism.etherscan.io/tx/${tx.transactionHash}`}
-                        className={linkStyle}
-                        target="_blank"
-                      >
-                        {shortString(tx.transactionHash)}
-                      </a>
-                    </div>
-                  ) : (
-                    "Error loading transaction hash"
-                  )}
-
-                  <div>
-                    {formatAmount(BigInt(tx.record.value), tx.status, decimals)}
-                  </div>
-                  <div className="text-xs text-white/60">
-                    {`Poseidon commitment: uint254(${shortString(tx.record.hash)}n)`}
-                  </div>
-                </div>
-              </li>
+            transactionGroups.map(([txHash, transactions]) => (
+              <TransactionGroup
+                key={txHash}
+                txHash={txHash}
+                transactions={transactions}
+                decimals={decimals}
+              />
             ))
           )}
         </ul>

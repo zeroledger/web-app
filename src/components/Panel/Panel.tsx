@@ -93,7 +93,7 @@ function PanelContent() {
   return (
     <div
       className="
-          flex flex-col w-full md:h-[50svh] h-dvh
+          flex flex-col w-full md:h-[75svh] h-dvh
           md:max-w-lg
           overflow-hidden
         "

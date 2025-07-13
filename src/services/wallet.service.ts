@@ -82,10 +82,39 @@ export class WalletService extends EventEmitter {
 
   async getTransactions() {
     try {
-      return await this.commitmentsHistoryService.all();
+      const transactions = await this.commitmentsHistoryService.all();
+
+      // Group transactions by transaction hash and categorize as incomings/outgoings
+      const groupedTransactions = transactions.reduce(
+        (groups, transaction) => {
+          const txHash = transaction.transactionHash || "unknown";
+
+          if (!groups[txHash]) {
+            groups[txHash] = {
+              incomings: [],
+              outgoings: [],
+            };
+          }
+
+          // Categorize based on status
+          if (transaction.status === "added") {
+            groups[txHash].incomings.push(transaction);
+          } else if (transaction.status === "spend") {
+            groups[txHash].outgoings.push(transaction);
+          }
+
+          return groups;
+        },
+        {} as Record<
+          string,
+          { incomings: typeof transactions; outgoings: typeof transactions }
+        >,
+      );
+
+      return groupedTransactions;
     } catch (error) {
       this.catchService.catch(error as Error);
-      return [];
+      return {};
     }
   }
 
