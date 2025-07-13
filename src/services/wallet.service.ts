@@ -24,7 +24,7 @@ import {
   CommitmentsHistoryService,
   HistoryRecordDto,
 } from "@src/services/ledger";
-import { delay, logStringify } from "@src/utils/common";
+import { delay } from "@src/utils/common";
 import { catchService } from "@src/services/core/catch.service";
 
 export const ClientServiceEvents = {
@@ -321,7 +321,6 @@ export class WalletService extends EventEmitter {
         ) {
           // add commitment to LedgerRecordDto
           const commitment = decrypt(event.args.encryptedData);
-          this.logger.log(`commitment: ${logStringify(commitment)}`);
           const ledgerRecord = LedgerRecordDto.from(
             event.args.poseidonHash!,
             commitment.amount,

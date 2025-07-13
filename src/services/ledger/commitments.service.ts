@@ -91,7 +91,7 @@ export default class CommitmentsService {
         if (a.value === b.value) {
           return 0;
         }
-        return a.value > b.value ? -1 : 1;
+        return a.value > b.value ? 1 : -1;
       });
 
     let selectedCommitmentRecords: Array<SelectedCommitmentRecord> = [];
@@ -102,7 +102,7 @@ export default class CommitmentsService {
     while (i < sortedCommitments.length && accumulatedAmount < amount) {
       accumulatedAmount = 0n;
       selectedCommitmentRecords = [];
-      for (let j = i; j < 3; j++) {
+      for (let j = i; j < i + 3; j++) {
         if (accumulatedAmount >= amount) {
           break;
         }

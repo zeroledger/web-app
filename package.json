@@ -30,7 +30,7 @@
     "prettier": "prettier --write src/**/*.ts"
   },
   "dependencies": {
-    "@headlessui/react": "^2.2.0",
+    "@headlessui/react": "^2.2.4",
     "@heroicons/react": "^2.2.0",
     "@openzeppelin/merkle-tree": "^1.0.8",
     "@tailwindcss/vite": "^4.0.12",
