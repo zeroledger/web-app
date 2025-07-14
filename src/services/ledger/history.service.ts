@@ -330,7 +330,7 @@ export default class CommitmentsHistoryService {
 
   async all() {
     const historyRecords: HistoryRecordDto[] = [];
-    await this.each((historyRecord) => {
+    await this.eachRevert((historyRecord) => {
       historyRecords.push(historyRecord);
     });
     return historyRecords;

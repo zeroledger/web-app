@@ -23,6 +23,7 @@ import {
   CommitmentsService,
   CommitmentsHistoryService,
   HistoryRecordDto,
+  SyncService,
 } from "@src/services/ledger";
 import { delay } from "@src/utils/common";
 import { catchService } from "@src/services/core/catch.service";
@@ -47,6 +48,7 @@ export class WalletService extends EventEmitter {
     private readonly queue: MemoryQueue,
     private readonly commitmentsService: CommitmentsService,
     private readonly commitmentsHistoryService: CommitmentsHistoryService,
+    private readonly syncService: SyncService,
   ) {
     super();
     this.address = this.client.account.address;
@@ -120,7 +122,16 @@ export class WalletService extends EventEmitter {
 
   async start() {
     try {
+      const currentBlock = await this.client.getBlockNumber();
       this.subscribeOnVaultEvents();
+      const missedEvents = await this.syncService.runSync(
+        this.client,
+        this.vault,
+        this.address,
+        this.token,
+        currentBlock,
+      );
+      await this.handleIncomingEvents(missedEvents);
       return await this.getBalance();
     } catch (error) {
       this.catchService.catch(error as Error);
@@ -312,6 +323,7 @@ export class WalletService extends EventEmitter {
         if (
           event.eventName === "CommitmentCreated" &&
           event.args.owner === this.address &&
+          event.args.token === this.token &&
           event.args.encryptedData
         ) {
           if (!event.blockNumber || !event.transactionIndex) {
@@ -334,12 +346,16 @@ export class WalletService extends EventEmitter {
               event.transactionIndex,
             ),
           );
+          await this.syncService.setLastSyncedBlock(
+            event.blockNumber.toString(),
+          );
           await this.updateBothBalances();
           return;
         }
         if (
           event.eventName === "CommitmentRemoved" &&
-          event.args.owner === this.address
+          event.args.owner === this.address &&
+          event.args.token === this.token
         ) {
           if (!event.blockNumber || !event.transactionIndex) {
             throw new Error("Block number and transaction index are required");
@@ -359,6 +375,9 @@ export class WalletService extends EventEmitter {
               ),
             );
           }
+          await this.syncService.setLastSyncedBlock(
+            event.blockNumber.toString(),
+          );
           await this.updateBothBalances();
           return;
         }

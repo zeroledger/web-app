@@ -19,3 +19,26 @@ export const watchVault = (
   });
   return unwatch;
 };
+
+export const getMissedEvents = async (
+  client: CustomClient,
+  contractAddress: Address,
+  owner: Address,
+  token: Address,
+  eventName: "CommitmentCreated" | "CommitmentRemoved",
+  fromBlock: bigint,
+  toBlock: bigint,
+) => {
+  const events = await client.getContractEvents({
+    address: contractAddress,
+    abi: VAULT_ABI_EVENTS,
+    eventName,
+    args: {
+      owner,
+      token,
+    },
+    fromBlock,
+    toBlock,
+  });
+  return events;
+};

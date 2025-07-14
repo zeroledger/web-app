@@ -3,7 +3,6 @@ import clsx from "clsx";
 import { UseFormReturn } from "react-hook-form";
 import { useContext } from "react";
 import { WalletContext } from "@src/context/wallet.context";
-import { ClientContext } from "@src/context/client.context";
 import { parseUnits } from "viem";
 import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
 
@@ -26,7 +25,6 @@ export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
     setValue,
   } = formMethods;
   const { privateBalance, decimals } = useContext(WalletContext);
-  const { client } = useContext(ClientContext);
 
   const validateAmount = (value: string) => {
     if (!value) return "Amount is required";
@@ -53,15 +51,6 @@ export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
             pattern: {
               value: /^0x[a-fA-F0-9]{40}$/,
               message: "Invalid Ethereum address",
-            },
-            validate: (value) => {
-              if (
-                value.toLowerCase() === client.account.address.toLowerCase() &&
-                type === "Payment"
-              ) {
-                return "Cannot send to your own address";
-              }
-              return true;
             },
           })}
           placeholder="0x00..."

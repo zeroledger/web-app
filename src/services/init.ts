@@ -14,6 +14,7 @@ import { CustomClient } from "@src/common.types";
 import {
   CommitmentsHistoryService,
   CommitmentsService,
+  SyncService,
 } from "@src/services/ledger";
 import { DataSource } from "./core/db/leveldb.service";
 
@@ -45,7 +46,7 @@ export const create = (axiosInstance: Axios, client: CustomClient, pk: Hex) => {
   const commitmentsHistoryService = new CommitmentsHistoryService(
     zeroLEdgerDataSource,
   );
-
+  const syncService = new SyncService(zeroLEdgerDataSource);
   _walletService = new WalletService(
     client,
     VAULT_ADDRESS,
@@ -55,6 +56,7 @@ export const create = (axiosInstance: Axios, client: CustomClient, pk: Hex) => {
     queue,
     commitmentsService,
     commitmentsHistoryService,
+    syncService,
   );
 
   _client = client;
