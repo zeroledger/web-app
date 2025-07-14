@@ -20,6 +20,8 @@ jobs:
         uses: ./.github/actions/setup
       - name: Code quality
         run: npm run lint
+      - name: Test
+        run: npm run test
       - name: Build validation
         env:
           NODE_ENV: production

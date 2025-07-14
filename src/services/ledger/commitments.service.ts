@@ -102,7 +102,7 @@ export default class CommitmentsService {
     while (i < sortedCommitments.length && accumulatedAmount < amount) {
       accumulatedAmount = 0n;
       selectedCommitmentRecords = [];
-      for (let j = i; j < i + 3; j++) {
+      for (let j = i; j < i + 3 && j < sortedCommitments.length; j++) {
         if (accumulatedAmount >= amount) {
           break;
         }
@@ -110,6 +110,13 @@ export default class CommitmentsService {
         selectedCommitmentRecords.push(sortedCommitments[j]);
       }
       i++;
+    }
+
+    if (accumulatedAmount < amount) {
+      return {
+        selectedCommitmentRecords: [],
+        totalAmount: 0n,
+      };
     }
 
     return {

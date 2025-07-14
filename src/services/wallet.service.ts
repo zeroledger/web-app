@@ -120,11 +120,6 @@ export class WalletService extends EventEmitter {
 
   async start() {
     try {
-      // get onchain transactions from indexer
-      // (deposits, withdrawals, transfers)
-      // decrypt outputs dedicated for this client and update records
-      // save deposits, withdrawals, transfers in decrypted form
-      // return balance
       this.subscribeOnVaultEvents();
       return await this.getBalance();
     } catch (error) {

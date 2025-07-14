@@ -72,27 +72,41 @@ export default class CommitmentsHistoryService {
     ]);
 
     const batch: Batch = [];
-    if (!headNode) {
+
+    // Case 1: Empty list (no head, no tail)
+    if (!headNode && !tailNode) {
       batch.push({
         type: "put",
         key: "headId",
         value: node.stringify(),
       });
+      batch.push({
+        type: "put",
+        key: "tailId",
+        value: node.stringify(),
+      });
     }
-    if (tailNode && headNode && tailNode.prevId === undefined) {
+    // Case 2: Single node list (head and tail are the same)
+    else if (headNode && tailNode && headNode.id === tailNode.id) {
+      // Update head node to point to new node
       headNode.nextId = node.id;
-
       node.prevId = headNode.id;
 
       batch.push({
         type: "put",
-        key: "headId",
+        key: headNode.id,
         value: headNode.stringify(),
       });
+      batch.push({
+        type: "put",
+        key: "tailId",
+        value: node.stringify(),
+      });
     }
-    if (tailNode) {
+    // Case 3: Multiple nodes - add to end
+    else if (headNode && tailNode) {
+      // Update current tail to point to new node
       tailNode.nextId = node.id;
-
       node.prevId = tailNode.id;
 
       batch.push({
@@ -100,17 +114,20 @@ export default class CommitmentsHistoryService {
         key: tailNode.id,
         value: tailNode.stringify(),
       });
+      batch.push({
+        type: "put",
+        key: "tailId",
+        value: node.stringify(),
+      });
     }
-    batch.push({
-      type: "put",
-      key: "tailId",
-      value: node.stringify(),
-    });
+
+    // Always add the new node
     batch.push({
       type: "put",
       key: node.id,
       value: node.stringify(),
     });
+
     await this._store.batch(batch);
     return true;
   }
@@ -124,7 +141,24 @@ export default class CommitmentsHistoryService {
     if (!source) {
       return false;
     }
-    return true;
+    // Verify the node is part of the linked list by checking if it's reachable
+    const head = await this._getHeadNode();
+    if (!head) {
+      return false;
+    }
+
+    let node: Node | undefined = head;
+    const tail = await this._getTailNode();
+    while (node) {
+      if (node.id === id) {
+        return true;
+      }
+      if (node.id === tail?.id) {
+        break; // Reached the end of the list
+      }
+      node = node.nextId ? await this._getNode(node.nextId) : undefined;
+    }
+    return false;
   }
 
   async each(fn: (historyRecord: HistoryRecordDto) => Promise<void> | void) {
@@ -134,17 +168,18 @@ export default class CommitmentsHistoryService {
     const duplicates: Record<string, true> = {};
 
     const tail = await this._getTailNode();
-    let node = await this._getHeadNode();
+    let node: Node | undefined = await this._getHeadNode();
 
     while (node) {
       if (!duplicates[node.id]) {
         await fn(node.data);
         duplicates[node.id] = true;
       }
-      node =
-        node.nextId && node.id != tail?.id
-          ? await this._getNode(node.nextId)
-          : undefined;
+      // Continue until we reach the tail node, then stop
+      if (node.id === tail?.id) {
+        break;
+      }
+      node = node.nextId ? await this._getNode(node.nextId) : undefined;
     }
   }
 
@@ -157,17 +192,18 @@ export default class CommitmentsHistoryService {
     const duplicates: Record<string, true> = {};
 
     const head = await this._getHeadNode();
-    let node = await this._getTailNode();
+    let node: Node | undefined = await this._getTailNode();
 
     while (node) {
       if (!duplicates[node.id]) {
         await fn(node.data);
         duplicates[node.id] = true;
       }
-      node =
-        node.prevId && node.id != head?.id
-          ? await this._getNode(node.prevId)
-          : undefined;
+      // Continue until we reach the head node, then stop
+      if (node.id === head?.id) {
+        break;
+      }
+      node = node.prevId ? await this._getNode(node.prevId) : undefined;
     }
   }
 
