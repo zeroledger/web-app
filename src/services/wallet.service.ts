@@ -314,6 +314,9 @@ export class WalletService extends EventEmitter {
           event.args.owner === this.address &&
           event.args.encryptedData
         ) {
+          if (!event.blockNumber || !event.transactionIndex) {
+            throw new Error("Block number and transaction index are required");
+          }
           // add commitment to LedgerRecordDto
           const commitment = decrypt(event.args.encryptedData);
           const ledgerRecord = LedgerRecordDto.from(
@@ -323,7 +326,13 @@ export class WalletService extends EventEmitter {
           );
           await this.commitmentsService.save(ledgerRecord);
           await this.commitmentsHistoryService.add(
-            new HistoryRecordDto("added", event.transactionHash, ledgerRecord),
+            new HistoryRecordDto(
+              "added",
+              event.transactionHash,
+              ledgerRecord,
+              event.blockNumber.toString(),
+              event.transactionIndex,
+            ),
           );
           await this.updateBothBalances();
           return;
@@ -332,6 +341,9 @@ export class WalletService extends EventEmitter {
           event.eventName === "CommitmentRemoved" &&
           event.args.owner === this.address
         ) {
+          if (!event.blockNumber || !event.transactionIndex) {
+            throw new Error("Block number and transaction index are required");
+          }
           // remove commitment from LedgerRecordDto
           const ledgerRecord = await this.commitmentsService.delete(
             event.args.poseidonHash!.toString(),
@@ -342,6 +354,8 @@ export class WalletService extends EventEmitter {
                 "spend",
                 event.transactionHash,
                 ledgerRecord,
+                event.blockNumber.toString(),
+                event.transactionIndex,
               ),
             );
           }

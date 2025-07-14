@@ -15,13 +15,21 @@ describe("CommitmentsHistoryService", () => {
     value: string = "1000000000000000000",
     sValue: string = "123456789",
     hash: string = "987654321",
+    blockNumber: string = "0",
+    transactionIndex: number = 0,
   ): HistoryRecordDto => {
     const record = LedgerRecordDto.from(
       BigInt(hash),
       BigInt(value),
       BigInt(sValue),
     );
-    return new HistoryRecordDto(status, transactionHash, record);
+    return new HistoryRecordDto(
+      status,
+      transactionHash,
+      record,
+      blockNumber,
+      transactionIndex,
+    );
   };
 
   beforeEach(() => {
@@ -54,6 +62,46 @@ describe("CommitmentsHistoryService", () => {
       expect(await service.has(record.id)).toBe(true);
     });
 
+    it("should add records in correct order", async () => {
+      const record1 = createMockHistoryRecord(
+        "added",
+        "0x111",
+        "100",
+        "1",
+        "1001",
+      );
+      console.log("record1", record1);
+      const record2 = createMockHistoryRecord(
+        "spend",
+        "0x222",
+        "200",
+        "2",
+        "1002",
+      );
+      console.log("record2", record2);
+      const record3 = createMockHistoryRecord(
+        "added",
+        "0x333",
+        "300",
+        "3",
+        "1003",
+      );
+      console.log("record3", record3);
+      const result1 = await service.add(record1);
+      const result2 = await service.add(record2);
+      const result3 = await service.add(record3);
+
+      expect(result1).toBe(true);
+      expect(result2).toBe(true);
+      expect(result3).toBe(true);
+      expect(await service.isEmpty()).toBe(false);
+      expect(await service.has(record1.id)).toBe(true);
+      expect(await service.has(record2.id)).toBe(true);
+      expect(await service.has(record3.id)).toBe(true);
+      expect((await service.getHeadNode())?.data).toEqual(record1);
+      expect((await service.getTailNode())?.data).toEqual(record3);
+    });
+
     it("should not add duplicate records", async () => {
       const record = createMockHistoryRecord();
       await service.add(record);
@@ -70,9 +118,27 @@ describe("CommitmentsHistoryService", () => {
     });
 
     it("should return true for existing record", async () => {
-      const record = createMockHistoryRecord();
-      await service.add(record);
-      expect(await service.has(record.id)).toBe(true);
+      const record1 = createMockHistoryRecord(
+        "added",
+        "0x111",
+        "100",
+        "1",
+        "1001",
+      );
+      const record2 = createMockHistoryRecord(
+        "spend",
+        "0x222",
+        "200",
+        "2",
+        "1002",
+      );
+      const result1 = await service.add(record1);
+      const result2 = await service.add(record2);
+
+      expect(result1).toBe(true);
+      expect(result2).toBe(true);
+      expect(await service.has(record1.id)).toBe(true);
+      expect(await service.has(record2.id)).toBe(true);
     });
   });
 

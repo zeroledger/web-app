@@ -1,6 +1,5 @@
 import { DataSource } from "@src/services/core/db/leveldb.service";
 import { HistoryRecordDto } from "./ledger.dto";
-import { Hex } from "viem";
 
 export const messageBusEntityKey = {
   name: `commitments_history`,
@@ -20,10 +19,10 @@ type Batch = (
 
 export class Node {
   constructor(
-    public id: Hex,
+    public id: string,
     public data: HistoryRecordDto,
-    public prevId?: Hex,
-    public nextId?: Hex,
+    public prevId?: string,
+    public nextId?: string,
   ) {}
 
   stringify() {
@@ -43,15 +42,15 @@ export default class CommitmentsHistoryService {
 
   private _store: ReturnType<DataSource["getEntityLevel"]>;
 
-  private async _getHeadNode() {
-    return this._getNode("headId");
+  async getHeadNode() {
+    return this.getNode("headId");
   }
 
-  private async _getTailNode() {
-    return this._getNode("tailId");
+  async getTailNode() {
+    return this.getNode("tailId");
   }
 
-  private async _getNode(key: string) {
+  async getNode(key: string) {
     const source = await this._store.get(key);
     if (!source) {
       return;
@@ -67,14 +66,15 @@ export default class CommitmentsHistoryService {
     const node = new Node(id, historyRecord);
 
     const [headNode, tailNode] = await Promise.all([
-      this._getHeadNode(),
-      this._getTailNode(),
+      this.getHeadNode(),
+      this.getTailNode(),
     ]);
 
     const batch: Batch = [];
 
     // Case 1: Empty list (no head, no tail)
     if (!headNode && !tailNode) {
+      console.log("Case 1: Empty list (no head, no tail)");
       batch.push({
         type: "put",
         key: "headId",
@@ -88,10 +88,16 @@ export default class CommitmentsHistoryService {
     }
     // Case 2: Single node list (head and tail are the same)
     else if (headNode && tailNode && headNode.id === tailNode.id) {
+      console.log("Case 2: Single node list (head and tail are the same)");
       // Update head node to point to new node
       headNode.nextId = node.id;
       node.prevId = headNode.id;
 
+      batch.push({
+        type: "put",
+        key: "headId",
+        value: headNode.stringify(),
+      });
       batch.push({
         type: "put",
         key: headNode.id,
@@ -105,6 +111,7 @@ export default class CommitmentsHistoryService {
     }
     // Case 3: Multiple nodes - add to end
     else if (headNode && tailNode) {
+      console.log("Case 3: Multiple nodes - add to end");
       // Update current tail to point to new node
       tailNode.nextId = node.id;
       node.prevId = tailNode.id;
@@ -121,12 +128,15 @@ export default class CommitmentsHistoryService {
       });
     }
 
+    console.log("Adding new node", node.id);
     // Always add the new node
     batch.push({
       type: "put",
       key: node.id,
       value: node.stringify(),
     });
+
+    console.log("Batch", batch);
 
     await this._store.batch(batch);
     return true;
@@ -136,27 +146,26 @@ export default class CommitmentsHistoryService {
     await this._store.clear();
   }
 
-  async has(id: Hex) {
+  async has(id: string) {
     const source = await this._store.get(id);
     if (!source) {
       return false;
     }
     // Verify the node is part of the linked list by checking if it's reachable
-    const head = await this._getHeadNode();
+    const head = await this.getHeadNode();
     if (!head) {
       return false;
     }
 
     let node: Node | undefined = head;
-    const tail = await this._getTailNode();
     while (node) {
+      console.log("node.id", node.id);
+
       if (node.id === id) {
         return true;
       }
-      if (node.id === tail?.id) {
-        break; // Reached the end of the list
-      }
-      node = node.nextId ? await this._getNode(node.nextId) : undefined;
+      console.log("node.nextId", node.nextId);
+      node = node.nextId ? await this.getNode(node.nextId) : undefined;
     }
     return false;
   }
@@ -167,8 +176,8 @@ export default class CommitmentsHistoryService {
      */
     const duplicates: Record<string, true> = {};
 
-    const tail = await this._getTailNode();
-    let node: Node | undefined = await this._getHeadNode();
+    const tail = await this.getTailNode();
+    let node: Node | undefined = await this.getHeadNode();
 
     while (node) {
       if (!duplicates[node.id]) {
@@ -179,7 +188,7 @@ export default class CommitmentsHistoryService {
       if (node.id === tail?.id) {
         break;
       }
-      node = node.nextId ? await this._getNode(node.nextId) : undefined;
+      node = node.nextId ? await this.getNode(node.nextId) : undefined;
     }
   }
 
@@ -191,8 +200,8 @@ export default class CommitmentsHistoryService {
      */
     const duplicates: Record<string, true> = {};
 
-    const head = await this._getHeadNode();
-    let node: Node | undefined = await this._getTailNode();
+    const head = await this.getHeadNode();
+    let node: Node | undefined = await this.getTailNode();
 
     while (node) {
       if (!duplicates[node.id]) {
@@ -203,7 +212,7 @@ export default class CommitmentsHistoryService {
       if (node.id === head?.id) {
         break;
       }
-      node = node.prevId ? await this._getNode(node.prevId) : undefined;
+      node = node.prevId ? await this.getNode(node.prevId) : undefined;
     }
   }
 
