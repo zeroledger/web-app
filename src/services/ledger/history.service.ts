@@ -1,8 +1,12 @@
 import { DataSource } from "@src/services/core/db/leveldb.service";
 import { HistoryRecordDto } from "./ledger.dto";
 
-export const messageBusEntityKey = {
-  name: `commitments_history`,
+export const HistoryNodesEntityKey = {
+  name: `history_nodes`,
+};
+
+export const HistoryPointersEntityKey = {
+  name: `history_pointers`,
 };
 
 type Batch = (
@@ -37,17 +41,62 @@ export class Node {
 
 export default class CommitmentsHistoryService {
   constructor(public readonly dataSource: DataSource) {
-    this._store = this.dataSource.getEntityLevel(messageBusEntityKey);
+    this._store = this.dataSource.getEntityLevel(HistoryNodesEntityKey);
+    this._pointersStore = this.dataSource.getEntityLevel(
+      HistoryPointersEntityKey,
+    );
   }
 
   private _store: ReturnType<DataSource["getEntityLevel"]>;
+  private _pointersStore: ReturnType<DataSource["getEntityLevel"]>;
+
+  private compareRecords(a: HistoryRecordDto, b: HistoryRecordDto): number {
+    // Compare block numbers first (newest first)
+    const blockA = BigInt(a.blockNumber);
+    const blockB = BigInt(b.blockNumber);
+
+    if (blockA !== blockB) {
+      return blockB > blockA ? 1 : -1; // Newest first
+    }
+
+    // If same block, compare transaction index (newest first)
+    if (a.transactionIndex !== b.transactionIndex) {
+      return b.transactionIndex - a.transactionIndex; // Newest first
+    }
+
+    // If same block and transaction index, maintain insertion order
+    return 0;
+  }
+
+  private async _getPointers() {
+    const source = await this._pointersStore.get("pointers");
+    if (!source) {
+      return { headId: null, tailId: null };
+    }
+    return JSON.parse(source);
+  }
+
+  private async _setPointers(headId: string | null, tailId: string | null) {
+    await this._pointersStore.put(
+      "pointers",
+      JSON.stringify({ headId, tailId }),
+    );
+  }
 
   async getHeadNode() {
-    return this.getNode("headId");
+    const pointers = await this._getPointers();
+    if (!pointers.headId) {
+      return undefined;
+    }
+    return this.getNode(pointers.headId);
   }
 
   async getTailNode() {
-    return this.getNode("tailId");
+    const pointers = await this._getPointers();
+    if (!pointers.tailId) {
+      return undefined;
+    }
+    return this.getNode(pointers.tailId);
   }
 
   async getNode(key: string) {
@@ -74,69 +123,134 @@ export default class CommitmentsHistoryService {
 
     // Case 1: Empty list (no head, no tail)
     if (!headNode && !tailNode) {
-      console.log("Case 1: Empty list (no head, no tail)");
       batch.push({
         type: "put",
-        key: "headId",
+        key: node.id,
         value: node.stringify(),
       });
-      batch.push({
-        type: "put",
-        key: "tailId",
-        value: node.stringify(),
-      });
+      await this._setPointers(node.id, node.id);
     }
     // Case 2: Single node list (head and tail are the same)
     else if (headNode && tailNode && headNode.id === tailNode.id) {
-      console.log("Case 2: Single node list (head and tail are the same)");
-      // Update head node to point to new node
-      headNode.nextId = node.id;
-      node.prevId = headNode.id;
+      const comparison = this.compareRecords(historyRecord, headNode.data);
 
-      batch.push({
-        type: "put",
-        key: "headId",
-        value: headNode.stringify(),
-      });
-      batch.push({
-        type: "put",
-        key: headNode.id,
-        value: headNode.stringify(),
-      });
-      batch.push({
-        type: "put",
-        key: "tailId",
-        value: node.stringify(),
-      });
+      if (comparison >= 0) {
+        // Insert before head (new head)
+        node.nextId = headNode.id;
+        headNode.prevId = node.id;
+
+        batch.push({
+          type: "put",
+          key: node.id,
+          value: node.stringify(),
+        });
+        batch.push({
+          type: "put",
+          key: headNode.id,
+          value: headNode.stringify(),
+        });
+        await this._setPointers(node.id, headNode.id);
+      } else {
+        // Insert after head (new tail)
+        headNode.nextId = node.id;
+        node.prevId = headNode.id;
+
+        batch.push({
+          type: "put",
+          key: headNode.id,
+          value: headNode.stringify(),
+        });
+        batch.push({
+          type: "put",
+          key: node.id,
+          value: node.stringify(),
+        });
+        await this._setPointers(headNode.id, node.id);
+      }
     }
-    // Case 3: Multiple nodes - add to end
+    // Case 3: Multiple nodes - find correct insertion point
     else if (headNode && tailNode) {
-      console.log("Case 3: Multiple nodes - add to end");
-      // Update current tail to point to new node
-      tailNode.nextId = node.id;
-      node.prevId = tailNode.id;
+      const headComparison = this.compareRecords(historyRecord, headNode.data);
+      const tailComparison = this.compareRecords(historyRecord, tailNode.data);
 
-      batch.push({
-        type: "put",
-        key: tailNode.id,
-        value: tailNode.stringify(),
-      });
-      batch.push({
-        type: "put",
-        key: "tailId",
-        value: node.stringify(),
-      });
+      // Insert at head
+      if (headComparison >= 0) {
+        node.nextId = headNode.id;
+        headNode.prevId = node.id;
+
+        batch.push({
+          type: "put",
+          key: node.id,
+          value: node.stringify(),
+        });
+        batch.push({
+          type: "put",
+          key: headNode.id,
+          value: headNode.stringify(),
+        });
+        await this._setPointers(node.id, tailNode.id);
+      }
+      // Insert at tail
+      else if (tailComparison < 0) {
+        tailNode.nextId = node.id;
+        node.prevId = tailNode.id;
+
+        batch.push({
+          type: "put",
+          key: tailNode.id,
+          value: tailNode.stringify(),
+        });
+        batch.push({
+          type: "put",
+          key: node.id,
+          value: node.stringify(),
+        });
+        await this._setPointers(headNode.id, node.id);
+      }
+      // Insert in middle
+      else {
+        let currentNode = headNode;
+        let nextNode = currentNode.nextId
+          ? await this.getNode(currentNode.nextId)
+          : undefined;
+
+        // Find the correct position
+        while (
+          nextNode &&
+          this.compareRecords(historyRecord, nextNode.data) < 0
+        ) {
+          currentNode = nextNode;
+          nextNode = currentNode.nextId
+            ? await this.getNode(currentNode.nextId)
+            : undefined;
+        }
+
+        // Insert between currentNode and nextNode
+        node.prevId = currentNode.id;
+        node.nextId = nextNode?.id;
+        currentNode.nextId = node.id;
+        if (nextNode) {
+          nextNode.prevId = node.id;
+          batch.push({
+            type: "put",
+            key: nextNode.id,
+            value: nextNode.stringify(),
+          });
+        }
+
+        batch.push({
+          type: "put",
+          key: currentNode.id,
+          value: currentNode.stringify(),
+        });
+        batch.push({
+          type: "put",
+          key: node.id,
+          value: node.stringify(),
+        });
+        // Pointers remain the same for middle insertion
+      }
     }
-
-    console.log("Adding new node", node.id);
-    // Always add the new node
-    batch.push({
-      type: "put",
-      key: node.id,
-      value: node.stringify(),
-    });
-
-    console.log("Batch", batch);
 
     await this._store.batch(batch);
     return true;
@@ -144,6 +258,7 @@ export default class CommitmentsHistoryService {
 
   async clean() {
     await this._store.clear();
+    await this._pointersStore.clear();
   }
 
   async has(id: string) {
@@ -159,12 +274,9 @@ export default class CommitmentsHistoryService {
 
     let node: Node | undefined = head;
     while (node) {
-      console.log("node.id", node.id);
-
       if (node.id === id) {
         return true;
       }
-      console.log("node.nextId", node.nextId);
       node = node.nextId ? await this.getNode(node.nextId) : undefined;
     }
     return false;
@@ -218,14 +330,14 @@ export default class CommitmentsHistoryService {
 
   async all() {
     const historyRecords: HistoryRecordDto[] = [];
-    await this.eachRevert((historyRecord) => {
+    await this.each((historyRecord) => {
       historyRecords.push(historyRecord);
     });
     return historyRecords;
   }
 
   async isEmpty() {
-    const rawHeadNode = await this._store.get("headId");
-    return !rawHeadNode;
+    const pointers = await this._getPointers();
+    return !pointers.headId;
   }
 }

@@ -70,7 +70,6 @@ describe("CommitmentsHistoryService", () => {
         "1",
         "1001",
       );
-      console.log("record1", record1);
       const record2 = createMockHistoryRecord(
         "spend",
         "0x222",
@@ -78,7 +77,6 @@ describe("CommitmentsHistoryService", () => {
         "2",
         "1002",
       );
-      console.log("record2", record2);
       const record3 = createMockHistoryRecord(
         "added",
         "0x333",
@@ -86,7 +84,6 @@ describe("CommitmentsHistoryService", () => {
         "3",
         "1003",
       );
-      console.log("record3", record3);
       const result1 = await service.add(record1);
       const result2 = await service.add(record2);
       const result3 = await service.add(record3);
@@ -98,8 +95,9 @@ describe("CommitmentsHistoryService", () => {
       expect(await service.has(record1.id)).toBe(true);
       expect(await service.has(record2.id)).toBe(true);
       expect(await service.has(record3.id)).toBe(true);
-      expect((await service.getHeadNode())?.data).toEqual(record1);
-      expect((await service.getTailNode())?.data).toEqual(record3);
+      // With sorting, the newest record (record3) should be at the head
+      expect((await service.getHeadNode())?.data).toEqual(record3);
+      expect((await service.getTailNode())?.data).toEqual(record1);
     });
 
     it("should not add duplicate records", async () => {
