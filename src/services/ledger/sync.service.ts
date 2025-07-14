@@ -1,7 +1,7 @@
 import { CustomClient } from "@src/common.types";
 import { Address } from "viem";
 import { DataSource } from "@src/services/core/db/leveldb.service";
-import { getMissedEvents } from "@src/utils/vault";
+import { getMissedEvents, VaultEvent } from "@src/utils/vault";
 
 export const SyncEntityKey = {
   name: `sync_state`,
@@ -18,9 +18,9 @@ export default class SyncService {
    * Get the last synced block number
    * @returns The last synced block number as a string, or null if no sync has occurred
    */
-  async getLastSyncedBlock(): Promise<string | undefined> {
+  async getLastSyncedBlock(): Promise<string> {
     const lastBlock = await this._store.get("lastSyncedBlock");
-    return lastBlock;
+    return lastBlock ?? "30306142";
   }
 
   /**
@@ -38,6 +38,23 @@ export default class SyncService {
     await this._store.clear();
   }
 
+  /**
+   * Sleep for a specified number of milliseconds
+   */
+  private async sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Run sync process to fetch missed events from last synced block to current block
+   * Handles pagination and rate limiting for large block ranges
+   * @param client - The blockchain client
+   * @param vault - The vault address
+   * @param address - The user address
+   * @param token - The token address
+   * @param currentBlock - The current block number
+   * @returns Array of missed events (CommitmentCreated and CommitmentRemoved)
+   */
   async runSync(
     client: CustomClient,
     vault: Address,
@@ -46,33 +63,61 @@ export default class SyncService {
     currentBlock: bigint,
   ) {
     const lastBlock = BigInt((await this.getLastSyncedBlock()) ?? "0");
-    if (lastBlock < currentBlock) {
-      const [missedCommitmentCreatedEvents, missedCommitmentRemovedEvents] =
-        await Promise.all([
-          await getMissedEvents(
-            client,
-            vault,
-            address,
-            token,
-            "CommitmentCreated",
-            lastBlock + 1n,
-            currentBlock,
-          ),
-          await getMissedEvents(
-            client,
-            vault,
-            address,
-            token,
-            "CommitmentRemoved",
-            lastBlock + 1n,
-            currentBlock,
-          ),
-        ]);
-      await this.setLastSyncedBlock(currentBlock.toString());
-      return missedCommitmentCreatedEvents.concat(
-        missedCommitmentRemovedEvents,
-      );
+    if (lastBlock >= currentBlock) {
+      return [];
     }
-    return [];
+
+    const MAX_BLOCKS_PER_REQUEST = 500n;
+    const RATE_LIMIT_DELAY = 100; // 100ms between requests
+
+    let fromBlock = lastBlock + 1n;
+    const allCommitmentCreatedEvents: VaultEvent[] = [];
+    const allCommitmentRemovedEvents: VaultEvent[] = [];
+
+    // Process blocks in chunks of 500
+    while (fromBlock < currentBlock) {
+      const toBlock = fromBlock + MAX_BLOCKS_PER_REQUEST - 1n;
+      const endBlock = toBlock > currentBlock ? currentBlock : toBlock;
+
+      const commitmentCreatedEvents = await getMissedEvents(
+        client,
+        vault,
+        address,
+        token,
+        "CommitmentCreated",
+        fromBlock,
+        endBlock,
+      );
+
+      await this.sleep(RATE_LIMIT_DELAY);
+
+      const commitmentRemovedEvents = await getMissedEvents(
+        client,
+        vault,
+        address,
+        token,
+        "CommitmentRemoved",
+        fromBlock,
+        endBlock,
+      );
+
+      // Collect events
+      allCommitmentCreatedEvents.push(...commitmentCreatedEvents);
+      allCommitmentRemovedEvents.push(...commitmentRemovedEvents);
+
+      // Move to next block range
+      fromBlock = endBlock + 1n;
+
+      // Rate limiting: wait 100ms before next request (except for the last iteration)
+      if (fromBlock < currentBlock) {
+        await this.sleep(RATE_LIMIT_DELAY);
+      }
+    }
+
+    // Update the last synced block to current block
+    await this.setLastSyncedBlock(currentBlock.toString());
+
+    // Return all collected events
+    return allCommitmentCreatedEvents.concat(allCommitmentRemovedEvents);
   }
 }

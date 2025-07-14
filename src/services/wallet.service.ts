@@ -74,12 +74,24 @@ export class WalletService extends EventEmitter {
     return result;
   }
 
+  private updateBothBalancesTimeout: NodeJS.Timeout | null = null;
+
   private async updateBothBalances() {
-    this.safeEmit(
-      ClientServiceEvents.PRIVATE_BALANCE_CHANGE,
-      await this.getBalance(),
-    );
-    this.safeEmit(ClientServiceEvents.ONCHAIN_BALANCE_CHANGE);
+    // Clear any existing timeout
+    if (this.updateBothBalancesTimeout) {
+      clearTimeout(this.updateBothBalancesTimeout);
+    }
+
+    // Set a new timeout for 500ms
+    this.updateBothBalancesTimeout = setTimeout(async () => {
+      this.updateBothBalancesTimeout = null; // Clear the reference
+
+      this.safeEmit(
+        ClientServiceEvents.PRIVATE_BALANCE_CHANGE,
+        await this.getBalance(),
+      );
+      this.safeEmit(ClientServiceEvents.ONCHAIN_BALANCE_CHANGE);
+    }, 500);
   }
 
   async getTransactions() {
