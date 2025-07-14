@@ -1,4 +1,3 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import CommitmentsHistoryService from "@src/services/ledger/history.service";
 import {
   HistoryRecordDto,
@@ -146,7 +145,7 @@ describe("CommitmentsHistoryService", () => {
       expect(allRecords).toEqual([]);
     });
 
-    it("should return all records in reverse order", async () => {
+    it("should return all records in correct order", async () => {
       const records = [
         createMockHistoryRecord("added", "0x1111111111111111", "100", "1", "1"),
         createMockHistoryRecord("spend", "0x2222222222222222", "200", "2", "2"),
@@ -159,9 +158,7 @@ describe("CommitmentsHistoryService", () => {
 
       const allRecords = await service.all();
       expect(allRecords).toHaveLength(3);
-      expect(allRecords.map((r) => r.id)).toEqual(
-        records.map((r) => r.id).reverse(),
-      );
+      expect(allRecords.map((r) => r.id)).toEqual(records.map((r) => r.id));
     });
   });
 

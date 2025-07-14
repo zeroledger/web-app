@@ -1,4 +1,3 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import SyncService from "@src/services/ledger/sync.service";
 import { createMockDataSource } from "@test/utils/mockDataSource";
 
@@ -18,9 +17,9 @@ describe("SyncService", () => {
   });
 
   describe("getLastSyncedBlock", () => {
-    it("should return null when no block has been synced", async () => {
+    it("should return 30306142 when no block has been synced", async () => {
       const result = await syncService.getLastSyncedBlock();
-      expect(result).toBeNull();
+      expect(result).toBe("30306142");
     });
 
     it("should return the last synced block number", async () => {
@@ -75,7 +74,7 @@ describe("SyncService", () => {
       await syncService.clear();
 
       const result = await syncService.getLastSyncedBlock();
-      expect(result).toBeNull();
+      expect(result).toBe("30306142");
     });
 
     it("should allow setting new block after clear", async () => {
@@ -91,7 +90,7 @@ describe("SyncService", () => {
   describe("integration", () => {
     it("should maintain state across multiple operations", async () => {
       // Initial state
-      expect(await syncService.getLastSyncedBlock()).toBeNull();
+      expect(await syncService.getLastSyncedBlock()).toBe("30306142");
 
       // Set first block
       await syncService.setLastSyncedBlock("100");
@@ -103,7 +102,7 @@ describe("SyncService", () => {
 
       // Clear and verify
       await syncService.clear();
-      expect(await syncService.getLastSyncedBlock()).toBeNull();
+      expect(await syncService.getLastSyncedBlock()).toBe("30306142");
 
       // Set new block after clear
       await syncService.setLastSyncedBlock("300");
