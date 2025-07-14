@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import CommitmentsHistoryService from "./history.service";
-import { HistoryRecordDto, LedgerRecordDto } from "./ledger.dto";
-import { createMockDataSource } from "@src/test-utils/mockDataSource";
+import CommitmentsHistoryService from "@src/services/ledger/history.service";
+import {
+  HistoryRecordDto,
+  LedgerRecordDto,
+} from "@src/services/ledger/ledger.dto";
+import { createMockDataSource } from "@test/utils/mockDataSource";
 
 describe("CommitmentsHistoryService", () => {
   let service: CommitmentsHistoryService;
