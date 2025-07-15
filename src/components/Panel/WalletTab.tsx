@@ -6,11 +6,11 @@ import { useSendModal } from "./hooks/useSendModal";
 import { useCopyAddress } from "./hooks/useCopyAddress";
 import { formatUnits } from "viem";
 import { WalletContext } from "@src/context/wallet.context";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 
 export default function WalletTab() {
   const { showCopiedTooltip, handleCopyAddress, address } = useCopyAddress();
-  const { privateBalance, isLoading, error, decimals } =
+  const { privateBalance, isLoading, error, decimals, walletService } =
     useContext(WalletContext);
   const {
     isModalOpen,
@@ -22,13 +22,31 @@ export default function WalletTab() {
     handleSend,
     handleBack,
   } = useSendModal(decimals);
+  const [blocksToSync, setBlocksToSync] = useState<bigint>(0n);
+
+  useEffect(() => {
+    const fetchSyncStatus = async () => {
+      if (!walletService) return;
+      const { processedBlock, currentBlock } = await walletService.syncStatus();
+      setBlocksToSync(currentBlock - processedBlock);
+    };
+    fetchSyncStatus();
+    const interval = setInterval(fetchSyncStatus, 300);
+    return () => clearInterval(interval);
+  }, [walletService]);
 
   return (
     <div className="flex flex-col items-center justify-center h-full px-4 pt-4">
       <div className="text-2xl font-bold text-white mb-4">Private Balance:</div>
       {error && <div className="text-white">{error.message}</div>}
       {isLoading && (
-        <div className="w-48 h-12 bg-gray-700 rounded-lg animate-pulse" />
+        <>
+          <div className="w-48 h-12 bg-gray-700 rounded-lg animate-pulse" />
+          <div className="mt-1">
+            Syncing{" "}
+            {blocksToSync > 0n ? `${blocksToSync.toString()} blocks` : ""}
+          </div>
+        </>
       )}
       {!isLoading && !error && (
         <>

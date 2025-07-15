@@ -14,6 +14,7 @@ export default class SyncService {
   }
 
   private _store: ReturnType<DataSource["getEntityLevel"]>;
+  private _processedBlock: bigint = 30306142n;
 
   /**
    * Get the last synced block number
@@ -30,6 +31,10 @@ export default class SyncService {
    */
   async setLastSyncedBlock(blockNumber: string): Promise<void> {
     await this._store.put("lastSyncedBlock", blockNumber);
+  }
+
+  getProcessedBlock(): bigint {
+    return this._processedBlock;
   }
 
   /**
@@ -65,19 +70,20 @@ export default class SyncService {
   ) {
     const lastBlock = BigInt((await this.getLastSyncedBlock()) ?? "0");
     if (lastBlock >= currentBlock) {
+      this._processedBlock = currentBlock;
       return [];
     }
 
     const MAX_BLOCKS_PER_REQUEST = 500n;
     const RATE_LIMIT_DELAY = 100; // 100ms between requests
 
-    let fromBlock = lastBlock + 1n;
+    this._processedBlock = lastBlock + 1n;
     const allCommitmentCreatedEvents: VaultEvent[] = [];
     const allCommitmentRemovedEvents: VaultEvent[] = [];
 
     // Process blocks in chunks of 500
-    while (fromBlock < currentBlock) {
-      const toBlock = fromBlock + MAX_BLOCKS_PER_REQUEST - 1n;
+    while (this._processedBlock < currentBlock) {
+      const toBlock = this._processedBlock + MAX_BLOCKS_PER_REQUEST - 1n;
       const endBlock = toBlock > currentBlock ? currentBlock : toBlock;
 
       const commitmentCreatedEvents = await getMissedEvents(
@@ -86,7 +92,7 @@ export default class SyncService {
         address,
         token,
         "CommitmentCreated",
-        fromBlock,
+        this._processedBlock,
         endBlock,
       );
 
@@ -98,7 +104,7 @@ export default class SyncService {
         address,
         token,
         "CommitmentRemoved",
-        fromBlock,
+        this._processedBlock,
         endBlock,
       );
 
@@ -107,10 +113,10 @@ export default class SyncService {
       allCommitmentRemovedEvents.push(...commitmentRemovedEvents);
 
       // Move to next block range
-      fromBlock = endBlock + 1n;
+      this._processedBlock = endBlock + 1n;
 
       // Rate limiting: wait 100ms before next request (except for the last iteration)
-      if (fromBlock < currentBlock) {
+      if (this._processedBlock < currentBlock) {
         await this.sleep(RATE_LIMIT_DELAY);
       }
     }

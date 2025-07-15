@@ -150,6 +150,15 @@ export class WalletService extends EventEmitter {
     }
   }
 
+  async syncStatus() {
+    const currentBlock = await this.client.getBlockNumber();
+    const processedBlock = this.syncService.getProcessedBlock();
+    return {
+      processedBlock,
+      currentBlock,
+    };
+  }
+
   async getBalance() {
     const commitments = await this.commitmentsService.all();
     return commitments.reduce((acc, c) => acc + BigInt(c.value), 0n);

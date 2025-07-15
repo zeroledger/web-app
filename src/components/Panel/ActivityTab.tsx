@@ -23,9 +23,10 @@ const formatAmount = (
 function TransactionSkeleton() {
   return (
     <li className="bg-white/5 rounded-lg p-4 text-white shadow animate-pulse">
-      <div className="h-5 w-1/3 bg-white/20 rounded mb-2" />
-      <div className="h-4 w-2/3 bg-white/10 rounded mb-2" />
-      <div className="h-3 w-1/2 bg-white/10 rounded" />
+      <div className="h-6 w-1/3 bg-white/20 rounded mb-3" />
+      <div className="h-9 w-2/3 bg-white/10 rounded mb-3" />
+      <div className="h-6 w-1/2 bg-white/10 rounded mb-3" />
+      <div className="h-6 w-1/2 bg-white/10 rounded" />
     </li>
   );
 }
@@ -223,11 +224,15 @@ export default function ActivityTab({ active }: { active: boolean }) {
   const [groupedTransactions, setGroupedTransactions] =
     useState<GroupedTransactions>({});
   const [error, setError] = useState<string | null>(null);
-  const { decimals, walletService } = useContext(WalletContext);
+  const {
+    decimals,
+    walletService,
+    isLoading: walletDataLoading,
+  } = useContext(WalletContext);
 
   useEffect(() => {
     const loadTransactions = async () => {
-      if (!walletService) return;
+      if (!walletService || walletDataLoading) return;
 
       setLoading(true);
       setError(null);
@@ -247,7 +252,7 @@ export default function ActivityTab({ active }: { active: boolean }) {
     if (active) {
       loadTransactions();
     }
-  }, [walletService, active]);
+  }, [walletService, active, walletDataLoading]);
 
   const transactionGroups = Object.entries(groupedTransactions);
 
@@ -255,7 +260,7 @@ export default function ActivityTab({ active }: { active: boolean }) {
     <div className="h-full pt-4">
       <div className="h-full overflow-y-auto px-4">
         <ul className="flex flex-col gap-4 h-full">
-          {loading ? (
+          {loading || walletDataLoading ? (
             Array.from({ length: 10 }).map((_, idx) => (
               <TransactionSkeleton key={idx} />
             ))

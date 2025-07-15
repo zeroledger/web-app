@@ -15,7 +15,7 @@ import { useContext } from "react";
 import { SpendModal } from "../Modals/SpendModal";
 
 export default function MenuTab() {
-  const { decimals } = useContext(WalletContext);
+  const { decimals, isLoading: walletDataLoading } = useContext(WalletContext);
   const {
     isDepositModalOpen,
     isDepositModalLoading,
@@ -66,7 +66,7 @@ export default function MenuTab() {
         <button
           className={`${buttonStyle} ${disabledButtonStyle}`}
           onClick={onWithdrawModalOpen}
-          disabled={isFauceting}
+          disabled={isFauceting || walletDataLoading}
         >
           Withdraw
           <ArrowIcon rotate={90} />
@@ -74,14 +74,14 @@ export default function MenuTab() {
         <button
           onClick={onDepositModalOpen}
           className={`${buttonStyle} ${disabledButtonStyle}`}
-          disabled={isFauceting}
+          disabled={isFauceting || walletDataLoading}
         >
           Deposit
           <ArrowIcon />
         </button>
         <button
           className={`${buttonStyle} ${disabledButtonStyle}`}
-          disabled={isFauceting}
+          disabled={isFauceting || walletDataLoading}
         >
           F.A.Q
           <QuestionIcon />
@@ -89,7 +89,7 @@ export default function MenuTab() {
         <button
           className={`${buttonStyle} ${disabledButtonStyle}`}
           onClick={onPruneModalOpen}
-          disabled={isFauceting}
+          disabled={isFauceting || walletDataLoading}
         >
           Prune Wallet
           <TrashIcon />
@@ -97,7 +97,7 @@ export default function MenuTab() {
         <button
           className={`${buttonStyle} ${disabledButtonStyle}`}
           onClick={handleFaucet}
-          disabled={isFauceting}
+          disabled={isFauceting || walletDataLoading}
         >
           Faucet
           <FaucetIcon className="mr-1" />
