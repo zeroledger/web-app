@@ -21,12 +21,15 @@ export async function isUserRegistered(
   client: CustomClient,
 ) {
   const registry = await getRegistry(vaultAddress, client);
-  const [, active] = await client.readContract({
+  const [publicKey, active] = await client.readContract({
     address: registry,
     abi: REGISTRY_ABI,
     functionName: "encryptionPubKeys",
     args: [userAddress],
   });
 
-  return active;
+  return {
+    publicKey,
+    active,
+  };
 }

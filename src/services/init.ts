@@ -1,9 +1,10 @@
-import { type Hex } from "viem";
+import { PrivateKeyAccount, type Hex } from "viem";
 import { Axios } from "axios";
 import {
   TOKEN_ADDRESS,
   FAUCET_URL,
   VAULT_ADDRESS,
+  TES_URL,
 } from "@src/common.constants";
 
 import { JsonRpcClient } from "@src/services/core/rpc";
@@ -17,6 +18,7 @@ import {
   SyncService,
 } from "@src/services/ledger";
 import { DataSource } from "./core/db/leveldb.service";
+import TesService from "./core/tes.service";
 
 let _client: CustomClient | undefined;
 let _pk: Hex | undefined;
@@ -47,6 +49,10 @@ export const create = (axiosInstance: Axios, client: CustomClient, pk: Hex) => {
     zeroLEdgerDataSource,
   );
   const syncService = new SyncService(zeroLEdgerDataSource);
+  const tesService = new TesService(
+    TES_URL,
+    client.account as PrivateKeyAccount,
+  );
   _walletService = new WalletService(
     client,
     VAULT_ADDRESS,
@@ -57,6 +63,7 @@ export const create = (axiosInstance: Axios, client: CustomClient, pk: Hex) => {
     commitmentsService,
     commitmentsHistoryService,
     syncService,
+    tesService,
   );
 
   _client = client;

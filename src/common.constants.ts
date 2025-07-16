@@ -10,6 +10,8 @@ export const TOKEN_ADDRESS: Address = import.meta.env.VITE_TOKEN_ADDRESS;
 
 export const FAUCET_URL: Address = import.meta.env.VITE_FAUCET_URL;
 
+export const TES_URL: Address = import.meta.env.VITE_TES_URL;
+
 export const VAULT_ADDRESS: Address = import.meta.env.VITE_VAULT_ADDRESS;
 
 export const RPC: { [prop: number]: string } = {

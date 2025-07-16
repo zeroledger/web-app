@@ -1,4 +1,4 @@
-import { Address, zeroAddress } from "viem";
+import { Address, Hex, zeroAddress } from "viem";
 import { EventEmitter } from "node:events";
 import { FaucetRpc, FaucetRequestDto } from "@src/services/core/faucet.dto";
 import { approve } from "@src/utils/erc20";
@@ -27,6 +27,7 @@ import {
 } from "@src/services/ledger";
 import { delay } from "@src/utils/common";
 import { catchService } from "@src/services/core/catch.service";
+import TesService from "@src/services/core/tes.service";
 
 export const ClientServiceEvents = {
   PRIVATE_BALANCE_CHANGE: "PRIVATE_BALANCE_CHANGE",
@@ -49,6 +50,7 @@ export class WalletService extends EventEmitter {
     private readonly commitmentsService: CommitmentsService,
     private readonly commitmentsHistoryService: CommitmentsHistoryService,
     private readonly syncService: SyncService,
+    private readonly tesService: TesService,
   ) {
     super();
     this.address = this.client.account.address;
@@ -264,28 +266,47 @@ export class WalletService extends EventEmitter {
     });
   }
 
+  private async getTrustedEncryptionKeys(recipient: Address) {
+    let senderEncryptionKey: Hex;
+    let recipientEncryptionKey: Hex;
+
+    const { publicKey: senderPublicKey, active: senderActive } =
+      await isUserRegistered(this.address, this.vault, this.client);
+    if (!senderActive) {
+      this.logger.warn(
+        "Sender PEPK is not registered, getting trusted encryption token",
+      );
+      senderEncryptionKey = await this.tesService.getTrustedEncryptionToken();
+    } else {
+      senderEncryptionKey = senderPublicKey;
+    }
+
+    const { publicKey: recipientPublicKey, active: recipientActive } =
+      await isUserRegistered(recipient, this.vault, this.client);
+
+    if (!recipientActive) {
+      this.logger.warn(
+        "Recipient PEPK is not registered, getting trusted encryption token",
+      );
+      recipientEncryptionKey =
+        await this.tesService.getTrustedEncryptionToken();
+    } else {
+      recipientEncryptionKey = recipientPublicKey;
+    }
+
+    return {
+      senderEncryptionKey,
+      recipientEncryptionKey,
+    };
+  }
+
   send(value: bigint, recipient: Address) {
     return this.enqueue(async () => {
-      const isRegistered = await isUserRegistered(
-        this.address,
-        this.vault,
-        this.client,
-      );
-      if (!isRegistered) {
-        this.logger.error("Sender PEPK is not registered");
-        // throw new Error("User is not registered");
-      }
+      const { senderEncryptionKey, recipientEncryptionKey } =
+        await this.getTrustedEncryptionKeys(recipient);
 
-      const isRecipientRegistered = await isUserRegistered(
-        recipient,
-        this.vault,
-        this.client,
-      );
-
-      if (!isRecipientRegistered) {
-        this.logger.error("Recipient PEPK is not registered");
-        // throw new Error("User is not registered");
-      }
+      this.logger.log(`Sender encryption key: ${senderEncryptionKey}`);
+      this.logger.log(`Recipient encryption key: ${recipientEncryptionKey}`);
 
       const publicOutputs = [{ owner: zeroAddress, amount: 0n }];
 
