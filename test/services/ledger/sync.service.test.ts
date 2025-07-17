@@ -17,9 +17,9 @@ describe("SyncService", () => {
   });
 
   describe("getLastSyncedBlock", () => {
-    it("should return 30306142 when no block has been synced", async () => {
+    it("should return 30480845 when no block has been synced", async () => {
       const result = await syncService.getLastSyncedBlock();
-      expect(result).toBe("30306142");
+      expect(result).toBe("30480845");
     });
 
     it("should return the last synced block number", async () => {
@@ -74,7 +74,7 @@ describe("SyncService", () => {
       await syncService.clear();
 
       const result = await syncService.getLastSyncedBlock();
-      expect(result).toBe("30306142");
+      expect(result).toBe("30480845");
     });
 
     it("should allow setting new block after clear", async () => {
@@ -90,7 +90,7 @@ describe("SyncService", () => {
   describe("integration", () => {
     it("should maintain state across multiple operations", async () => {
       // Initial state
-      expect(await syncService.getLastSyncedBlock()).toBe("30306142");
+      expect(await syncService.getLastSyncedBlock()).toBe("30480845");
 
       // Set first block
       await syncService.setLastSyncedBlock("100");
@@ -102,7 +102,7 @@ describe("SyncService", () => {
 
       // Clear and verify
       await syncService.clear();
-      expect(await syncService.getLastSyncedBlock()).toBe("30306142");
+      expect(await syncService.getLastSyncedBlock()).toBe("30480845");
 
       // Set new block after clear
       await syncService.setLastSyncedBlock("300");
