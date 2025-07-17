@@ -1,4 +1,4 @@
-import { Address, Hex, zeroAddress } from "viem";
+import { Address, Hash, PrivateKeyAccount, zeroAddress } from "viem";
 import { EventEmitter } from "node:events";
 import { FaucetRpc, FaucetRequestDto } from "@src/services/core/faucet.dto";
 import { approve } from "@src/utils/erc20";
@@ -16,7 +16,8 @@ import {
   type CommitmentStruct,
   watchVault,
   type VaultEvent,
-  decrypt,
+  decodeMetadata,
+  decryptCommitment,
 } from "@src/utils/vault";
 import {
   LedgerRecordDto,
@@ -41,6 +42,7 @@ export class WalletService extends EventEmitter {
   private catchService = catchService;
 
   constructor(
+    private readonly pk: Hash,
     private readonly client: CustomClient,
     private readonly vault: Address,
     private readonly token: Address,
@@ -168,8 +170,17 @@ export class WalletService extends EventEmitter {
 
   deposit(value: bigint) {
     return this.enqueue(async () => {
+      const { tesUrl, encryptionPublicKey } = await this.getEncryptionParams(
+        this.address,
+      );
       const { proofData, depositStruct /* depositCommitmentData */ } =
-        await prepareDeposit(this.token, this.client, value);
+        await prepareDeposit(
+          this.token,
+          this.client,
+          value,
+          encryptionPublicKey,
+          tesUrl,
+        );
 
       const transfer = {
         tokenAddress: depositStruct.token,
@@ -211,16 +222,24 @@ export class WalletService extends EventEmitter {
         throw new Error("No commitments found to cover the requested amount");
       }
 
-      const { proofData, transactionStruct } = await prepareSpend(
-        selectedCommitmentRecords,
-        this.token,
-        totalAmount,
-        0n,
-        value,
+      const { encryptionPublicKey, tesUrl } = await this.getEncryptionParams(
         this.address,
-        this.address,
-        publicOutputs,
       );
+
+      const { proofData, transactionStruct } = await prepareSpend({
+        commitments: selectedCommitmentRecords,
+        token: this.token,
+        totalMovingAmount: totalAmount,
+        privateSpendAmount: 0n,
+        publicSpendAmount: value,
+        spender: this.address,
+        spenderEncryptionPublicKey: encryptionPublicKey,
+        spenderTesUrl: tesUrl,
+        receiver: this.address,
+        receiverEncryptionPublicKey: encryptionPublicKey,
+        receiverTesUrl: tesUrl,
+        publicOutputs,
+      });
 
       await spend({
         transactionStruct,
@@ -266,48 +285,24 @@ export class WalletService extends EventEmitter {
     });
   }
 
-  private async getTrustedEncryptionKeys(recipient: Address) {
-    let senderEncryptionKey: Hex;
-    let recipientEncryptionKey: Hex;
-
-    const { publicKey: senderPublicKey, active: senderActive } =
-      await isUserRegistered(this.address, this.vault, this.client);
+  private async getEncryptionParams(user: Address) {
+    const { publicKey: encryptionPublicKey, active: senderActive } =
+      await isUserRegistered(user, this.vault, this.client);
     if (!senderActive) {
       this.logger.warn(
-        "Sender PEPK is not registered, getting trusted encryption token",
+        `${user} PEPK is not registered, getting trusted encryption token`,
       );
-      senderEncryptionKey = await this.tesService.getTrustedEncryptionToken();
+      return {
+        encryptionPublicKey: await this.tesService.getTrustedEncryptionToken(),
+        tesUrl: this.tesService.tesUrl,
+      };
     } else {
-      senderEncryptionKey = senderPublicKey;
+      return { encryptionPublicKey };
     }
-
-    const { publicKey: recipientPublicKey, active: recipientActive } =
-      await isUserRegistered(recipient, this.vault, this.client);
-
-    if (!recipientActive) {
-      this.logger.warn(
-        "Recipient PEPK is not registered, getting trusted encryption token",
-      );
-      recipientEncryptionKey =
-        await this.tesService.getTrustedEncryptionToken();
-    } else {
-      recipientEncryptionKey = recipientPublicKey;
-    }
-
-    return {
-      senderEncryptionKey,
-      recipientEncryptionKey,
-    };
   }
 
   send(value: bigint, recipient: Address) {
     return this.enqueue(async () => {
-      const { senderEncryptionKey, recipientEncryptionKey } =
-        await this.getTrustedEncryptionKeys(recipient);
-
-      this.logger.log(`Sender encryption key: ${senderEncryptionKey}`);
-      this.logger.log(`Recipient encryption key: ${recipientEncryptionKey}`);
-
       const publicOutputs = [{ owner: zeroAddress, amount: 0n }];
 
       const { selectedCommitmentRecords, totalAmount } =
@@ -317,16 +312,30 @@ export class WalletService extends EventEmitter {
         throw new Error("No commitments found to cover the requested amount");
       }
 
-      const { proofData, transactionStruct } = await prepareSpend(
-        selectedCommitmentRecords,
-        this.token,
-        totalAmount,
-        value,
-        0n,
-        this.address,
-        recipient,
+      const {
+        encryptionPublicKey: spenderEncryptionPublicKey,
+        tesUrl: spenderTesUrl,
+      } = await this.getEncryptionParams(this.address);
+
+      const {
+        encryptionPublicKey: receiverEncryptionPublicKey,
+        tesUrl: receiverTesUrl,
+      } = await this.getEncryptionParams(recipient);
+
+      const { proofData, transactionStruct } = await prepareSpend({
+        commitments: selectedCommitmentRecords,
+        token: this.token,
+        totalMovingAmount: totalAmount,
+        privateSpendAmount: value,
+        publicSpendAmount: 0n,
+        spender: this.address,
+        spenderEncryptionPublicKey,
+        spenderTesUrl,
+        receiver: recipient,
+        receiverEncryptionPublicKey,
+        receiverTesUrl,
         publicOutputs,
-      );
+      });
 
       await spend({
         transactionStruct,
@@ -366,13 +375,38 @@ export class WalletService extends EventEmitter {
           event.eventName === "CommitmentCreated" &&
           event.args.owner === this.address &&
           event.args.token === this.token &&
-          event.args.encryptedData
+          event.args.metadata
         ) {
           if (!event.blockNumber || !event.transactionIndex) {
             throw new Error("Block number and transaction index are required");
           }
           // add commitment to LedgerRecordDto
-          const commitment = decrypt(event.args.encryptedData);
+          const { encryptedCommitment, tesUrl } = decodeMetadata(
+            event.args.metadata,
+          );
+
+          this.logger.log(`encryptedCommitment: ${encryptedCommitment}`);
+
+          let commitment: CommitmentStruct;
+
+          if (tesUrl.length && tesUrl === this.tesService.tesUrl) {
+            commitment = await this.tesService.decrypt(
+              encryptedCommitment,
+              this.token,
+            );
+          } else if (tesUrl.length && tesUrl !== this.tesService.tesUrl) {
+            const shortLivedTes = new TesService(
+              tesUrl,
+              this.client.account as PrivateKeyAccount,
+            );
+            commitment = await shortLivedTes.decrypt(
+              encryptedCommitment,
+              this.token,
+            );
+          } else {
+            commitment = decryptCommitment(encryptedCommitment, this.pk);
+          }
+
           const ledgerRecord = LedgerRecordDto.from(
             event.args.poseidonHash!,
             commitment.amount,

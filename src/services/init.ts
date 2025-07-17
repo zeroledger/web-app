@@ -54,6 +54,7 @@ export const create = (axiosInstance: Axios, client: CustomClient, pk: Hex) => {
     client.account as PrivateKeyAccount,
   );
   _walletService = new WalletService(
+    pk,
     client,
     VAULT_ADDRESS,
     TOKEN_ADDRESS,

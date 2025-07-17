@@ -6,7 +6,7 @@ import { VAULT_ABI_EVENTS } from "./vault.abi";
 export type DepositCommitmentParamsStruct = {
   poseidonHash: bigint;
   owner: Address;
-  encryptedData: Hex;
+  metadata: Hex;
 };
 
 export type DepositStruct = {
@@ -83,7 +83,7 @@ export type TransactionStruct = {
   token: Address;
   inputsPoseidonHashes: bigint[];
   outputsPoseidonHashes: bigint[];
-  encryptedData: Hex[];
+  metadata: Hex[];
   outputsOwners: OutputsOwnersStruct[];
   publicOutputs: PublicOutput[];
 };

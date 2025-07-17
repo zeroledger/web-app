@@ -1,7 +1,7 @@
 import { randomBytes } from "@noble/hashes/utils";
 import { CustomClient } from "@src/common.types";
 import { computePoseidon } from "@src/utils/poseidon";
-import { Address, toHex, zeroAddress } from "viem";
+import { Address, Hex, toHex, zeroAddress } from "viem";
 import { prover } from "@src/utils/prover";
 import {
   DepositCommitmentData,
@@ -11,7 +11,7 @@ import {
   DepositStruct,
 } from "./types";
 import { shuffle } from "@src/utils/common";
-import { encrypt } from "./encryption";
+import { encode } from "./metadata";
 
 async function createDepositStruct(
   token: Address,
@@ -30,6 +30,8 @@ async function createDepositStruct(
 async function generateDepositCommitmentData(
   individualAmounts: bigint[],
   userAddress: Address,
+  userEncryptionPublicKey: Hex,
+  tesUrl: string,
 ): Promise<DepositCommitmentData> {
   const amounts: bigint[] = [];
   const sValues: bigint[] = [];
@@ -55,17 +57,29 @@ async function generateDepositCommitmentData(
     {
       poseidonHash: hashes[0],
       owner: userAddress,
-      encryptedData: encrypt({ amount: amounts[0], sValue: sValues[0] }),
+      metadata: encode(
+        { amount: amounts[0], sValue: sValues[0] },
+        tesUrl,
+        userEncryptionPublicKey,
+      ),
     },
     {
       poseidonHash: hashes[1],
       owner: userAddress,
-      encryptedData: encrypt({ amount: amounts[1], sValue: sValues[1] }),
+      metadata: encode(
+        { amount: amounts[1], sValue: sValues[1] },
+        tesUrl,
+        userEncryptionPublicKey,
+      ),
     },
     {
       poseidonHash: hashes[2],
       owner: userAddress,
-      encryptedData: encrypt({ amount: amounts[2], sValue: sValues[2] }),
+      metadata: encode(
+        { amount: amounts[2], sValue: sValues[2] },
+        tesUrl,
+        userEncryptionPublicKey,
+      ),
     },
   ];
 
@@ -101,6 +115,8 @@ export default async function prepareDeposit(
   token: Address,
   client: CustomClient,
   value: bigint,
+  userEncryptionPublicKey: Hex,
+  tesUrl = "",
 ) {
   const random = BigInt(Math.ceil(Math.random() * 3));
   const firstAmount = value / random;
@@ -116,6 +132,8 @@ export default async function prepareDeposit(
   const depositCommitmentData = await generateDepositCommitmentData(
     depositData.individualAmounts,
     depositData.user,
+    userEncryptionPublicKey,
+    tesUrl,
   );
 
   const proofData = await generateDepositProof(

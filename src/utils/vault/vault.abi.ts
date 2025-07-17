@@ -81,7 +81,7 @@ export const VAULT_ABI = [
         type: "address",
       },
       {
-        indexed: true,
+        indexed: false,
         internalType: "uint256",
         name: "poseidonHash",
         type: "uint256",
@@ -89,7 +89,7 @@ export const VAULT_ABI = [
       {
         indexed: false,
         internalType: "bytes",
-        name: "encryptedData",
+        name: "metadata",
         type: "bytes",
       },
     ],
@@ -112,7 +112,7 @@ export const VAULT_ABI = [
         type: "address",
       },
       {
-        indexed: true,
+        indexed: false,
         internalType: "uint256",
         name: "poseidonHash",
         type: "uint256",
@@ -301,7 +301,7 @@ export const VAULT_ABI = [
               },
               {
                 internalType: "bytes",
-                name: "encryptedData",
+                name: "metadata",
                 type: "bytes",
               },
             ],
@@ -411,7 +411,7 @@ export const VAULT_ABI = [
           },
           {
             internalType: "bytes[]",
-            name: "encryptedData",
+            name: "metadata",
             type: "bytes[]",
           },
           {
@@ -632,14 +632,29 @@ export const VAULT_ABI_EVENTS = VAULT_ABI.filter(
   (item) => item.type === "event",
 );
 
-export const COMMITMENTS_ABI = [
+export const COMMITMENT_ABI = [
   {
+    internalType: "uint256",
     name: "amount",
     type: "uint256",
   },
   {
+    internalType: "uint256",
     name: "sValue",
     type: "uint256",
+  },
+] as const;
+
+export const ENCRYPTION_ABI = [
+  {
+    internalType: "bytes",
+    name: "encryptedCommitment",
+    type: "bytes",
+  },
+  {
+    internalType: "string",
+    name: "tesUrl",
+    type: "string",
   },
 ] as const;
 

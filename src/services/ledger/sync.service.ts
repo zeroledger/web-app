@@ -14,7 +14,7 @@ export default class SyncService {
   }
 
   private _store: ReturnType<DataSource["getEntityLevel"]>;
-  private _processedBlock: bigint = 30306142n;
+  private _processedBlock: bigint = 30480845n;
 
   /**
    * Get the last synced block number
@@ -22,7 +22,7 @@ export default class SyncService {
    */
   async getLastSyncedBlock(): Promise<string> {
     const lastBlock = await this._store.get("lastSyncedBlock");
-    return lastBlock ?? "30306142";
+    return lastBlock ?? "30480845";
   }
 
   /**

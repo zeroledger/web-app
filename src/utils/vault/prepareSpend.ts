@@ -1,7 +1,7 @@
 import { randomBytes } from "@noble/hashes/utils";
 import { computePoseidon } from "@src/utils/poseidon";
 import { CircuitType, getCircuitType, prover } from "@src/utils/prover";
-import { Address, toHex } from "viem";
+import { Address, Hex, toHex } from "viem";
 import {
   SpendInput,
   TransactionStruct,
@@ -10,7 +10,7 @@ import {
   SelectedCommitmentRecord,
 } from "./types";
 import { logStringify } from "../common";
-import { encrypt } from "./encryption";
+import { encode } from "./metadata";
 
 async function createOutputs(amount: bigint, totalInputAmount: bigint) {
   const hasChange = totalInputAmount > amount;
@@ -67,16 +67,35 @@ async function generateSpendProof(
   return { calldata_proof };
 }
 
-function createTransactionStruct(
-  token: Address,
-  inputHashes: bigint[],
-  outputAmounts: bigint[],
-  outputSValues: bigint[],
-  outputHashes: bigint[],
-  spender: Address,
-  receiver: Address,
-  publicOutputs: PublicOutput[],
-): TransactionStruct {
+type TransactionStructCreationInput = {
+  token: Address;
+  inputHashes: bigint[];
+  outputAmounts: bigint[];
+  outputSValues: bigint[];
+  outputHashes: bigint[];
+  spender: Address;
+  spenderEncryptionPublicKey: Hex;
+  spenderTesUrl: string;
+  receiver: Address;
+  receiverEncryptionPublicKey: Hex;
+  receiverTesUrl: string;
+  publicOutputs: PublicOutput[];
+};
+
+function createTransactionStruct({
+  token,
+  inputHashes,
+  outputAmounts,
+  outputSValues,
+  outputHashes,
+  spender,
+  spenderEncryptionPublicKey,
+  spenderTesUrl,
+  receiver,
+  receiverEncryptionPublicKey,
+  receiverTesUrl,
+  publicOutputs,
+}: TransactionStructCreationInput): TransactionStruct {
   const outputsOwners: OutputsOwnersStruct[] = [
     {
       owner: receiver,
@@ -84,38 +103,73 @@ function createTransactionStruct(
     },
   ];
 
+  const metadata = [
+    encode(
+      {
+        amount: outputAmounts[0],
+        sValue: outputSValues[0],
+      },
+      receiverTesUrl,
+      receiverEncryptionPublicKey,
+    ),
+  ];
+
   if (outputHashes.length > 1) {
     outputsOwners.push({
       owner: spender,
       indexes: [1],
     });
+    metadata.push(
+      encode(
+        {
+          amount: outputAmounts[1],
+          sValue: outputSValues[1],
+        },
+        spenderTesUrl,
+        spenderEncryptionPublicKey,
+      ),
+    );
   }
 
   return {
     token,
     inputsPoseidonHashes: inputHashes,
     outputsPoseidonHashes: outputHashes,
-    encryptedData: outputHashes.map((_, index) =>
-      encrypt({
-        amount: outputAmounts[index],
-        sValue: outputSValues[index],
-      }),
-    ),
+    metadata,
     outputsOwners,
     publicOutputs,
   };
 }
 
-export default async function prepareSpend(
-  commitments: SelectedCommitmentRecord[],
-  token: Address,
-  totalMovingAmount: bigint,
-  privateSpendAmount: bigint,
-  publicSpendAmount: bigint,
-  spender: Address,
-  receiver: Address,
-  publicOutputs: PublicOutput[],
-) {
+export type PrepareSpendParams = {
+  commitments: SelectedCommitmentRecord[];
+  token: Address;
+  totalMovingAmount: bigint;
+  privateSpendAmount: bigint;
+  publicSpendAmount: bigint;
+  spender: Address;
+  spenderEncryptionPublicKey: Hex;
+  spenderTesUrl?: string;
+  receiver: Address;
+  receiverEncryptionPublicKey: Hex;
+  receiverTesUrl?: string;
+  publicOutputs: PublicOutput[];
+};
+
+export default async function prepareSpend({
+  commitments,
+  token,
+  totalMovingAmount,
+  privateSpendAmount,
+  publicSpendAmount,
+  spender,
+  spenderEncryptionPublicKey,
+  spenderTesUrl = "",
+  receiver,
+  receiverEncryptionPublicKey,
+  receiverTesUrl = "",
+  publicOutputs,
+}: PrepareSpendParams) {
   const totalMovingPrivatelyAmounts = totalMovingAmount - publicSpendAmount;
   const { outputHashes, outputAmounts, outputSValues } = await createOutputs(
     privateSpendAmount,
@@ -140,16 +194,20 @@ export default async function prepareSpend(
 
   const { calldata_proof } = await generateSpendProof(circuitType, proofInput);
 
-  const transactionStruct = createTransactionStruct(
+  const transactionStruct = createTransactionStruct({
     token,
-    proofInput.inputs_hashes,
+    inputHashes: proofInput.inputs_hashes,
     outputAmounts,
     outputSValues,
     outputHashes,
     spender,
+    spenderEncryptionPublicKey,
+    spenderTesUrl,
     receiver,
+    receiverEncryptionPublicKey,
+    receiverTesUrl,
     publicOutputs,
-  );
+  });
 
   return {
     proofData: {
