@@ -1,9 +1,8 @@
-import { Address, Hash, PrivateKeyAccount, zeroAddress } from "viem";
+import { Address, zeroAddress } from "viem";
 import { EventEmitter } from "node:events";
 import { FaucetRpc, FaucetRequestDto } from "@src/services/core/faucet.dto";
 import { approve } from "@src/utils/erc20";
 import { JsonRpcClient, ServiceClient } from "@src/services/core/rpc";
-import { CustomClient } from "@src/common.types";
 import { Logger } from "@src/utils/logger";
 import { MemoryQueue } from "@src/services/core/queue";
 import {
@@ -19,31 +18,30 @@ import {
   decodeMetadata,
   decryptCommitment,
 } from "@src/utils/vault";
-import {
-  LedgerRecordDto,
-  CommitmentsService,
-  CommitmentsHistoryService,
-  HistoryRecordDto,
-  SyncService,
-} from "@src/services/ledger";
 import { delay } from "@src/utils/common";
 import { catchService } from "@src/services/core/catch.service";
 import TesService from "@src/services/core/tes.service";
+import CommitmentsService from "./commitments.service";
+import CommitmentsHistoryService from "./history.service";
+import SyncService from "./sync.service";
+import { HistoryRecordDto, LedgerRecordDto } from "./ledger.dto";
+import { EvmClientService } from "../core/evmClient.service";
+import { AccountService } from "./accounts.service";
 
-export const ClientServiceEvents = {
+export const LedgerServiceEvents = {
   PRIVATE_BALANCE_CHANGE: "PRIVATE_BALANCE_CHANGE",
   ONCHAIN_BALANCE_CHANGE: "ONCHAIN_BALANCE_CHANGE",
 } as const;
 
-export class WalletService extends EventEmitter {
+export class LedgerService extends EventEmitter {
   private readonly address: Address;
   private faucetRpc: ServiceClient<FaucetRpc>;
   private logger = new Logger("WalletService");
   private catchService = catchService;
 
   constructor(
-    private readonly pk: Hash,
-    private readonly client: CustomClient,
+    private readonly accountService: AccountService,
+    private readonly clientService: EvmClientService,
     private readonly vault: Address,
     private readonly token: Address,
     private readonly faucetUrl: string,
@@ -55,14 +53,14 @@ export class WalletService extends EventEmitter {
     private readonly tesService: TesService,
   ) {
     super();
-    this.address = this.client.account.address;
+    this.address = this.clientService.client.account.address;
     this.faucetRpc = this.faucetRpcClient.getService(this.faucetUrl, {
       namespace: "faucet",
     });
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private safeEmit(event: keyof typeof ClientServiceEvents, ...args: any[]) {
+  private safeEmit(event: keyof typeof LedgerServiceEvents, ...args: any[]) {
     try {
       this.emit(event, ...args);
     } catch (error) {
@@ -91,10 +89,10 @@ export class WalletService extends EventEmitter {
       this.updateBothBalancesTimeout = null; // Clear the reference
 
       this.safeEmit(
-        ClientServiceEvents.PRIVATE_BALANCE_CHANGE,
+        LedgerServiceEvents.PRIVATE_BALANCE_CHANGE,
         await this.getBalance(),
       );
-      this.safeEmit(ClientServiceEvents.ONCHAIN_BALANCE_CHANGE);
+      this.safeEmit(LedgerServiceEvents.ONCHAIN_BALANCE_CHANGE);
     }, 500);
   }
 
@@ -138,24 +136,24 @@ export class WalletService extends EventEmitter {
 
   async start() {
     try {
-      const currentBlock = await this.client.getBlockNumber();
+      const currentBlock = await this.clientService.client.getBlockNumber();
       this.subscribeOnVaultEvents();
       const missedEvents = await this.syncService.runSync(
-        this.client,
+        this.clientService.client,
         this.vault,
         this.address,
         this.token,
         currentBlock,
       );
       await this.handleIncomingEvents(missedEvents);
-      return await this.getBalance();
+      this.updateBothBalances();
     } catch (error) {
       this.catchService.catch(error as Error);
     }
   }
 
   async syncStatus() {
-    const currentBlock = await this.client.getBlockNumber();
+    const currentBlock = await this.clientService.client.getBlockNumber();
     const processedBlock = this.syncService.getProcessedBlock();
     return {
       processedBlock,
@@ -176,7 +174,7 @@ export class WalletService extends EventEmitter {
       const { proofData, depositStruct /* depositCommitmentData */ } =
         await prepareDeposit(
           this.token,
-          this.client,
+          this.clientService.client,
           value,
           encryptionPublicKey,
           tesUrl,
@@ -186,13 +184,13 @@ export class WalletService extends EventEmitter {
         tokenAddress: depositStruct.token,
         receiverAddress: this.vault,
         amount: depositStruct.total_deposit_amount,
-        client: this.client,
+        client: this.clientService.client,
       };
 
       await approve(transfer);
       await deposit({
         depositStruct,
-        client: this.client,
+        client: this.clientService.client,
         contract: this.vault,
         proof: proofData.calldata_proof,
       });
@@ -206,7 +204,7 @@ export class WalletService extends EventEmitter {
       const isRegistered = await isUserRegistered(
         recipient,
         this.vault,
-        this.client,
+        this.clientService.client,
       );
       if (!isRegistered) {
         this.logger.error("Recipient PEPK is not registered");
@@ -243,7 +241,7 @@ export class WalletService extends EventEmitter {
 
       await spend({
         transactionStruct,
-        client: this.client,
+        client: this.clientService.client,
         contract: this.vault,
         proof: proofData.calldata_proof,
       });
@@ -274,7 +272,7 @@ export class WalletService extends EventEmitter {
       }
 
       await withdraw({
-        client: this.client,
+        client: this.clientService.client,
         contract: this.vault,
         token: this.token,
         withdrawItems,
@@ -287,7 +285,7 @@ export class WalletService extends EventEmitter {
 
   private async getEncryptionParams(user: Address) {
     const { publicKey: encryptionPublicKey, active: senderActive } =
-      await isUserRegistered(user, this.vault, this.client);
+      await isUserRegistered(user, this.vault, this.clientService.client);
     if (!senderActive) {
       this.logger.warn(
         `${user} PEPK is not registered, getting trusted encryption token`,
@@ -339,7 +337,7 @@ export class WalletService extends EventEmitter {
 
       await spend({
         transactionStruct,
-        client: this.client,
+        client: this.clientService.client,
         contract: this.vault,
         proof: proofData.calldata_proof,
       });
@@ -365,7 +363,7 @@ export class WalletService extends EventEmitter {
         await this.handleIncomingEvents(events);
       });
     };
-    watchVault(this.client, this.vault, handlerWrapper);
+    watchVault(this.clientService.client, this.vault, handlerWrapper);
   }
 
   private async handleIncomingEvents(events: VaultEvent[]) {
@@ -395,16 +393,16 @@ export class WalletService extends EventEmitter {
               this.token,
             );
           } else if (tesUrl.length && tesUrl !== this.tesService.tesUrl) {
-            const shortLivedTes = new TesService(
-              tesUrl,
-              this.client.account as PrivateKeyAccount,
-            );
+            const shortLivedTes = new TesService(tesUrl, this.accountService);
             commitment = await shortLivedTes.decrypt(
               encryptedCommitment,
               this.token,
             );
           } else {
-            commitment = decryptCommitment(encryptedCommitment, this.pk);
+            commitment = decryptCommitment(
+              encryptedCommitment,
+              this.accountService.decryptPrivateKey(),
+            );
           }
 
           const ledgerRecord = LedgerRecordDto.from(

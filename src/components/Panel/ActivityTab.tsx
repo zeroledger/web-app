@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { formatUnits } from "viem";
 import { shortString } from "@src/utils/common";
-import { WalletContext } from "@src/context/wallet.context";
+import { LedgerContext } from "@src/context/ledger.context";
 import { useContext } from "react";
 import { HistoryRecordDto } from "@src/services/ledger";
 import {
@@ -224,20 +224,17 @@ export default function ActivityTab({ active }: { active: boolean }) {
   const [groupedTransactions, setGroupedTransactions] =
     useState<GroupedTransactions>({});
   const [error, setError] = useState<string | null>(null);
-  const {
-    decimals,
-    walletService,
-    isLoading: walletDataLoading,
-  } = useContext(WalletContext);
+  const { decimals, ledgerServices, connected, isConnecting } =
+    useContext(LedgerContext);
 
   useEffect(() => {
     const loadTransactions = async () => {
-      if (!walletService || walletDataLoading) return;
+      if (!connected || !ledgerServices) return;
 
       setLoading(true);
       setError(null);
       try {
-        const txs = await walletService.getTransactions();
+        const txs = await ledgerServices.ledgerService.getTransactions();
         if (txs) {
           setGroupedTransactions(txs);
         }
@@ -252,7 +249,7 @@ export default function ActivityTab({ active }: { active: boolean }) {
     if (active) {
       loadTransactions();
     }
-  }, [walletService, active, walletDataLoading]);
+  }, [ledgerServices, active, connected]);
 
   const transactionGroups = Object.entries(groupedTransactions);
 
@@ -260,7 +257,7 @@ export default function ActivityTab({ active }: { active: boolean }) {
     <div className="h-full pt-4">
       <div className="h-full overflow-y-auto px-4">
         <ul className="flex flex-col gap-4 h-full">
-          {loading || walletDataLoading ? (
+          {isConnecting || loading ? (
             Array.from({ length: 10 }).map((_, idx) => (
               <TransactionSkeleton key={idx} />
             ))

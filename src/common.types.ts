@@ -1,12 +1,3 @@
-import {
-  Account,
-  Transport,
-  WalletClient,
-  RpcSchema,
-  PublicClient,
-} from "viem";
-import { Chain } from "viem/chains";
-
 export type JsonValue =
   | string
   | number
@@ -22,6 +13,3 @@ export type Entries<T> = {
 }[keyof T][];
 
 export type Keys<T> = keyof T;
-
-export type CustomClient = PublicClient<Transport, Chain, Account, RpcSchema> &
-  WalletClient<Transport, Chain, Account, RpcSchema>;

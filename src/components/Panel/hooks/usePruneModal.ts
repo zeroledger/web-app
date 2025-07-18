@@ -1,22 +1,22 @@
 import { useContext, useState, useCallback } from "react";
-import { ClientContext } from "@src/context/client.context";
+import { LedgerContext } from "@src/context/ledger.context";
 import { useSwipe } from "./useSwipe";
 
 export const usePruneModal = () => {
-  const { prune } = useContext(ClientContext);
+  const { ledgerServices } = useContext(LedgerContext);
   const [isPruneModalOpen, setIsPruneModalOpen] = useState(false);
   const { disableSwipe, enableSwipe } = useSwipe();
 
   const handlePrune = useCallback(async () => {
     try {
-      await prune();
+      await ledgerServices?.reset();
       setIsPruneModalOpen(false);
       enableSwipe();
       window.location.reload();
     } catch (error) {
       console.error("Failed to clear data:", error);
     }
-  }, [prune, enableSwipe]);
+  }, [ledgerServices, enableSwipe]);
 
   const onPruneModalOpen = () => {
     setIsPruneModalOpen(true);

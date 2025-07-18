@@ -9,10 +9,12 @@ import {
   Button,
 } from "@headlessui/react";
 import clsx from "clsx";
-import { ClientContext } from "@src/context/client.context";
+import { LedgerContext } from "@src/context/ledger.context";
 import { useNavigate } from "react-router-dom";
 import { primaryButtonStyle, linkButtonStyle } from "@src/components/Button";
 import { generatePrivateKey } from "viem/accounts";
+import { optimismSepolia } from "viem/chains";
+import { Hash } from "viem";
 
 export default function RegisterForm() {
   const {
@@ -28,18 +30,19 @@ export default function RegisterForm() {
 
   const navigate = useNavigate();
 
-  const { signUp, login, loggedIn, onlyLogin } = useContext(ClientContext);
+  const { initializeLedger, connected, onlyLogin } = useContext(LedgerContext);
 
   const [error, setError] = useState<string>();
 
   const onSubmit = useCallback(
     async (data: { password: string; privateKey?: string }) => {
       try {
-        if (!onlyLogin) {
-          await signUp(data.password, data.privateKey as `0x${string}`);
-        } else {
-          await login(data.password);
-        }
+        console.log("onSubmit");
+        await initializeLedger(
+          data.password,
+          optimismSepolia,
+          data.privateKey as Hash | undefined,
+        );
       } catch (error) {
         const message = (error as Error).message;
         const defaultMessage = onlyLogin
@@ -48,14 +51,14 @@ export default function RegisterForm() {
         setError(message || defaultMessage);
       }
     },
-    [signUp, login, onlyLogin],
+    [initializeLedger, onlyLogin],
   );
 
   useEffect(() => {
-    if (loggedIn) {
+    if (connected) {
       navigate("/panel/wallet");
     }
-  }, [loggedIn, navigate]);
+  }, [connected, navigate]);
 
   const generateRandomPrivateKey = useCallback(() => {
     setValue("privateKey", generatePrivateKey());

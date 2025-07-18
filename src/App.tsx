@@ -1,12 +1,12 @@
 import { RouterProvider } from "react-router-dom";
-import { ClientProvider } from "@src/context/client.context";
+import { LedgerProvider } from "@src/context/ledger.context";
 import router from "./router";
 
 function App() {
   return (
-    <ClientProvider>
+    <LedgerProvider>
       <RouterProvider router={router} />
-    </ClientProvider>
+    </LedgerProvider>
   );
 }
 

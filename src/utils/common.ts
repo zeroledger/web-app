@@ -96,3 +96,6 @@ export function shuffle<T>(array: T[]): T[] {
   }
   return result;
 }
+
+export const semiStringToUint8Array = (data: string) =>
+  new Uint8Array(data.split(",").map(Number));

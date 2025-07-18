@@ -1,12 +1,7 @@
 import { Logger } from "@src/utils/logger";
 import { deSerializeCommitment } from "@src/utils/vault/metadata";
-import {
-  Address,
-  encodeAbiParameters,
-  Hex,
-  parseAbiParameters,
-  PrivateKeyAccount,
-} from "viem";
+import { Address, encodeAbiParameters, Hex, parseAbiParameters } from "viem";
+import { AccountService } from "../ledger";
 
 interface ChallengeResponse {
   random: Hex;
@@ -24,12 +19,15 @@ const AUTH_TOKEN_ABI = parseAbiParameters(
 export default class TesService {
   constructor(
     public readonly tesUrl: string,
-    public readonly account: PrivateKeyAccount,
-  ) {}
+    public readonly accountService: AccountService,
+  ) {
+    this.account = this.accountService.getAccount()!;
+  }
 
   private authToken: Hex | undefined;
   private timeout = 0;
   private logger = new Logger(TesService.name);
+  private account: NonNullable<ReturnType<AccountService["getAccount"]>>;
 
   private async challenge() {
     this.logger.log("Run challenge for tes auth");

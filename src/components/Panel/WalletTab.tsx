@@ -5,13 +5,19 @@ import { shortString } from "@src/utils/common";
 import { useSendModal } from "./hooks/useSendModal";
 import { useCopyAddress } from "./hooks/useCopyAddress";
 import { formatUnits } from "viem";
-import { WalletContext } from "@src/context/wallet.context";
+import { LedgerContext } from "@src/context/ledger.context";
 import { useContext, useEffect, useState } from "react";
 
 export default function WalletTab() {
   const { showCopiedTooltip, handleCopyAddress, address } = useCopyAddress();
-  const { privateBalance, isLoading, error, decimals, walletService } =
-    useContext(WalletContext);
+  const {
+    privateBalance,
+    isConnecting,
+    error,
+    decimals,
+    ledgerServices,
+    connected,
+  } = useContext(LedgerContext);
   const {
     isModalOpen,
     isModalLoading,
@@ -26,20 +32,21 @@ export default function WalletTab() {
 
   useEffect(() => {
     const fetchSyncStatus = async () => {
-      if (!walletService) return;
-      const { processedBlock, currentBlock } = await walletService.syncStatus();
+      if (!ledgerServices || !connected) return;
+      const { processedBlock, currentBlock } =
+        await ledgerServices.ledgerService.syncStatus();
       setBlocksToSync(currentBlock - processedBlock);
     };
     fetchSyncStatus();
     const interval = setInterval(fetchSyncStatus, 300);
     return () => clearInterval(interval);
-  }, [walletService]);
+  }, [ledgerServices, connected]);
 
   return (
     <div className="flex flex-col items-center justify-center h-full px-4 pt-4">
       <div className="text-2xl font-bold text-white mb-4">Private Balance:</div>
       {error && <div className="text-white">{error.message}</div>}
-      {isLoading && (
+      {isConnecting && (
         <>
           <div className="w-48 h-12 bg-gray-700 rounded-lg animate-pulse" />
           <div className="mt-1">
@@ -48,10 +55,8 @@ export default function WalletTab() {
           </div>
         </>
       )}
-      {!isLoading && !error && (
-        <>
-          <div className="text-4xl h-12 font-extrabold text-white">{`$${formatUnits(privateBalance, decimals)}`}</div>
-        </>
+      {!isConnecting && !error && connected && (
+        <div className="text-4xl h-12 font-extrabold text-white">{`$${formatUnits(privateBalance, decimals)}`}</div>
       )}
       <div className="flex items-center gap-2 mt-2 mb-4 relative">
         <a

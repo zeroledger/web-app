@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { Loader } from "@src/components/Loader";
 import { BackButton } from "@src/components/Buttons/BackButton";
 import { SuccessMessage } from "@src/components/Modals/SuccessMessage";
-import { WalletContext } from "@src/context/wallet.context";
+import { LedgerContext } from "@src/context/ledger.context";
 import { ErrorMessage } from "@src/components/Modals/ErrorMessage";
 import { DepositForm } from "./DepositForm";
 
@@ -32,7 +32,7 @@ export default function DepositModal({
   formMethods,
 }: DepositModalProps) {
   const { handleSubmit } = formMethods;
-  const { decimals } = useContext(WalletContext);
+  const { decimals } = useContext(LedgerContext);
 
   const onSubmit = (data: DepositFormData) => {
     onDeposit(data, decimals);

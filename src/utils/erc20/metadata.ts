@@ -1,6 +1,6 @@
 import { Address, Hex } from "viem";
-import { CustomClient } from "@src/common.types";
 import { ERC_20_WITH_MINT_ABI } from "./constants";
+import { type CustomClient } from "@src/services/core/evmClient.service";
 
 export type ERC20MetadataParams = {
   tokenAddress: Hex;

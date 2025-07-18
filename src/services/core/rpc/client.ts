@@ -26,7 +26,9 @@ export class JsonRpcClient<SvcInterface> {
   constructor(
     private readonly axios: Axios,
     private readonly clientId: Address = toHex(randomBytes(32)),
-  ) {}
+  ) {
+    console.log("asdasd");
+  }
 
   getService(
     url: string,

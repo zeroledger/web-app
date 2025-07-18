@@ -2,7 +2,7 @@ import { Field, Label, Input } from "@headlessui/react";
 import clsx from "clsx";
 import { UseFormReturn } from "react-hook-form";
 import { useContext } from "react";
-import { WalletContext } from "@src/context/wallet.context";
+import { LedgerContext } from "@src/context/ledger.context";
 import { parseUnits } from "viem";
 import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
 
@@ -24,7 +24,7 @@ export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
     clearErrors,
     setValue,
   } = formMethods;
-  const { privateBalance, decimals } = useContext(WalletContext);
+  const { privateBalance, decimals } = useContext(LedgerContext);
 
   const validateAmount = (value: string) => {
     if (!value) return "Amount is required";

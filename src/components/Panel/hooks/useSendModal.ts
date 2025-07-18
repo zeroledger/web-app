@@ -1,7 +1,7 @@
 import { useState, useContext } from "react";
 import { useForm } from "react-hook-form";
 import { Address, parseUnits } from "viem";
-import { WalletContext } from "@src/context/wallet.context";
+import { LedgerContext } from "@src/context/ledger.context";
 import { useSwipe } from "./useSwipe";
 
 interface PaymentFormData {
@@ -10,7 +10,7 @@ interface PaymentFormData {
 }
 
 export const useSendModal = (decimals: number) => {
-  const { walletService } = useContext(WalletContext);
+  const { ledgerServices } = useContext(LedgerContext);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalLoading, setIsModalLoading] = useState(false);
   const [isModalSuccess, setIsModalSuccess] = useState(false);
@@ -37,7 +37,7 @@ export const useSendModal = (decimals: number) => {
   const handleSend = async (data: PaymentFormData) => {
     setIsModalLoading(true);
     try {
-      await walletService?.send(
+      await ledgerServices?.ledgerService?.send(
         parseUnits(data.amount, decimals),
         data.recipient as Address,
       );

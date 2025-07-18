@@ -10,12 +10,12 @@ import { usePruneModal } from "./hooks/usePruneModal";
 import { useDepositModal } from "./hooks/useDepositModal";
 import { useFaucet } from "./hooks/useFaucet";
 import { useWithdrawModal } from "./hooks/useWithdrawModal";
-import { WalletContext } from "@src/context/wallet.context";
+import { LedgerContext } from "@src/context/ledger.context";
 import { useContext } from "react";
 import { SpendModal } from "../Modals/SpendModal";
 
 export default function MenuTab() {
-  const { decimals, isLoading: walletDataLoading } = useContext(WalletContext);
+  const { decimals, isConnecting } = useContext(LedgerContext);
   const {
     isDepositModalOpen,
     isDepositModalLoading,
@@ -66,7 +66,7 @@ export default function MenuTab() {
         <button
           className={`${buttonStyle} ${disabledButtonStyle}`}
           onClick={onWithdrawModalOpen}
-          disabled={isFauceting || walletDataLoading}
+          disabled={isFauceting || isConnecting}
         >
           Withdraw
           <ArrowIcon rotate={90} />
@@ -74,14 +74,14 @@ export default function MenuTab() {
         <button
           onClick={onDepositModalOpen}
           className={`${buttonStyle} ${disabledButtonStyle}`}
-          disabled={isFauceting || walletDataLoading}
+          disabled={isFauceting || isConnecting}
         >
           Deposit
           <ArrowIcon />
         </button>
         <button
           className={`${buttonStyle} ${disabledButtonStyle}`}
-          disabled={isFauceting || walletDataLoading}
+          disabled={isFauceting || isConnecting}
         >
           F.A.Q
           <QuestionIcon />
@@ -89,7 +89,7 @@ export default function MenuTab() {
         <button
           className={`${buttonStyle} ${disabledButtonStyle}`}
           onClick={onPruneModalOpen}
-          disabled={isFauceting || walletDataLoading}
+          disabled={isFauceting || isConnecting}
         >
           Prune Wallet
           <TrashIcon />
@@ -97,7 +97,7 @@ export default function MenuTab() {
         <button
           className={`${buttonStyle} ${disabledButtonStyle}`}
           onClick={handleFaucet}
-          disabled={isFauceting || walletDataLoading}
+          disabled={isFauceting || isConnecting}
         >
           Faucet
           <FaucetIcon className="mr-1" />
