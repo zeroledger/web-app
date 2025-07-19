@@ -6,11 +6,9 @@ interface SwipeContextType {
   enableSwipe: () => void;
 }
 
-export const SwipeContext = createContext<SwipeContextType | undefined>(
-  undefined,
-);
+const SwipeContext = createContext<SwipeContextType | undefined>(undefined);
 
-export function SwipeProvider({ children }: { children: ReactNode }) {
+function SwipeProvider({ children }: { children: ReactNode }) {
   const [isSwipeEnabled, setIsSwipeEnabled] = useState(true);
 
   const value = useMemo(
@@ -30,3 +28,5 @@ export function SwipeProvider({ children }: { children: ReactNode }) {
     <SwipeContext.Provider value={value}>{children}</SwipeContext.Provider>
   );
 }
+
+export { SwipeContext, SwipeProvider };
