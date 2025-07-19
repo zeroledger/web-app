@@ -1,6 +1,6 @@
 import { Hex } from "viem";
 import { ERC_20_WITH_MINT_ABI } from "./constants";
-import { CustomClient } from "@src/common.types";
+import { type CustomClient } from "@src/services/core/evmClient.service";
 
 export type TransferProps = {
   tokenAddress: Hex;

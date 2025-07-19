@@ -3,7 +3,7 @@ import { Address } from "viem";
 import { VAULT_ABI_EVENTS } from "./vault.abi";
 import { VaultEvent } from "./types";
 import { format } from "../common";
-import { CustomClient } from "@src/common.types";
+import { type CustomClient } from "@src/services/core/evmClient.service";
 
 export const watchVault = (
   client: CustomClient,
