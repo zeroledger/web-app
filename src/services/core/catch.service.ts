@@ -2,7 +2,7 @@ import { EventEmitter } from "node:events";
 
 class CatchService extends EventEmitter {
   catch(e: Error) {
-    console.error(`Error: ${e.message}`);
+    console.error(e);
     this.emit("errorNotification", e.message);
   }
 }

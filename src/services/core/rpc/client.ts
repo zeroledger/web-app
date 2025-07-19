@@ -1,8 +1,8 @@
 import type { JsonRpcResponse, ServiceClient } from "./types";
-import { randomBytes } from "@noble/hashes/utils";
-import { Address, toHex } from "viem";
+import { Address } from "viem";
 import type { Axios } from "axios";
 import { JsonRpcErrorResponse, JsonRpcException } from "./dto";
+import { generatePrivateKey } from "viem/accounts";
 
 const serializeResponse = <T>(
   response: JsonRpcResponse<T> | JsonRpcErrorResponse,
@@ -25,9 +25,9 @@ export class JsonRpcClient<SvcInterface> {
 
   constructor(
     private readonly axios: Axios,
-    private readonly clientId: Address = toHex(randomBytes(32)),
+    private readonly clientId?: Address,
   ) {
-    console.log("asdasd");
+    this.clientId = clientId ?? generatePrivateKey();
   }
 
   getService(

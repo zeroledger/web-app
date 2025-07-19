@@ -1,7 +1,7 @@
-import { randomBytes } from "@noble/hashes/utils";
+import { generatePrivateKey } from "viem/accounts";
 import { computePoseidon } from "@src/utils/poseidon";
 import { CircuitType, getCircuitType, prover } from "@src/utils/prover";
-import { Address, Hex, toHex } from "viem";
+import { Address, Hex } from "viem";
 import {
   SpendInput,
   TransactionStruct,
@@ -9,7 +9,6 @@ import {
   PublicOutput,
   SelectedCommitmentRecord,
 } from "./types";
-import { logStringify } from "../common";
 import { encode } from "./metadata";
 
 async function createOutputs(amount: bigint, totalInputAmount: bigint) {
@@ -20,7 +19,7 @@ async function createOutputs(amount: bigint, totalInputAmount: bigint) {
   const outputAmounts: bigint[] = [];
   const outputSValues: bigint[] = [];
 
-  const receiverSValue = BigInt(toHex(randomBytes(32)));
+  const receiverSValue = BigInt(generatePrivateKey());
   const receiverHash = await computePoseidon({
     amount,
     entropy: receiverSValue,
@@ -32,7 +31,7 @@ async function createOutputs(amount: bigint, totalInputAmount: bigint) {
 
   // Create change output if needed
   if (hasChange) {
-    const changeSValue = BigInt(toHex(randomBytes(32)));
+    const changeSValue = BigInt(generatePrivateKey());
     const changeHash = await computePoseidon({
       amount: changeAmount,
       entropy: changeSValue,
@@ -187,10 +186,6 @@ export default async function prepareSpend({
   };
 
   const circuitType = getCircuitType(commitments.length, outputHashes.length);
-
-  console.log(
-    `circuitType: ${circuitType} with proofInput: ${logStringify(proofInput)}`,
-  );
 
   const { calldata_proof } = await generateSpendProof(circuitType, proofInput);
 

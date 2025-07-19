@@ -1,7 +1,7 @@
-import { CustomClient } from "@src/common.types";
 import { Address, Hex, Log } from "viem";
 import { Proof } from "@src/utils/prover";
 import { VAULT_ABI_EVENTS } from "./vault.abi";
+import { CustomClient } from "@src/services/core/evmClient.service";
 
 export type DepositCommitmentParamsStruct = {
   poseidonHash: bigint;
@@ -113,6 +113,26 @@ export type VaultEvent = Log<
   (typeof VAULT_ABI_EVENTS)[number],
   undefined,
   typeof VAULT_ABI_EVENTS
+>;
+
+export type VaultCommitmentCreatedEvent = Log<
+  bigint,
+  number,
+  boolean,
+  NonNullable<(typeof VAULT_ABI_EVENTS)[number]>,
+  undefined,
+  typeof VAULT_ABI_EVENTS,
+  "CommitmentCreated"
+>;
+
+export type VaultCommitmentRemovedEvent = Log<
+  bigint,
+  number,
+  boolean,
+  NonNullable<(typeof VAULT_ABI_EVENTS)[number]>,
+  undefined,
+  typeof VAULT_ABI_EVENTS,
+  "CommitmentRemoved"
 >;
 
 export type SelectedCommitmentRecord = {

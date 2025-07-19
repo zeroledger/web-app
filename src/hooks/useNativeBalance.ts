@@ -1,6 +1,7 @@
 import { useContext, useCallback } from "react";
 import useSWR from "swr";
 import { LedgerContext } from "@src/context/ledger.context";
+import { accountService } from "@src/services/ledger/accounts.service";
 import { swrKeyForClient } from "@src/utils/swrKey";
 
 export default function useNativeBalance() {
@@ -8,7 +9,7 @@ export default function useNativeBalance() {
   const fetcher = useCallback(async () => {
     if (ledgerServices && connected) {
       return ledgerServices.evmClientService.client.getBalance({
-        address: ledgerServices.accountService.getAccount()!.address,
+        address: accountService.getAccount()!.address,
       });
     }
     return 0n;

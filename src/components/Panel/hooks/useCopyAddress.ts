@@ -1,9 +1,8 @@
-import { LedgerContext } from "@src/context/ledger.context";
-import { useContext, useState } from "react";
+import { accountService } from "@src/services/ledger/accounts.service";
+import { useState } from "react";
 
 export const useCopyAddress = () => {
-  const { ledgerServices } = useContext(LedgerContext);
-  const address = ledgerServices!.accountService.getAccount()!.address;
+  const address = accountService.getAccount()!.address;
   const [showCopiedTooltip, setShowCopiedTooltip] = useState(false);
 
   const handleCopyAddress = async () => {

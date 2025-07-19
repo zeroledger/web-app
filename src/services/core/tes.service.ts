@@ -2,6 +2,7 @@ import { Logger } from "@src/utils/logger";
 import { deSerializeCommitment } from "@src/utils/vault/metadata";
 import { Address, encodeAbiParameters, Hex, parseAbiParameters } from "viem";
 import { AccountService } from "../ledger";
+import { MemoryQueue } from "@src/services/core/queue";
 
 interface ChallengeResponse {
   random: Hex;
@@ -20,6 +21,7 @@ export default class TesService {
   constructor(
     public readonly tesUrl: string,
     public readonly accountService: AccountService,
+    private readonly memoryQueue: MemoryQueue,
   ) {
     this.account = this.accountService.getAccount()!;
   }
@@ -37,7 +39,7 @@ export default class TesService {
     const { random, expiration } = (await response.json()) as ChallengeResponse;
     const authToken = await this.getAuthToken(random);
     this.logger.log(
-      `Update auth token ${authToken.length} with timeout ${expiration}`,
+      `Update auth token $(len: ${authToken.length}) with timeout ${expiration}`,
     );
     this.authToken = authToken;
     this.timeout = expiration;
@@ -63,10 +65,16 @@ export default class TesService {
     return headers;
   }
 
+  private manageAuth() {
+    return this.memoryQueue.schedule("TesService.manageAuth", async () => {
+      if (!this.authToken || this.timeout < Date.now()) {
+        await this.challenge();
+      }
+    });
+  }
+
   async getTrustedEncryptionToken() {
-    if (!this.authToken || this.timeout < Date.now()) {
-      await this.challenge();
-    }
+    await this.manageAuth();
     const response = await fetch(`${this.tesUrl}/encryption/tepk`, {
       headers: this.setAccessToken(new Headers()),
     });
@@ -75,9 +83,7 @@ export default class TesService {
   }
 
   async decrypt(encryptedCommitment: Hex, token: Address) {
-    if (!this.authToken || this.timeout < Date.now()) {
-      await this.challenge();
-    }
+    await this.manageAuth();
 
     const requestData = {
       encryptedCommitments: [encryptedCommitment],
@@ -95,5 +101,10 @@ export default class TesService {
     return deSerializeCommitment(
       (await response.json()).decryptedCommitments[0],
     );
+  }
+
+  reset() {
+    delete this.authToken;
+    this.timeout = 0;
   }
 }

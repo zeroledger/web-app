@@ -9,6 +9,7 @@ import {
 import { semiStringToUint8Array } from "@src/utils/common";
 import { privateKeyToAccount } from "viem/accounts";
 import { decryptData, encryptData } from "@src/utils/crypt";
+import { APP_PREFIX_KEY } from "@src/common.constants";
 
 export type EncryptedAccountsStore = Record<
   string,
@@ -87,7 +88,6 @@ export class AccountService extends EventEmitter {
     const encryptedAccountsList = Object.values(this.encryptedAccounts());
 
     if (privateKey && !encryptedAccountsList.length) {
-      console.log("create");
       this._pk = privateKey;
       await this.create(password, privateKey);
       return;
@@ -136,3 +136,5 @@ export class AccountService extends EventEmitter {
     this.emit(AccountServiceEvents.ACCOUNT_SERVICE_CHANGE, this._account);
   }
 }
+
+export const accountService = new AccountService(APP_PREFIX_KEY);

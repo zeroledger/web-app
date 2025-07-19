@@ -9,17 +9,11 @@ import {
 import { type Hex } from "viem";
 import { Chain, optimismSepolia } from "viem/chains";
 
-import {
-  AccountService,
-  initialize,
-  LedgerService,
-  LedgerServiceEvents,
-} from "@src/services/ledger";
+import { initialize, LedgerService } from "@src/services/ledger";
 import { EvmClientService } from "@src/services/core/evmClient.service";
 import { TOKEN_ADDRESS } from "@src/common.constants";
-import { metadata } from "@src/utils/erc20";
-import { swrKeyForClient } from "@src/utils/swrKey";
-import useSWR from "swr";
+import { useBalanceUpdates } from "@src/hooks/useBalanceUpdates";
+import { useMetadata } from "@src/hooks/useMetadata";
 
 const LedgerContext = createContext<{
   initializeLedger: (
@@ -29,7 +23,6 @@ const LedgerContext = createContext<{
   ) => Promise<void>;
   ledgerServices?: {
     ledgerService: LedgerService;
-    accountService: AccountService;
     evmClientService: EvmClientService;
     reset: () => Promise<void>;
   };
@@ -40,7 +33,6 @@ const LedgerContext = createContext<{
   symbol: string;
   publicBalance: bigint;
   decimals: number;
-  onlyLogin: boolean;
 }>({
   initializeLedger: async () => {},
   privateBalance: 0n,
@@ -49,17 +41,16 @@ const LedgerContext = createContext<{
   symbol: "",
   publicBalance: 0n,
   decimals: 18,
-  onlyLogin: false,
 });
 
 const LedgerProvider: React.FC<{ children?: ReactNode }> = ({ children }) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [connected, setIsConnected] = useState(false);
+  const [sync, setIsInSync] = useState(false);
   const [error, setError] = useState<Error>();
   const [privateBalance, setPrivateBalance] = useState<bigint>(0n);
   const [ledgerServices, setLedgerServices] = useState<{
     ledgerService: LedgerService;
-    accountService: AccountService;
     evmClientService: EvmClientService;
     reset: () => Promise<void>;
   }>();
@@ -84,40 +75,26 @@ const LedgerProvider: React.FC<{ children?: ReactNode }> = ({ children }) => {
     [setLedgerServices],
   );
 
-  const fetcher = useCallback(() => {
-    if (ledgerServices && connected) {
-      return metadata({
-        tokenAddress: TOKEN_ADDRESS,
-        client: ledgerServices.evmClientService.client,
-      });
-    }
-    return Promise.resolve(["", 0n, 0] as const);
-  }, [ledgerServices, connected]);
-
   const {
-    data: onchainWalletData,
-    isLoading: isMetadataLoading,
-    error: metadataError,
+    symbol,
+    publicBalance,
+    decimals,
+    isMetadataLoading,
+    metadataError,
     mutate,
-  } = useSWR(
-    ["/metadata", swrKeyForClient(ledgerServices?.evmClientService.client)],
-    fetcher,
-  );
-
-  const [symbol, publicBalance, decimals] = onchainWalletData ?? ["", 0n, 0];
+  } = useMetadata(TOKEN_ADDRESS, ledgerServices?.evmClientService, connected);
 
   const value = useMemo(
     () => ({
       initializeLedger,
       ledgerServices,
       privateBalance,
-      isConnecting: isConnecting && isMetadataLoading,
+      isConnecting: isConnecting || isMetadataLoading || sync,
       connected,
       error: error || metadataError,
       symbol,
       publicBalance,
       decimals,
-      onlyLogin: Boolean(ledgerServices?.accountService.hasAccount),
     }),
     [
       ledgerServices,
@@ -131,31 +108,20 @@ const LedgerProvider: React.FC<{ children?: ReactNode }> = ({ children }) => {
       symbol,
       publicBalance,
       decimals,
+      sync,
     ],
   );
 
+  useBalanceUpdates(ledgerServices, connected, setPrivateBalance, mutate);
+
   useEffect(() => {
-    if (ledgerServices && connected) {
-      ledgerServices.ledgerService.on(
-        LedgerServiceEvents.PRIVATE_BALANCE_CHANGE,
-        setPrivateBalance,
-      );
-      ledgerServices.ledgerService.on(
-        LedgerServiceEvents.ONCHAIN_BALANCE_CHANGE,
-        mutate,
-      );
-      return () => {
-        ledgerServices.ledgerService.off(
-          LedgerServiceEvents.PRIVATE_BALANCE_CHANGE,
-          setPrivateBalance,
-        );
-        ledgerServices.ledgerService.off(
-          LedgerServiceEvents.ONCHAIN_BALANCE_CHANGE,
-          mutate,
-        );
-      };
+    if (ledgerServices?.ledgerService && connected) {
+      setIsInSync(true);
+      ledgerServices?.ledgerService.start().then(() => {
+        setIsInSync(false);
+      });
     }
-  }, [ledgerServices, connected, mutate]);
+  }, [ledgerServices, connected]);
 
   useEffect(() => {
     return () => {
@@ -169,6 +135,3 @@ const LedgerProvider: React.FC<{ children?: ReactNode }> = ({ children }) => {
 };
 
 export { LedgerContext, LedgerProvider };
-
-// account initiation => updates client => updates wallet
-// user change pass/chain => call account => client => wallet chain

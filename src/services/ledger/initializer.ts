@@ -21,7 +21,7 @@ import { LedgerService } from "./ledger.service";
 import CommitmentsService from "./commitments.service";
 import CommitmentsHistoryService from "./history.service";
 import SyncService from "./sync.service";
-import { AccountService } from "./accounts.service";
+import { accountService } from "./accounts.service";
 import { EvmClientService } from "../core/evmClient.service";
 
 const axiosInstance = axios.create();
@@ -31,7 +31,6 @@ export const initialize = async (
   password: string,
   privateKey?: Hex,
 ) => {
-  const accountService = new AccountService(APP_PREFIX_KEY);
   await accountService.open(password, privateKey);
   const evmClientService = new EvmClientService(
     WS_RPC[chain.id],
@@ -51,7 +50,7 @@ export const initialize = async (
     zeroLedgerDataSource,
   );
   const syncService = new SyncService(zeroLedgerDataSource);
-  const tesService = new TesService(TES_URL, accountService);
+  const tesService = new TesService(TES_URL, accountService, queue);
   const ledgerService = new LedgerService(
     accountService,
     evmClientService,
@@ -65,12 +64,12 @@ export const initialize = async (
     syncService,
     tesService,
   );
-  // await ledgerService.start();
   return {
     ledgerService,
-    accountService,
     evmClientService,
     reset: async () => {
+      ledgerService.reset();
+      tesService.reset();
       await zeroLedgerDataSource.clear();
       await accountService.reset();
     },

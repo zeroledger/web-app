@@ -1,5 +1,6 @@
 import { DataSource } from "@src/services/core/db/leveldb.service";
 import { HistoryRecordDto } from "./ledger.dto";
+import { compareEvents } from "@src/utils/events";
 
 export const HistoryNodesEntityKey = {
   name: `history_nodes`,
@@ -49,24 +50,6 @@ export default class CommitmentsHistoryService {
 
   private _store: ReturnType<DataSource["getEntityLevel"]>;
   private _pointersStore: ReturnType<DataSource["getEntityLevel"]>;
-
-  private compareRecords(a: HistoryRecordDto, b: HistoryRecordDto): number {
-    // Compare block numbers first (newest first)
-    const blockA = BigInt(a.blockNumber);
-    const blockB = BigInt(b.blockNumber);
-
-    if (blockA !== blockB) {
-      return blockB > blockA ? 1 : -1; // Newest first
-    }
-
-    // If same block, compare transaction index (newest first)
-    if (a.transactionIndex !== b.transactionIndex) {
-      return b.transactionIndex - a.transactionIndex; // Newest first
-    }
-
-    // If same block and transaction index, maintain insertion order
-    return 0;
-  }
 
   private async _getPointers() {
     const source = await this._pointersStore.get("pointers");
@@ -132,7 +115,7 @@ export default class CommitmentsHistoryService {
     }
     // Case 2: Single node list (head and tail are the same)
     else if (headNode && tailNode && headNode.id === tailNode.id) {
-      const comparison = this.compareRecords(historyRecord, headNode.data);
+      const comparison = compareEvents(historyRecord, headNode.data);
 
       if (comparison >= 0) {
         // Insert before head (new head)
@@ -170,8 +153,8 @@ export default class CommitmentsHistoryService {
     }
     // Case 3: Multiple nodes - find correct insertion point
     else if (headNode && tailNode) {
-      const headComparison = this.compareRecords(historyRecord, headNode.data);
-      const tailComparison = this.compareRecords(historyRecord, tailNode.data);
+      const headComparison = compareEvents(historyRecord, headNode.data);
+      const tailComparison = compareEvents(historyRecord, tailNode.data);
 
       // Insert at head
       if (headComparison >= 0) {
@@ -215,10 +198,7 @@ export default class CommitmentsHistoryService {
           : undefined;
 
         // Find the correct position
-        while (
-          nextNode &&
-          this.compareRecords(historyRecord, nextNode.data) < 0
-        ) {
+        while (nextNode && compareEvents(historyRecord, nextNode.data) < 0) {
           currentNode = nextNode;
           nextNode = currentNode.nextId
             ? await this.getNode(currentNode.nextId)

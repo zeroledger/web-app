@@ -10,11 +10,10 @@ export default defineConfig({
     react(),
     tsconfigPaths(),
     nodePolyfills({
-      include: ["events", "crypto", "timers"],
+      include: ["events"],
       globals: {
         Buffer: true,
         global: true,
-        process: true,
       },
     }),
     tailwindcss(),

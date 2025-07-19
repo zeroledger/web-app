@@ -15,6 +15,7 @@ import { primaryButtonStyle, linkButtonStyle } from "@src/components/Button";
 import { generatePrivateKey } from "viem/accounts";
 import { optimismSepolia } from "viem/chains";
 import { Hash } from "viem";
+import { accountService } from "@src/services/ledger/accounts.service";
 
 export default function RegisterForm() {
   const {
@@ -30,14 +31,13 @@ export default function RegisterForm() {
 
   const navigate = useNavigate();
 
-  const { initializeLedger, connected, onlyLogin } = useContext(LedgerContext);
+  const { initializeLedger, connected } = useContext(LedgerContext);
 
   const [error, setError] = useState<string>();
 
   const onSubmit = useCallback(
     async (data: { password: string; privateKey?: string }) => {
       try {
-        console.log("onSubmit");
         await initializeLedger(
           data.password,
           optimismSepolia,
@@ -45,13 +45,13 @@ export default function RegisterForm() {
         );
       } catch (error) {
         const message = (error as Error).message;
-        const defaultMessage = onlyLogin
+        const defaultMessage = accountService.hasAccount()
           ? "Invalid password"
           : "Failed to register";
         setError(message || defaultMessage);
       }
     },
-    [initializeLedger, onlyLogin],
+    [initializeLedger],
   );
 
   useEffect(() => {
@@ -89,7 +89,7 @@ export default function RegisterForm() {
       onKeyDown={onEnter}
       className="mx-auto mt-5 w-96 px-5 md:px-0"
     >
-      {!onlyLogin && (
+      {!accountService.hasAccount() && (
         <Field>
           <Label className="text-base/6 font-medium text-white">
             Private key
@@ -133,7 +133,11 @@ export default function RegisterForm() {
           </p>
         )}
       </div>
-      <Field className={clsx({ "mt-2": !onlyLogin })}>
+      <Field
+        className={clsx({
+          "mt-2": !accountService.hasAccount(),
+        })}
+      >
         <Label className="text-base/6 font-medium dark:text-white">
           Password
         </Label>
@@ -172,7 +176,7 @@ export default function RegisterForm() {
           className={primaryButtonStyle}
           disabled={isSubmitting}
         >
-          {onlyLogin ? "Login" : "Register"}
+          {accountService.hasAccount() ? "Login" : "Register"}
         </Button>
       </div>
     </form>

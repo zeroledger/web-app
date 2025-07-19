@@ -1,8 +1,8 @@
-import { CustomClient } from "@src/common.types";
 import { Address } from "viem";
 import { DataSource } from "@src/services/core/db/leveldb.service";
 import { getMissedEvents } from "@src/utils/vault/watcher";
 import { VaultEvent } from "@src/utils/vault/types";
+import { CustomClient } from "@src/services/core/evmClient.service";
 
 export const SyncEntityKey = {
   name: `sync_state`,
@@ -14,7 +14,7 @@ export default class SyncService {
   }
 
   private _store: ReturnType<DataSource["getEntityLevel"]>;
-  private _processedBlock: bigint = 30480845n;
+  private _processedBlock: bigint = 30538369n;
 
   /**
    * Get the last synced block number
@@ -22,7 +22,7 @@ export default class SyncService {
    */
   async getLastSyncedBlock(): Promise<string> {
     const lastBlock = await this._store.get("lastSyncedBlock");
-    return lastBlock ?? "30480845";
+    return lastBlock ?? "30538369";
   }
 
   /**

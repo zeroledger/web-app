@@ -1,7 +1,6 @@
-import { randomBytes } from "@noble/hashes/utils";
-import { CustomClient } from "@src/common.types";
+import { generatePrivateKey } from "viem/accounts";
 import { computePoseidon } from "@src/utils/poseidon";
-import { Address, Hex, toHex, zeroAddress } from "viem";
+import { Address, Hex, zeroAddress } from "viem";
 import { prover } from "@src/utils/prover";
 import {
   DepositCommitmentData,
@@ -12,6 +11,7 @@ import {
 } from "./types";
 import { shuffle } from "@src/utils/common";
 import { encode } from "./metadata";
+import { CustomClient } from "@src/services/core/evmClient.service";
 
 async function createDepositStruct(
   token: Address,
@@ -38,7 +38,7 @@ async function generateDepositCommitmentData(
   const hashes: bigint[] = [];
 
   for (let i = 0; i < 3; i++) {
-    const sValue = BigInt(toHex(randomBytes(32)));
+    const sValue = BigInt(generatePrivateKey());
     sValues.push(sValue);
     amounts.push(individualAmounts[i]);
 

@@ -1,12 +1,4 @@
-import {
-  type Hex,
-  isAddress,
-  getAddress,
-  toHex,
-  slice,
-  hexToBigInt,
-} from "viem";
-import { randomBytes } from "@noble/hashes/utils";
+import { type Hex, isAddress, getAddress, slice, hexToBigInt } from "viem";
 
 export const formatValue = (
   value?: string,
@@ -58,8 +50,6 @@ export const delay = <T>(ms: number, value?: T) =>
       res(value);
     }, ms);
   });
-
-export const getRandomHash = (len = 32) => toHex(randomBytes(len));
 
 export type NormalizedSignature = { r: Hex; s: Hex; v: number };
 
