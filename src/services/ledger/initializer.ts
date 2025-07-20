@@ -32,6 +32,7 @@ export const initialize = async (
   privateKey?: Hex,
 ) => {
   await accountService.open(password, privateKey);
+  await accountService.setupViewAccount();
   const evmClientService = new EvmClientService(
     WS_RPC[chain.id],
     RPC[chain.id],

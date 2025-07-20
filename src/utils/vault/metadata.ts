@@ -27,11 +27,11 @@ export const encode = (
   tesUrl: string,
   encryptionPublicKey: Hex,
 ) => {
-  const encyptedCommitment = encrypt(
+  const encryptedCommitment = encrypt(
     JSON.stringify(serializeCommitment(commitment)),
     encryptionPublicKey,
   );
-  return encodeAbiParameters(ENCRYPTION_ABI, [encyptedCommitment, tesUrl]);
+  return encodeAbiParameters(ENCRYPTION_ABI, [encryptedCommitment, tesUrl]);
 };
 
 export const decodeMetadata = (metadata: Hex) => {

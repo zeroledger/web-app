@@ -14,7 +14,7 @@ interface TepkResponse {
 }
 
 const AUTH_TOKEN_ABI = parseAbiParameters(
-  "address userAddress,bytes signature",
+  "address authAddress,bytes authSignature,address ownerAddress,bytes delegationSignature",
 );
 
 export default class TesService {
@@ -23,18 +23,26 @@ export default class TesService {
     public readonly accountService: AccountService,
     private readonly memoryQueue: MemoryQueue,
   ) {
-    this.account = this.accountService.getAccount()!;
+    this.viewAccount = this.accountService.getViewAccount()!;
+    this.mainAccount = this.accountService.getAccount()!;
+    this.delegationSignature = this.accountService.getDelegationSignature()!;
   }
 
-  private authToken: Hex | undefined;
+  private authToken?: Hex;
   private timeout = 0;
   private logger = new Logger(TesService.name);
-  private account: NonNullable<ReturnType<AccountService["getAccount"]>>;
+  private viewAccount: NonNullable<
+    ReturnType<AccountService["getViewAccount"]>
+  >;
+  private mainAccount: NonNullable<ReturnType<AccountService["getAccount"]>>;
+  private delegationSignature: NonNullable<
+    ReturnType<AccountService["getDelegationSignature"]>
+  >;
 
   private async challenge() {
     this.logger.log("Run challenge for tes auth");
     const response = await fetch(
-      `${this.tesUrl}/challenge/${this.account.address}`,
+      `${this.tesUrl}/challenge/${this.viewAccount.address}`,
     );
     const { random, expiration } = (await response.json()) as ChallengeResponse;
     const authToken = await this.getAuthToken(random);
@@ -46,16 +54,17 @@ export default class TesService {
   }
 
   private signChallenge(random: Hex) {
-    return this.account.signMessage({
+    return this.viewAccount.signMessage({
       message: random,
     });
   }
 
   async getAuthToken(random: Hex) {
-    const signature = await this.signChallenge(random);
     const token = encodeAbiParameters(AUTH_TOKEN_ABI, [
-      this.account.address,
-      signature,
+      this.viewAccount.address,
+      await this.signChallenge(random),
+      this.mainAccount.address,
+      this.delegationSignature,
     ]);
     return token;
   }

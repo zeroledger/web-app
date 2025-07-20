@@ -450,7 +450,7 @@ export class LedgerService extends EventEmitter {
         } else {
           commitment = decryptCommitment(
             encryptedCommitment,
-            this.accountService.decryptPrivateKey(),
+            this.accountService.viewPrivateKey()!,
           );
         }
 
