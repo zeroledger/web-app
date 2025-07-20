@@ -1,9 +1,8 @@
 import { EventEmitter } from "node:events";
 import { type PrivateKeyAccount, type Hex, Hash, keccak256, toHex } from "viem";
-import { semiStringToUint8Array } from "@src/utils/common";
 import { privateKeyToAccount } from "viem/accounts";
-import { decryptData, encryptData } from "@src/utils/crypt";
 import { APP_PREFIX_KEY } from "@src/common.constants";
+import { decrypt, encrypt } from "@zeroledger/vycrypt";
 
 export type EncryptedAccountsStore = Record<
   string,
@@ -48,19 +47,81 @@ export class AccountService extends EventEmitter {
 
   constructor(appPrefixKey: string) {
     super();
-    this.PKS_STORE_KEY = `${appPrefixKey}.encodedPKs`;
+    this.PKS_STORE_KEY = `${appPrefixKey}.encodedAccountData`;
   }
 
-  private getEncryptedDataJson() {
-    return localStorage.getItem(this.PKS_STORE_KEY);
+  /*********
+   * Utils *
+   *********/
+
+  private deriveEphemeralEncryptionKeys(password: string) {
+    const pk = keccak256(toHex(password));
+    const pubK = privateKeyToAccount(pk).publicKey;
+    return { pk, pubK };
+  }
+
+  /****************
+   * Main account *
+   ****************/
+
+  private encryptedMainPrivateKey() {
+    return localStorage.getItem(`${this.PKS_STORE_KEY}.main`) as Hex | null;
+  }
+
+  getMainAccount() {
+    return this._account;
+  }
+
+  isLoggedIn() {
+    return this._loggedIn;
+  }
+
+  hasMainAccount() {
+    return Boolean(this.encryptedMainPrivateKey());
+  }
+
+  private async create(password: string, privateKey: Hex) {
+    this._account = privateKeyToAccount(privateKey);
+    const { pubK } = this.deriveEphemeralEncryptionKeys(password);
+    const encryptedMainPublicKey = await encrypt(privateKey, pubK);
+
+    localStorage.setItem(`${this.PKS_STORE_KEY}.main`, encryptedMainPublicKey);
+    this._loggedIn = true;
+  }
+
+  async open(password: string, privateKey?: Hex) {
+    const encryptedMainPk = this.encryptedMainPrivateKey();
+    this._password = password;
+    if (privateKey && !encryptedMainPk) {
+      this._pk = privateKey;
+      await this.create(password, privateKey);
+      return;
+    }
+
+    const { pk } = this.deriveEphemeralEncryptionKeys(password);
+
+    this._pk = (await decrypt(pk, encryptedMainPk!)) as Hash;
+    this._account = privateKeyToAccount(this._pk);
+
+    this._loggedIn = true;
+  }
+
+  /****************
+   * View account *
+   ****************/
+
+  private encryptedViewPrivateKey() {
+    return localStorage.getItem(`${this.PKS_STORE_KEY}.view`) as Hex | null;
+  }
+
+  private encryptedDelegationSignature() {
+    return localStorage.getItem(
+      `${this.PKS_STORE_KEY}.delegation`,
+    ) as Hex | null;
   }
 
   viewPrivateKey() {
     return this._viewPk;
-  }
-
-  getAccount() {
-    return this._account;
   }
 
   getViewAccount() {
@@ -71,63 +132,20 @@ export class AccountService extends EventEmitter {
     return this._delegationSignature;
   }
 
-  isLoggedIn() {
-    return this._loggedIn;
-  }
-
-  hasAccount() {
-    return Object.values(this.encryptedAccounts()).length > 0;
-  }
-
-  encryptedAccounts(): EncryptedAccountsStore {
-    const encryptedDataJson = this.getEncryptedDataJson();
-    if (!encryptedDataJson) {
-      return {};
-    }
-    return JSON.parse(encryptedDataJson) as EncryptedAccountsStore;
-  }
-
-  private async create(password: string, privateKey: Hex) {
-    this._account = privateKeyToAccount(privateKey);
-    const encryption = await encryptData(privateKey, password);
-
-    const encryptedDataJson = JSON.stringify({
-      [this._account.address]: {
-        authTag: encryption.authTag.toString(),
-        ciphertext: encryption.ciphertext.toString(),
-        iv: encryption.iv.toString(),
-        salt: encryption.salt.toString(),
-      },
-    });
-    localStorage.setItem(this.PKS_STORE_KEY, encryptedDataJson);
-    this._loggedIn = true;
-  }
-
-  async open(password: string, privateKey?: Hex) {
-    const encryptedAccountsList = Object.values(this.encryptedAccounts());
-    this._password = password;
-    if (privateKey && !encryptedAccountsList.length) {
-      this._pk = privateKey;
-      await this.create(password, privateKey);
+  async setupViewAccount() {
+    const encryptedViewPk = this.encryptedViewPrivateKey();
+    const encryptedDelegationSignature = this.encryptedDelegationSignature();
+    const { pk, pubK } = this.deriveEphemeralEncryptionKeys(this._password!);
+    if (encryptedViewPk && encryptedDelegationSignature) {
+      this._viewPk = (await decrypt(pk, encryptedViewPk)) as Hash;
+      this._viewAccount = privateKeyToAccount(this._viewPk);
+      this._delegationSignature = (await decrypt(
+        pk,
+        encryptedDelegationSignature,
+      )) as Hex;
       return;
     }
 
-    const firstEncryptedAccount = encryptedAccountsList[0];
-
-    const encodedPrivateKey = {
-      authTag: semiStringToUint8Array(firstEncryptedAccount.authTag),
-      ciphertext: semiStringToUint8Array(firstEncryptedAccount.ciphertext),
-      iv: semiStringToUint8Array(firstEncryptedAccount.iv),
-      salt: semiStringToUint8Array(firstEncryptedAccount.salt),
-    };
-
-    this._pk = (await decryptData(encodedPrivateKey, password)) as Hash;
-    this._account = privateKeyToAccount(this._pk);
-
-    this._loggedIn = true;
-  }
-
-  async setupViewAccount() {
     if (this._account && this._password) {
       this._viewPk = keccak256(
         await this._account.sign({
@@ -146,12 +164,27 @@ export class AccountService extends EventEmitter {
           delegate: this._viewAccount.address,
         },
       });
+      localStorage.setItem(
+        `${this.PKS_STORE_KEY}.view`,
+        await encrypt(this._viewPk, pubK),
+      );
+      localStorage.setItem(
+        `${this.PKS_STORE_KEY}.delegation`,
+        await encrypt(this._delegationSignature, pubK),
+      );
     }
   }
 
   async reset() {
-    this._account = undefined;
-    localStorage.removeItem(this.PKS_STORE_KEY);
+    delete this._account;
+    delete this._viewAccount;
+    delete this._password;
+    delete this._pk;
+    delete this._viewPk;
+    delete this._delegationSignature;
+    localStorage.removeItem(`${this.PKS_STORE_KEY}.main`);
+    localStorage.removeItem(`${this.PKS_STORE_KEY}.view`);
+    localStorage.removeItem(`${this.PKS_STORE_KEY}.delegation`);
   }
 }
 

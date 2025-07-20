@@ -45,7 +45,7 @@ export default function RegisterForm() {
         );
       } catch (error) {
         const message = (error as Error).message;
-        const defaultMessage = accountService.hasAccount()
+        const defaultMessage = accountService.hasMainAccount()
           ? "Invalid password"
           : "Failed to register";
         setError(message || defaultMessage);
@@ -89,7 +89,7 @@ export default function RegisterForm() {
       onKeyDown={onEnter}
       className="mx-auto mt-5 w-96 px-5 md:px-0"
     >
-      {!accountService.hasAccount() && (
+      {!accountService.hasMainAccount() && (
         <Field>
           <Label className="text-base/6 font-medium text-white">
             Private key
@@ -135,7 +135,7 @@ export default function RegisterForm() {
       </div>
       <Field
         className={clsx({
-          "mt-2": !accountService.hasAccount(),
+          "mt-2": !accountService.hasMainAccount(),
         })}
       >
         <Label className="text-base/6 font-medium dark:text-white">
@@ -176,7 +176,7 @@ export default function RegisterForm() {
           className={primaryButtonStyle}
           disabled={isSubmitting}
         >
-          {accountService.hasAccount() ? "Login" : "Register"}
+          {accountService.hasMainAccount() ? "Login" : "Register"}
         </Button>
       </div>
     </form>

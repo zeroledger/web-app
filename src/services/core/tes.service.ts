@@ -24,7 +24,7 @@ export default class TesService {
     private readonly memoryQueue: MemoryQueue,
   ) {
     this.viewAccount = this.accountService.getViewAccount()!;
-    this.mainAccount = this.accountService.getAccount()!;
+    this.mainAccount = this.accountService.getMainAccount()!;
     this.delegationSignature = this.accountService.getDelegationSignature()!;
   }
 
@@ -34,7 +34,9 @@ export default class TesService {
   private viewAccount: NonNullable<
     ReturnType<AccountService["getViewAccount"]>
   >;
-  private mainAccount: NonNullable<ReturnType<AccountService["getAccount"]>>;
+  private mainAccount: NonNullable<
+    ReturnType<AccountService["getMainAccount"]>
+  >;
   private delegationSignature: NonNullable<
     ReturnType<AccountService["getDelegationSignature"]>
   >;

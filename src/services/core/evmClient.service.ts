@@ -33,7 +33,7 @@ export class EvmClientService {
     chain: Chain,
   ) {
     this.client = createWalletClient({
-      account: accountService.getAccount() as PrivateKeyAccount,
+      account: accountService.getMainAccount() as PrivateKeyAccount,
       chain,
       transport: fallback([webSocket(wsUrl), http(httpUrl), http()]),
       pollingInterval,

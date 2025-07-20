@@ -43,7 +43,7 @@ export const initialize = async (
   const queue = new MemoryQueue();
   const faucetRpcClient = new JsonRpcClient<FaucetRpc>(
     axiosInstance,
-    accountService.getAccount()?.address,
+    accountService.getMainAccount()!.address,
   );
   const zeroLedgerDataSource = new DataSource(APP_PREFIX_KEY);
   const commitmentsService = new CommitmentsService(zeroLedgerDataSource);

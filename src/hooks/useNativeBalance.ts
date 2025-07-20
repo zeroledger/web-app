@@ -9,7 +9,7 @@ export default function useNativeBalance() {
   const fetcher = useCallback(async () => {
     if (ledgerServices && connected) {
       return ledgerServices.evmClientService.client.getBalance({
-        address: accountService.getAccount()!.address,
+        address: accountService.getMainAccount()!.address,
       });
     }
     return 0n;
