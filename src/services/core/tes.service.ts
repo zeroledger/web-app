@@ -1,6 +1,12 @@
 import { Logger } from "@src/utils/logger";
 import { deSerializeCommitment } from "@src/utils/vault/metadata";
-import { Address, encodeAbiParameters, Hex, parseAbiParameters } from "viem";
+import {
+  Address,
+  encodeAbiParameters,
+  Hash,
+  Hex,
+  parseAbiParameters,
+} from "viem";
 import { AccountService } from "../ledger";
 import { MemoryQueue } from "@src/services/core/queue";
 
@@ -112,6 +118,53 @@ export default class TesService {
     return deSerializeCommitment(
       (await response.json()).decryptedCommitments[0],
     );
+  }
+
+  async syncWithTes(token: Address, fromBlock: string, toBlock: string) {
+    try {
+      await this.manageAuth();
+      const response = await fetch(
+        `${this.tesUrl}/indexer?owner=${this.mainAccount.address}&token=${token}&fromBlock=${fromBlock}&toBlock=${toBlock}`,
+        {
+          headers: this.setAccessToken(new Headers()),
+        },
+      );
+      const data: {
+        events: {
+          eventName: "CommitmentCreated" | "CommitmentRemoved";
+          args: {
+            owner: string;
+            token: string;
+            poseidonHash: string;
+            metadata?: string;
+          };
+          blockNumber: string;
+          transactionIndex: number;
+          transactionHash: string;
+        }[];
+        syncedBlock: string;
+      } = await response.json();
+
+      return {
+        syncedBlock: data.syncedBlock,
+        events: data.events.map((event) => ({
+          eventName: event.eventName,
+          args: {
+            ...event.args,
+            poseidonHash: BigInt(event.args.poseidonHash),
+          },
+          blockNumber: BigInt(event.blockNumber),
+          transactionIndex: event.transactionIndex,
+          transactionHash: event.transactionHash as Hash,
+        })),
+      };
+    } catch (error) {
+      this.logger.error(error);
+      return {
+        syncedBlock: fromBlock,
+        events: [],
+      };
+    }
   }
 
   reset() {

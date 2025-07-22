@@ -61,7 +61,7 @@ export default class SyncService {
    * @param currentBlock - The current block number
    * @returns Array of missed events (CommitmentCreated and CommitmentRemoved)
    */
-  async runSync(
+  async runOnchainSync(
     client: CustomClient,
     vault: Address,
     address: Address,

@@ -158,12 +158,20 @@ export class LedgerService extends EventEmitter {
           this.eventsCache.push(...events);
           this.eventsHandlerDebounced();
         });
-        const syncEvents = await this.syncService.runSync(
+        const currentBlock = await this.clientService.client.getBlockNumber();
+        const tesSyncEvents = await this.tesService.syncWithTes(
+          this.token,
+          await this.syncService.getLastSyncedBlock(),
+          currentBlock.toString(),
+        );
+        this.eventsCache.push(...(tesSyncEvents.events as VaultEvent[]));
+        await this.syncService.setLastSyncedBlock(tesSyncEvents.syncedBlock);
+        const syncEvents = await this.syncService.runOnchainSync(
           this.clientService.client,
           this.vault,
           this.address,
           this.token,
-          await this.clientService.client.getBlockNumber(),
+          currentBlock,
         );
         this.eventsCache.push(...syncEvents);
         await this.handleEventsBatch();
