@@ -30,6 +30,7 @@ import { HistoryRecordDto, LedgerRecordDto } from "./ledger.dto";
 import { EvmClientService } from "../core/evmClient.service";
 import { AccountService } from "./accounts.service";
 import { compareEvents, EventLike } from "@src/utils/events";
+import { logStringify } from "@src/utils/common";
 
 export const LedgerServiceEvents = {
   PRIVATE_BALANCE_CHANGE: "PRIVATE_BALANCE_CHANGE",
@@ -165,6 +166,9 @@ export class LedgerService extends EventEmitter {
           currentBlock.toString(),
         );
         this.eventsCache.push(...(tesSyncEvents.events as VaultEvent[]));
+        this.logger.log(
+          `Update last synced block after tes sync to ${tesSyncEvents.syncedBlock}`,
+        );
         await this.syncService.setLastSyncedBlock(tesSyncEvents.syncedBlock);
         const syncEvents = await this.syncService.runOnchainSync(
           this.clientService.client,
@@ -436,14 +440,15 @@ export class LedgerService extends EventEmitter {
           event.args.metadata,
         );
 
-        this.logger.log(`encryptedCommitment: ${encryptedCommitment}`);
+        this.logger.log(`e ${logStringify(event)}`);
 
         let commitment: CommitmentStruct;
 
         if (tesUrl.length && tesUrl === this.tesService.tesUrl) {
           commitment = await this.tesService.decrypt(
-            encryptedCommitment,
+            event.blockNumber!.toString(),
             this.token,
+            event.args.poseidonHash!.toString(),
           );
         } else if (tesUrl.length && tesUrl !== this.tesService.tesUrl) {
           const shortLivedTes = new TesService(
@@ -452,10 +457,14 @@ export class LedgerService extends EventEmitter {
             this.queue,
           );
           commitment = await shortLivedTes.decrypt(
-            encryptedCommitment,
+            event.blockNumber!.toString(),
             this.token,
+            event.args.poseidonHash!.toString(),
           );
         } else {
+          this.logger.log(
+            `local decryption of encryptedCommitment: ${encryptedCommitment}`,
+          );
           commitment = decryptCommitment(
             encryptedCommitment,
             this.accountService.viewPrivateKey()!,

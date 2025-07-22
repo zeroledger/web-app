@@ -99,12 +99,13 @@ export default class TesService {
     return tepk;
   }
 
-  async decrypt(encryptedCommitment: Hex, token: Address) {
+  async decrypt(block: string, token: Address, poseidonHash: string) {
     await this.manageAuth();
 
     const requestData = {
-      encryptedCommitments: [encryptedCommitment],
+      block,
       token,
+      poseidonHash,
     };
 
     const response = await fetch(`${this.tesUrl}/encryption/decrypt`, {
@@ -115,9 +116,7 @@ export default class TesService {
       body: JSON.stringify(requestData),
     });
 
-    return deSerializeCommitment(
-      (await response.json()).decryptedCommitments[0],
-    );
+    return deSerializeCommitment((await response.json()).decryptedCommitment);
   }
 
   async syncWithTes(token: Address, fromBlock: string, toBlock: string) {
