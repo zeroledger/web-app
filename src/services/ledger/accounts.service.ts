@@ -147,6 +147,10 @@ export class AccountService extends EventEmitter {
     }
 
     if (this._account && this._password) {
+      /**
+       * @todo: consider to not sign, but simply generate view keys like keccak256(toHex(this._password))
+       * this decreases security, but removes 1 signature request to eoa
+       */
       this._viewPk = keccak256(
         await this._account.sign({
           hash: keccak256(toHex(this._password)),
