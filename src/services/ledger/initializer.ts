@@ -9,6 +9,7 @@ import {
   RPC,
   WS_RPC,
   pollingInterval,
+  FORWARDER_ADDRESS,
 } from "@src/common.constants";
 
 import { JsonRpcClient } from "@src/services/core/rpc";
@@ -56,6 +57,7 @@ export const initialize = async (
     accountService,
     evmClientService,
     VAULT_ADDRESS,
+    FORWARDER_ADDRESS,
     TOKEN_ADDRESS,
     FAUCET_URL,
     faucetRpcClient,

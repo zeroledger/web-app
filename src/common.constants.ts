@@ -14,6 +14,9 @@ export const TES_URL: Address = import.meta.env.VITE_TES_URL;
 
 export const VAULT_ADDRESS: Address = import.meta.env.VITE_VAULT_ADDRESS;
 
+export const FORWARDER_ADDRESS: Address = import.meta.env
+  .VITE_FORWARDER_ADDRESS;
+
 export const RPC: { [prop: number]: string } = {
   [optimismSepolia.id]: `https://optimism-sepolia.infura.io/v3/${import.meta.env.VITE_INFURA_RPC_KEY}`,
 };

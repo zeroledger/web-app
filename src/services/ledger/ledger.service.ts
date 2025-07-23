@@ -20,6 +20,12 @@ import {
   decryptCommitment,
   VaultCommitmentCreatedEvent,
   VaultCommitmentRemovedEvent,
+  getDepositTxData,
+  getSpendTxData,
+  getWithdrawTxData,
+  getDepositTxGas,
+  getSpendTxGas,
+  getWithdrawTxGas,
 } from "@src/utils/vault";
 import { catchService } from "@src/services/core/catch.service";
 import TesService from "@src/services/core/tes.service";
@@ -31,6 +37,7 @@ import { EvmClientService } from "../core/evmClient.service";
 import { AccountService } from "./accounts.service";
 import { compareEvents, EventLike } from "@src/utils/events";
 import { logStringify } from "@src/utils/common";
+import { createSignedMetaTx, getForwarderNonce } from "@src/utils/metatx";
 
 export const LedgerServiceEvents = {
   PRIVATE_BALANCE_CHANGE: "PRIVATE_BALANCE_CHANGE",
@@ -50,6 +57,7 @@ export class LedgerService extends EventEmitter {
     private readonly accountService: AccountService,
     private readonly clientService: EvmClientService,
     private readonly vault: Address,
+    private readonly forwarder: Address,
     private readonly token: Address,
     private readonly faucetUrl: string,
     private readonly faucetRpcClient: JsonRpcClient<FaucetRpc>,
@@ -112,222 +120,6 @@ export class LedgerService extends EventEmitter {
     this.safeEmit(LedgerServiceEvents.ONCHAIN_BALANCE_CHANGE);
   }
 
-  async getTransactions() {
-    try {
-      const transactions = await this.commitmentsHistoryService.all();
-
-      // Group transactions by transaction hash and categorize as incomings/outgoings
-      const groupedTransactions = transactions.reduce(
-        (groups, transaction) => {
-          const txHash = transaction.transactionHash || "unknown";
-
-          if (!groups[txHash]) {
-            groups[txHash] = {
-              incomings: [],
-              outgoings: [],
-            };
-          }
-
-          // Categorize based on status
-          if (transaction.status === "added") {
-            groups[txHash].incomings.push(transaction);
-          } else if (transaction.status === "spend") {
-            groups[txHash].outgoings.push(transaction);
-          }
-
-          return groups;
-        },
-        {} as Record<
-          string,
-          { incomings: typeof transactions; outgoings: typeof transactions }
-        >,
-      );
-
-      return groupedTransactions;
-    } catch (error) {
-      this.catchService.catch(error as Error);
-      return {};
-    }
-  }
-
-  async start() {
-    // enqueue prevents handleIncomingEventsDebounced to be activated before sync is done,
-    // so that old commitments processed before 'real-time' incoming
-    await this.enqueue(
-      async () => {
-        watchVault(this.clientService.client, this.vault, (events) => {
-          this.eventsCache.push(...events);
-          this.eventsHandlerDebounced();
-        });
-        const currentBlock = await this.clientService.client.getBlockNumber();
-        const tesSyncEvents = await this.tesService.syncWithTes(
-          this.token,
-          await this.syncService.getLastSyncedBlock(),
-          currentBlock.toString(),
-        );
-        this.eventsCache.push(...(tesSyncEvents.events as VaultEvent[]));
-        this.logger.log(
-          `Update last synced block after tes sync to ${tesSyncEvents.syncedBlock}`,
-        );
-        await this.syncService.setLastSyncedBlock(tesSyncEvents.syncedBlock);
-        const syncEvents = await this.syncService.runOnchainSync(
-          this.clientService.client,
-          this.vault,
-          this.address,
-          this.token,
-          currentBlock,
-        );
-        this.eventsCache.push(...syncEvents);
-        await this.handleEventsBatch();
-      },
-      "LedgerService.start",
-      240_000,
-    );
-  }
-
-  async syncStatus() {
-    const currentBlock = await this.clientService.client.getBlockNumber();
-    const processedBlock = this.syncService.getProcessedBlock();
-    return {
-      processedBlock,
-      currentBlock,
-    };
-  }
-
-  async getBalance() {
-    const commitments = await this.commitmentsService.all();
-    return commitments.reduce((acc, c) => acc + BigInt(c.value), 0n);
-  }
-
-  deposit(value: bigint) {
-    return this.enqueue(
-      async () => {
-        const { tesUrl, encryptionPublicKey } = await this.getEncryptionParams(
-          this.address,
-        );
-        const { proofData, depositStruct /* depositCommitmentData */ } =
-          await prepareDeposit(
-            this.token,
-            this.clientService.client,
-            value,
-            encryptionPublicKey,
-            tesUrl,
-          );
-
-        const transfer = {
-          tokenAddress: depositStruct.token,
-          receiverAddress: this.vault,
-          amount: depositStruct.total_deposit_amount,
-          client: this.clientService.client,
-        };
-
-        await approve(transfer);
-        await deposit({
-          depositStruct,
-          client: this.clientService.client,
-          contract: this.vault,
-          proof: proofData.calldata_proof,
-        });
-
-        return true;
-      },
-      "LedgerService.deposit",
-      480_000,
-    );
-  }
-
-  partialWithdraw(value: bigint, recipient: Address) {
-    return this.enqueue(
-      async () => {
-        const isRegistered = await isUserRegistered(
-          recipient,
-          this.vault,
-          this.clientService.client,
-        );
-        if (!isRegistered) {
-          this.logger.error("Recipient PEPK is not registered");
-          // throw new Error("User is not registered");
-        }
-
-        const publicOutputs = [{ owner: recipient, amount: value }];
-
-        const { selectedCommitmentRecords, totalAmount } =
-          await this.commitmentsService.findCommitments(value);
-
-        if (selectedCommitmentRecords.length === 0) {
-          throw new Error("No commitments found to cover the requested amount");
-        }
-
-        const { encryptionPublicKey, tesUrl } = await this.getEncryptionParams(
-          this.address,
-        );
-
-        const { proofData, transactionStruct } = await prepareSpend({
-          commitments: selectedCommitmentRecords,
-          token: this.token,
-          totalMovingAmount: totalAmount,
-          privateSpendAmount: 0n,
-          publicSpendAmount: value,
-          spender: this.address,
-          spenderEncryptionPublicKey: encryptionPublicKey,
-          spenderTesUrl: tesUrl,
-          receiver: this.address,
-          receiverEncryptionPublicKey: encryptionPublicKey,
-          receiverTesUrl: tesUrl,
-          publicOutputs,
-        });
-
-        await spend({
-          transactionStruct,
-          client: this.clientService.client,
-          contract: this.vault,
-          proof: proofData.calldata_proof,
-        });
-
-        return true;
-      },
-      "LedgerService.partialWithdraw",
-      480_000,
-    );
-  }
-
-  withdraw(recipient: Address) {
-    return this.enqueue(
-      async () => {
-        const commitments = await this.commitmentsService.all();
-
-        const withdrawItems: CommitmentStruct[] = [];
-        const withdrawItemIds: string[] = [];
-        commitments.forEach((c) => {
-          if (BigInt(c.value) === 0n) {
-            return;
-          }
-          withdrawItems.push({
-            amount: BigInt(c.value),
-            sValue: BigInt(c.sValue),
-          });
-          withdrawItemIds.push(c.hash);
-        });
-
-        if (withdrawItems.length === 0) {
-          return false;
-        }
-
-        await withdraw({
-          client: this.clientService.client,
-          contract: this.vault,
-          token: this.token,
-          withdrawItems,
-          recipient,
-        });
-
-        return true;
-      },
-      "LedgerService.withdraw",
-      480_000,
-    );
-  }
-
   private async getEncryptionParams(user: Address) {
     const { publicKey: encryptionPublicKey, active: senderActive } =
       await isUserRegistered(user, this.vault, this.clientService.client);
@@ -342,73 +134,6 @@ export class LedgerService extends EventEmitter {
     } else {
       return { encryptionPublicKey };
     }
-  }
-
-  send(value: bigint, recipient: Address) {
-    return this.enqueue(
-      async () => {
-        const publicOutputs = [{ owner: zeroAddress, amount: 0n }];
-
-        const { selectedCommitmentRecords, totalAmount } =
-          await this.commitmentsService.findCommitments(value);
-
-        if (selectedCommitmentRecords.length === 0) {
-          throw new Error("No commitments found to cover the requested amount");
-        }
-
-        const {
-          encryptionPublicKey: spenderEncryptionPublicKey,
-          tesUrl: spenderTesUrl,
-        } = await this.getEncryptionParams(this.address);
-
-        const {
-          encryptionPublicKey: receiverEncryptionPublicKey,
-          tesUrl: receiverTesUrl,
-        } = await this.getEncryptionParams(recipient);
-
-        const { proofData, transactionStruct } = await prepareSpend({
-          commitments: selectedCommitmentRecords,
-          token: this.token,
-          totalMovingAmount: totalAmount,
-          privateSpendAmount: value,
-          publicSpendAmount: 0n,
-          spender: this.address,
-          spenderEncryptionPublicKey,
-          spenderTesUrl,
-          receiver: recipient,
-          receiverEncryptionPublicKey,
-          receiverTesUrl,
-          publicOutputs,
-        });
-
-        await spend({
-          transactionStruct,
-          client: this.clientService.client,
-          contract: this.vault,
-          proof: proofData.calldata_proof,
-        });
-
-        return true;
-      },
-      "LedgerService.send",
-      480_000,
-    );
-  }
-
-  async faucet(amount: string) {
-    return this.enqueue(
-      () =>
-        this.faucetRpc.obtainTestTokens(
-          new FaucetRequestDto(this.token, this.address, amount, "0.0001"),
-        ),
-      "LedgerService.faucet",
-      480_000,
-    );
-  }
-
-  reset() {
-    this.updateBothBalancesDebounced.clear();
-    this.eventsHandlerDebounced.clear();
   }
 
   private async handleEventsBatch() {
@@ -513,5 +238,364 @@ export class LedgerService extends EventEmitter {
         this.updateBothBalancesDebounced();
       }
     }
+  }
+
+  async getTransactions() {
+    try {
+      const transactions = await this.commitmentsHistoryService.all();
+
+      // Group transactions by transaction hash and categorize as incomings/outgoings
+      const groupedTransactions = transactions.reduce(
+        (groups, transaction) => {
+          const txHash = transaction.transactionHash || "unknown";
+
+          if (!groups[txHash]) {
+            groups[txHash] = {
+              incomings: [],
+              outgoings: [],
+            };
+          }
+
+          // Categorize based on status
+          if (transaction.status === "added") {
+            groups[txHash].incomings.push(transaction);
+          } else if (transaction.status === "spend") {
+            groups[txHash].outgoings.push(transaction);
+          }
+
+          return groups;
+        },
+        {} as Record<
+          string,
+          { incomings: typeof transactions; outgoings: typeof transactions }
+        >,
+      );
+
+      return groupedTransactions;
+    } catch (error) {
+      this.catchService.catch(error as Error);
+      return {};
+    }
+  }
+
+  async syncStatus() {
+    const currentBlock = await this.clientService.client.getBlockNumber();
+    const processedBlock = this.syncService.getProcessedBlock();
+    return {
+      processedBlock,
+      currentBlock,
+    };
+  }
+
+  async getBalance() {
+    const commitments = await this.commitmentsService.all();
+    return commitments.reduce((acc, c) => acc + BigInt(c.value), 0n);
+  }
+
+  async start() {
+    // enqueue prevents handleIncomingEventsDebounced to be activated before sync is done,
+    // so that old commitments processed before 'real-time' incoming
+    await this.enqueue(
+      async () => {
+        watchVault(this.clientService.client, this.vault, (events) => {
+          this.eventsCache.push(...events);
+          this.eventsHandlerDebounced();
+        });
+        const currentBlock = await this.clientService.client.getBlockNumber();
+        const tesSyncEvents = await this.tesService.syncWithTes(
+          this.token,
+          await this.syncService.getLastSyncedBlock(),
+          currentBlock.toString(),
+        );
+        this.eventsCache.push(...(tesSyncEvents.events as VaultEvent[]));
+        this.logger.log(
+          `Update last synced block after tes sync to ${tesSyncEvents.syncedBlock}`,
+        );
+        await this.syncService.setLastSyncedBlock(tesSyncEvents.syncedBlock);
+        const syncEvents = await this.syncService.runOnchainSync(
+          this.clientService.client,
+          this.vault,
+          this.address,
+          this.token,
+          currentBlock,
+        );
+        this.eventsCache.push(...syncEvents);
+        await this.handleEventsBatch();
+      },
+      "LedgerService.start",
+      240_000,
+    );
+  }
+
+  deposit(value: bigint) {
+    return this.enqueue(
+      async () => {
+        const { tesUrl, encryptionPublicKey } = await this.getEncryptionParams(
+          this.address,
+        );
+        const { proofData, depositStruct /* depositCommitmentData */ } =
+          await prepareDeposit(
+            this.token,
+            this.clientService.client,
+            value,
+            encryptionPublicKey,
+            tesUrl,
+          );
+
+        const transfer = {
+          tokenAddress: depositStruct.token,
+          receiverAddress: this.vault,
+          amount: depositStruct.total_deposit_amount,
+          client: this.clientService.client,
+        };
+
+        await approve(transfer);
+
+        const depositParams = {
+          depositStruct,
+          client: this.clientService.client,
+          contract: this.vault,
+          proof: proofData.calldata_proof,
+        };
+
+        await createSignedMetaTx(
+          {
+            from: this.clientService.client.account.address,
+            to: this.vault,
+            value: 0,
+            gas: await getDepositTxGas(depositParams),
+            nonce: await getForwarderNonce(
+              this.forwarder,
+              this.clientService.client,
+            ),
+            deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+            data: getDepositTxData(depositStruct, proofData.calldata_proof),
+          },
+          this.forwarder,
+          this.clientService.client,
+        );
+        await deposit(depositParams);
+
+        return true;
+      },
+      "LedgerService.deposit",
+      480_000,
+    );
+  }
+
+  partialWithdraw(value: bigint, recipient: Address) {
+    return this.enqueue(
+      async () => {
+        const isRegistered = await isUserRegistered(
+          recipient,
+          this.vault,
+          this.clientService.client,
+        );
+        if (!isRegistered) {
+          this.logger.error("Recipient PEPK is not registered");
+          // throw new Error("User is not registered");
+        }
+
+        const publicOutputs = [{ owner: recipient, amount: value }];
+
+        const { selectedCommitmentRecords, totalAmount } =
+          await this.commitmentsService.findCommitments(value);
+
+        if (selectedCommitmentRecords.length === 0) {
+          throw new Error("No commitments found to cover the requested amount");
+        }
+
+        const { encryptionPublicKey, tesUrl } = await this.getEncryptionParams(
+          this.address,
+        );
+
+        const { proofData, transactionStruct } = await prepareSpend({
+          commitments: selectedCommitmentRecords,
+          token: this.token,
+          totalMovingAmount: totalAmount,
+          privateSpendAmount: 0n,
+          publicSpendAmount: value,
+          spender: this.address,
+          spenderEncryptionPublicKey: encryptionPublicKey,
+          spenderTesUrl: tesUrl,
+          receiver: this.address,
+          receiverEncryptionPublicKey: encryptionPublicKey,
+          receiverTesUrl: tesUrl,
+          publicOutputs,
+        });
+
+        const partialWithdrawParams = {
+          transactionStruct,
+          client: this.clientService.client,
+          contract: this.vault,
+          proof: proofData.calldata_proof,
+        };
+
+        await createSignedMetaTx(
+          {
+            from: this.clientService.client.account.address,
+            to: this.vault,
+            value: 0,
+            gas: await getSpendTxGas(partialWithdrawParams),
+            nonce: await getForwarderNonce(
+              this.forwarder,
+              this.clientService.client,
+            ),
+            deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+            data: getSpendTxData(transactionStruct, proofData.calldata_proof),
+          },
+          this.forwarder,
+          this.clientService.client,
+        );
+
+        await spend(partialWithdrawParams);
+
+        return true;
+      },
+      "LedgerService.partialWithdraw",
+      480_000,
+    );
+  }
+
+  withdraw(recipient: Address) {
+    return this.enqueue(
+      async () => {
+        const commitments = await this.commitmentsService.all();
+
+        const withdrawItems: CommitmentStruct[] = [];
+        const withdrawItemIds: string[] = [];
+        commitments.forEach((c) => {
+          if (BigInt(c.value) === 0n) {
+            return;
+          }
+          withdrawItems.push({
+            amount: BigInt(c.value),
+            sValue: BigInt(c.sValue),
+          });
+          withdrawItemIds.push(c.hash);
+        });
+
+        if (withdrawItems.length === 0) {
+          return false;
+        }
+
+        const withdrawParams = {
+          client: this.clientService.client,
+          contract: this.vault,
+          token: this.token,
+          withdrawItems,
+          recipient,
+        };
+
+        await createSignedMetaTx(
+          {
+            from: this.clientService.client.account.address,
+            to: this.vault,
+            value: 0,
+            gas: await getWithdrawTxGas(withdrawParams),
+            nonce: await getForwarderNonce(
+              this.forwarder,
+              this.clientService.client,
+            ),
+            deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+            data: getWithdrawTxData(withdrawParams),
+          },
+          this.forwarder,
+          this.clientService.client,
+        );
+
+        await withdraw(withdrawParams);
+
+        return true;
+      },
+      "LedgerService.withdraw",
+      480_000,
+    );
+  }
+
+  send(value: bigint, recipient: Address) {
+    return this.enqueue(
+      async () => {
+        const publicOutputs = [{ owner: zeroAddress, amount: 0n }];
+
+        const { selectedCommitmentRecords, totalAmount } =
+          await this.commitmentsService.findCommitments(value);
+
+        if (selectedCommitmentRecords.length === 0) {
+          throw new Error("No commitments found to cover the requested amount");
+        }
+
+        const {
+          encryptionPublicKey: spenderEncryptionPublicKey,
+          tesUrl: spenderTesUrl,
+        } = await this.getEncryptionParams(this.address);
+
+        const {
+          encryptionPublicKey: receiverEncryptionPublicKey,
+          tesUrl: receiverTesUrl,
+        } = await this.getEncryptionParams(recipient);
+
+        const { proofData, transactionStruct } = await prepareSpend({
+          commitments: selectedCommitmentRecords,
+          token: this.token,
+          totalMovingAmount: totalAmount,
+          privateSpendAmount: value,
+          publicSpendAmount: 0n,
+          spender: this.address,
+          spenderEncryptionPublicKey,
+          spenderTesUrl,
+          receiver: recipient,
+          receiverEncryptionPublicKey,
+          receiverTesUrl,
+          publicOutputs,
+        });
+
+        const sendParams = {
+          transactionStruct,
+          client: this.clientService.client,
+          contract: this.vault,
+          proof: proofData.calldata_proof,
+        };
+
+        await createSignedMetaTx(
+          {
+            from: this.clientService.client.account.address,
+            to: this.vault,
+            value: 0,
+            gas: await getSpendTxGas(sendParams),
+            nonce: await getForwarderNonce(
+              this.forwarder,
+              this.clientService.client,
+            ),
+            deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+            data: getSpendTxData(transactionStruct, proofData.calldata_proof),
+          },
+          this.forwarder,
+          this.clientService.client,
+        );
+
+        await spend(sendParams);
+
+        return true;
+      },
+      "LedgerService.send",
+      480_000,
+    );
+  }
+
+  async faucet(amount: string) {
+    return this.enqueue(
+      () =>
+        this.faucetRpc.obtainTestTokens(
+          new FaucetRequestDto(this.token, this.address, amount, "0.0001"),
+        ),
+      "LedgerService.faucet",
+      480_000,
+    );
+  }
+
+  reset() {
+    this.updateBothBalancesDebounced.clear();
+    this.eventsHandlerDebounced.clear();
   }
 }
