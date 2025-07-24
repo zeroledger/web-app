@@ -45,9 +45,9 @@ export class AccountService extends EventEmitter {
   private _viewAccount?: PrivateKeyAccount;
   private _delegationSignature?: Hex;
 
-  constructor(appPrefixKey: string) {
+  constructor(private readonly appPrefixKey: string) {
     super();
-    this.PKS_STORE_KEY = `${appPrefixKey}.encodedAccountData`;
+    this.PKS_STORE_KEY = `${this.appPrefixKey}.encodedAccountData`;
   }
 
   /*********
@@ -147,14 +147,8 @@ export class AccountService extends EventEmitter {
     }
 
     if (this._account && this._password) {
-      /**
-       * @todo: consider to not sign, but simply generate view keys like keccak256(toHex(this._password))
-       * this decreases security, but removes 1 signature request to eoa
-       */
       this._viewPk = keccak256(
-        await this._account.sign({
-          hash: keccak256(toHex(this._password)),
-        }),
+        keccak256(toHex(`${this.appPrefixKey}_${this._password}`)),
       );
       this._viewAccount = privateKeyToAccount(this._viewPk);
       this._delegationSignature = await this._account.signTypedData({

@@ -104,6 +104,8 @@ export type WithdrawParams = {
   token: Address;
   withdrawItems: CommitmentStruct[];
   recipient: Address;
+  fee: bigint;
+  feeRecipient: Address;
 };
 
 export type VaultEvent = Log<

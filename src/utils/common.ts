@@ -1,4 +1,12 @@
-import { type Hex, isAddress, getAddress, slice, hexToBigInt } from "viem";
+import {
+  type Hex,
+  isAddress,
+  getAddress,
+  slice,
+  hexToBigInt,
+  parseUnits,
+  formatUnits,
+} from "viem";
 
 export const formatValue = (
   value?: string,
@@ -89,3 +97,13 @@ export function shuffle<T>(array: T[]): T[] {
 
 export const semiStringToUint8Array = (data: string) =>
   new Uint8Array(data.split(",").map(Number));
+
+export const getMaxFormattedValue = (
+  value: string,
+  decimals: number,
+  privateBalance: bigint,
+) => {
+  const rawValue = parseUnits(value, decimals);
+  const amount = rawValue > privateBalance ? privateBalance : rawValue;
+  return formatUnits(amount, decimals);
+};

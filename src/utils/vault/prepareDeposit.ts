@@ -1,6 +1,6 @@
 import { generatePrivateKey } from "viem/accounts";
 import { computePoseidon } from "@src/utils/poseidon";
-import { Address, Hex, zeroAddress } from "viem";
+import { Address, Hex } from "viem";
 import { prover } from "@src/utils/prover";
 import {
   DepositCommitmentData,
@@ -116,6 +116,8 @@ export default async function prepareDeposit(
   client: CustomClient,
   value: bigint,
   userEncryptionPublicKey: Hex,
+  fee: bigint,
+  feeRecipient: Address,
   tesUrl = "",
 ) {
   const random = BigInt(Math.ceil(Math.random() * 3));
@@ -123,10 +125,10 @@ export default async function prepareDeposit(
   const secondAmount = value - firstAmount;
   const depositData: DepositData = {
     depositAmount: value,
-    fee: 0n,
     individualAmounts: shuffle([firstAmount, secondAmount, 0n]),
     user: client.account.address,
-    feeRecipient: zeroAddress,
+    fee,
+    feeRecipient,
   };
 
   const depositCommitmentData = await generateDepositCommitmentData(

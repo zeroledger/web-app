@@ -3,8 +3,8 @@ import clsx from "clsx";
 import { UseFormReturn } from "react-hook-form";
 import { useContext } from "react";
 import { LedgerContext } from "@src/context/ledger.context";
-import { parseUnits } from "viem";
 import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
+import { getMaxFormattedValue } from "@src/utils/common";
 
 interface SpendFormData {
   recipient: string;
@@ -28,9 +28,8 @@ export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
 
   const validateAmount = (value: string) => {
     if (!value) return "Amount is required";
-    const amount = parseUnits(value, decimals);
-    if (amount <= 0n) return "Amount must be greater than 0";
-    if (amount > privateBalance) return "Insufficient balance";
+    if (value === "0" || value[0] === "-")
+      return "Amount must be greater than 0";
     return true;
   };
 
@@ -69,9 +68,7 @@ export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
           Amount (USD)
         </Label>
         <Input
-          type="number"
-          step="0.01"
-          min="0"
+          type="string"
           className={clsx(
             "mt-1 block w-full rounded-lg border-none bg-white/5 py-2.5 px-3 text-base text-white leading-7",
             "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25",
@@ -83,7 +80,10 @@ export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
           })}
           placeholder="0.00"
           onChange={(e) => {
-            setValue("amount", e.target.value);
+            setValue(
+              "amount",
+              getMaxFormattedValue(e.target.value, decimals, privateBalance),
+            );
             clearErrors("amount");
           }}
           onKeyDown={onEnter}

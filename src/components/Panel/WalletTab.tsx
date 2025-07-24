@@ -56,7 +56,7 @@ export default function WalletTab() {
         </>
       )}
       {!isConnecting && !error && connected && (
-        <div className="text-4xl h-12 font-extrabold text-white">{`$${formatUnits(privateBalance, decimals)}`}</div>
+        <div className="text-4xl h-12 font-extrabold text-white">{`$${formatUnits(privateBalance, decimals).slice(0, 12)}`}</div>
       )}
       <div className="flex items-center gap-2 mt-2 mb-4 relative">
         <a

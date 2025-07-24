@@ -1,6 +1,23 @@
-import { encodeFunctionData, zeroAddress } from "viem";
+import { encodeFunctionData } from "viem";
 import { VAULT_ABI } from "./vault.abi";
 import { WithdrawParams } from "./types";
+import {
+  AVERAGE_ERC_20_TRANSFER_COST,
+  FORWARDER_EXECUTION_COST,
+  GAS_LIMIT_DENOMINATOR,
+  GAS_LIMIT_NOMINATOR,
+} from "./vault.constants";
+
+// gas amount that should be covered by fee during sponsoring
+// computes like avg tx gas limit * 1.1 + agv forwarder execution gas
+export const withdrawGasSponsoredLimit = (withdrawingItemsAmount: number) => {
+  const transfers =
+    BigInt(withdrawingItemsAmount) * AVERAGE_ERC_20_TRANSFER_COST;
+  return (
+    (transfers * GAS_LIMIT_NOMINATOR) / GAS_LIMIT_DENOMINATOR +
+    FORWARDER_EXECUTION_COST
+  );
+};
 
 export function getWithdrawTxData(params: WithdrawParams) {
   return encodeFunctionData({
@@ -10,8 +27,8 @@ export function getWithdrawTxData(params: WithdrawParams) {
       params.token,
       params.withdrawItems,
       params.recipient,
-      0n,
-      zeroAddress,
+      params.fee,
+      params.feeRecipient,
     ],
   });
 }
@@ -25,8 +42,8 @@ export function getWithdrawTxGas(params: WithdrawParams) {
       params.token,
       params.withdrawItems,
       params.recipient,
-      0n,
-      zeroAddress,
+      params.fee,
+      params.feeRecipient,
     ],
   });
 }
@@ -40,8 +57,8 @@ export async function getWithdrawRequest(params: WithdrawParams) {
       params.token,
       params.withdrawItems,
       params.recipient,
-      0n,
-      zeroAddress,
+      params.fee,
+      params.feeRecipient,
     ],
   });
   return request;

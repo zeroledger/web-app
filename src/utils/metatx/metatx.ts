@@ -1,7 +1,7 @@
 import { Address, Chain, Hex } from "viem";
 import { FORWARDER_ABI } from "./metatx.abi";
 import { CustomClient } from "@src/services/core/evmClient.service";
-import { forwardRequestType } from "./constants";
+import { forwardRequestType } from "./metatx.constants";
 
 const getForwarderDomain = (
   chainId: Chain["id"],
@@ -14,6 +14,7 @@ const getForwarderDomain = (
 });
 
 export async function getForwarderNonce(
+  user: Address,
   forwarderAddress: Address,
   client: CustomClient,
 ) {
@@ -21,7 +22,7 @@ export async function getForwarderNonce(
     address: forwarderAddress,
     abi: FORWARDER_ABI,
     functionName: "nonces",
-    args: [forwarderAddress],
+    args: [user],
   });
 }
 
@@ -29,7 +30,7 @@ export type MetaTransactionBody = {
   from: Address;
   to: Address;
   value: 0;
-  gas?: bigint;
+  gas: bigint;
   nonce: bigint;
   deadline: number;
   data: Hex;
@@ -46,5 +47,14 @@ export async function createSignedMetaTx(
     primaryType: "ForwardRequest",
     message: request,
   });
-  return { ...request, signature };
+  return {
+    ...request,
+    gas: request.gas.toString(),
+    nonce: request.nonce.toString(),
+    signature,
+  };
 }
+
+export type SignedMetaTransaction = Awaited<
+  ReturnType<typeof createSignedMetaTx>
+>;

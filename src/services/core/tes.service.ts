@@ -9,6 +9,7 @@ import {
 } from "viem";
 import { AccountService } from "../ledger";
 import { MemoryQueue } from "@src/services/core/queue";
+import type { SignedMetaTransaction } from "@src/utils/metatx";
 
 interface ChallengeResponse {
   random: Hex;
@@ -164,6 +165,35 @@ export default class TesService {
         events: [],
       };
     }
+  }
+
+  async quote(token: Address) {
+    const response = await fetch(`${this.tesUrl}/paymaster/quote/${token}`, {
+      headers: this.setAccessToken(new Headers()),
+    });
+
+    const data = (await response.json()) as {
+      gasPrice: string;
+      paymasterAddress: Address;
+    };
+    return {
+      gasPrice: BigInt(data.gasPrice),
+      paymasterAddress: data.paymasterAddress,
+    };
+  }
+
+  async executeMetaTransaction(
+    metatx: SignedMetaTransaction,
+    coveredGas: string,
+  ) {
+    console.log(`send metatx: ${JSON.stringify({ metatx, coveredGas })}`);
+    return fetch(`${this.tesUrl}/paymaster/execute`, {
+      method: "POST",
+      headers: this.setAccessToken(
+        new Headers({ "Content-Type": "application/json" }),
+      ),
+      body: JSON.stringify({ metatx, coveredGas }),
+    });
   }
 
   reset() {
