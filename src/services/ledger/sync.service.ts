@@ -1,8 +1,7 @@
-import { Address } from "viem";
+import { Address, PublicClient } from "viem";
 import { DataSource } from "@src/services/core/db/leveldb.service";
 import { getMissedEvents } from "@src/utils/vault/watcher";
 import { VaultEvent } from "@src/utils/vault/types";
-import { CustomClient } from "@src/services/core/evmClient.service";
 
 export const SyncEntityKey = {
   name: `sync_state`,
@@ -62,7 +61,7 @@ export default class SyncService {
    * @returns Array of missed events (CommitmentCreated and CommitmentRemoved)
    */
   async runOnchainSync(
-    client: CustomClient,
+    client: PublicClient,
     vault: Address,
     address: Address,
     token: Address,

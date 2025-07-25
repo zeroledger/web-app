@@ -9,15 +9,17 @@ import { LedgerContext } from "@src/context/ledger.context";
 import { useContext, useEffect, useState } from "react";
 
 export default function WalletTab() {
-  const { showCopiedTooltip, handleCopyAddress, address } = useCopyAddress();
   const {
     privateBalance,
     isConnecting,
     error,
     decimals,
     ledgerServices,
-    connected,
+    initialized,
   } = useContext(LedgerContext);
+  const address =
+    ledgerServices!.evmClientService.writeClient!.account.address!;
+  const { showCopiedTooltip, handleCopyAddress } = useCopyAddress(address);
   const {
     isModalOpen,
     isModalLoading,
@@ -32,7 +34,7 @@ export default function WalletTab() {
 
   useEffect(() => {
     const fetchSyncStatus = async () => {
-      if (!ledgerServices || !connected) return;
+      if (!ledgerServices || !initialized) return;
       const { processedBlock, currentBlock } =
         await ledgerServices.ledgerService.syncStatus();
       setBlocksToSync(currentBlock - processedBlock);
@@ -40,7 +42,7 @@ export default function WalletTab() {
     fetchSyncStatus();
     const interval = setInterval(fetchSyncStatus, 300);
     return () => clearInterval(interval);
-  }, [ledgerServices, connected]);
+  }, [ledgerServices, initialized]);
 
   return (
     <div className="flex flex-col items-center justify-center h-full px-4 pt-4">
@@ -55,7 +57,7 @@ export default function WalletTab() {
           </div>
         </>
       )}
-      {!isConnecting && !error && connected && (
+      {!isConnecting && !error && initialized && (
         <div className="text-4xl h-12 font-extrabold text-white">{`$${formatUnits(privateBalance, decimals).slice(0, 12)}`}</div>
       )}
       <div className="flex items-center gap-2 mt-2 mb-4 relative">

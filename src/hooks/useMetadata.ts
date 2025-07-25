@@ -8,24 +8,27 @@ import { Address } from "viem";
 export function useMetadata(
   tokenAddress: Address,
   evmClientService: EvmClientService | undefined,
-  connected: boolean,
+  initialized: boolean,
 ) {
   const fetcher = useCallback(() => {
-    if (evmClientService && connected) {
+    if (evmClientService && initialized) {
       return metadata({
         tokenAddress,
-        client: evmClientService.client,
+        client: evmClientService.writeClient!,
       });
     }
     return Promise.resolve(["", 0n, 0] as const);
-  }, [evmClientService, connected, tokenAddress]);
+  }, [evmClientService, initialized, tokenAddress]);
 
   const {
     data: onchainWalletData,
     isLoading: isMetadataLoading,
     error: metadataError,
     mutate,
-  } = useSWR(["/metadata", swrKeyForClient(evmClientService?.client)], fetcher);
+  } = useSWR(
+    ["/metadata", swrKeyForClient(evmClientService?.writeClient)],
+    fetcher,
+  );
 
   const [symbol, publicBalance, decimals] = onchainWalletData ?? ["", 0n, 0];
 

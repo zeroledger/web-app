@@ -1,4 +1,4 @@
-import { Chain, type Hex } from "viem";
+import { Address, Chain } from "viem";
 import axios from "axios";
 import {
   TOKEN_ADDRESS,
@@ -22,29 +22,34 @@ import { LedgerService } from "./ledger.service";
 import CommitmentsService from "./commitments.service";
 import CommitmentsHistoryService from "./history.service";
 import SyncService from "./sync.service";
-import { accountService } from "./accounts.service";
+import { AccountService } from "./accounts.service";
 import { EvmClientService } from "../core/evmClient.service";
+import { ConnectedWallet } from "@privy-io/react-auth";
 
 const axiosInstance = axios.create();
 
 export const initialize = async (
   chain: Chain,
   password: string,
-  privateKey?: Hex,
+  wallet: ConnectedWallet,
 ) => {
-  await accountService.open(password, privateKey);
-  await accountService.setupViewAccount();
-  const evmClientService = new EvmClientService(
-    WS_RPC[chain.id],
-    RPC[chain.id],
-    pollingInterval[chain.id],
-    accountService,
+  const evmClientService = new EvmClientService();
+  await evmClientService.open({
+    wsUrl: WS_RPC[chain.id],
+    httpUrl: RPC[chain.id],
+    pollingInterval: pollingInterval[chain.id],
     chain,
+    wallet,
+  });
+  const accountService = new AccountService(APP_PREFIX_KEY);
+  await accountService.setupViewAccount(
+    password,
+    evmClientService.writeClient!,
   );
   const queue = new MemoryQueue();
   const faucetRpcClient = new JsonRpcClient<FaucetRpc>(
     axiosInstance,
-    accountService.getMainAccount()!.address,
+    wallet.address as Address,
   );
   const zeroLedgerDataSource = new DataSource(APP_PREFIX_KEY);
   const commitmentsService = new CommitmentsService(zeroLedgerDataSource);
@@ -52,7 +57,12 @@ export const initialize = async (
     zeroLedgerDataSource,
   );
   const syncService = new SyncService(zeroLedgerDataSource);
-  const tesService = new TesService(TES_URL, accountService, queue);
+  const tesService = new TesService(
+    TES_URL,
+    accountService,
+    evmClientService,
+    queue,
+  );
   const ledgerService = new LedgerService(
     accountService,
     evmClientService,
@@ -67,14 +77,17 @@ export const initialize = async (
     syncService,
     tesService,
   );
+
+  const reset = async () => {
+    ledgerService.reset();
+    tesService.reset();
+    await zeroLedgerDataSource.clear();
+    await accountService.reset(wallet.address as Address);
+  };
+
   return {
     ledgerService,
     evmClientService,
-    reset: async () => {
-      ledgerService.reset();
-      tesService.reset();
-      await zeroLedgerDataSource.clear();
-      await accountService.reset();
-    },
+    reset,
   };
 };

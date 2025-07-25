@@ -10,6 +10,7 @@ import {
 import { AccountService } from "../ledger";
 import { MemoryQueue } from "@src/services/core/queue";
 import type { SignedMetaTransaction } from "@src/utils/metatx";
+import { EvmClientService } from "./evmClient.service";
 
 interface ChallengeResponse {
   random: Hex;
@@ -28,10 +29,12 @@ export default class TesService {
   constructor(
     public readonly tesUrl: string,
     public readonly accountService: AccountService,
+    public readonly evmClientService: EvmClientService,
     private readonly memoryQueue: MemoryQueue,
   ) {
     this.viewAccount = this.accountService.getViewAccount()!;
-    this.mainAccount = this.accountService.getMainAccount()!;
+    this.mainAccountAddress =
+      this.evmClientService.writeClient!.account.address;
     this.delegationSignature = this.accountService.getDelegationSignature()!;
   }
 
@@ -41,9 +44,7 @@ export default class TesService {
   private viewAccount: NonNullable<
     ReturnType<AccountService["getViewAccount"]>
   >;
-  private mainAccount: NonNullable<
-    ReturnType<AccountService["getMainAccount"]>
-  >;
+  private mainAccountAddress: Address;
   private delegationSignature: NonNullable<
     ReturnType<AccountService["getDelegationSignature"]>
   >;
@@ -72,7 +73,7 @@ export default class TesService {
     const token = encodeAbiParameters(AUTH_TOKEN_ABI, [
       this.viewAccount.address,
       await this.signChallenge(random),
-      this.mainAccount.address,
+      this.mainAccountAddress,
       this.delegationSignature,
     ]);
     return token;
@@ -124,7 +125,7 @@ export default class TesService {
     try {
       await this.manageAuth();
       const response = await fetch(
-        `${this.tesUrl}/indexer?owner=${this.mainAccount.address}&token=${token}&fromBlock=${fromBlock}&toBlock=${toBlock}`,
+        `${this.tesUrl}/indexer?owner=${this.mainAccountAddress}&token=${token}&fromBlock=${fromBlock}&toBlock=${toBlock}`,
         {
           headers: this.setAccessToken(new Headers()),
         },

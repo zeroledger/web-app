@@ -11,7 +11,6 @@ import {
 } from "./types";
 import { shuffle } from "@src/utils/common";
 import { encode } from "./metadata";
-import { CustomClient } from "@src/services/core/evmClient.service";
 
 async function createDepositStruct(
   token: Address,
@@ -113,7 +112,7 @@ export async function generateDepositProof(
 
 export default async function prepareDeposit(
   token: Address,
-  client: CustomClient,
+  user: Address,
   value: bigint,
   userEncryptionPublicKey: Hex,
   fee: bigint,
@@ -126,7 +125,7 @@ export default async function prepareDeposit(
   const depositData: DepositData = {
     depositAmount: value,
     individualAmounts: shuffle([firstAmount, secondAmount, 0n]),
-    user: client.account.address,
+    user,
     fee,
     feeRecipient,
   };

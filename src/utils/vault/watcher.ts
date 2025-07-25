@@ -1,12 +1,11 @@
-import { Log } from "viem";
+import { Log, PublicClient } from "viem";
 import { Address } from "viem";
 import { VAULT_ABI_EVENTS } from "./vault.abi";
 import { VaultEvent } from "./types";
 import { format } from "../common";
-import { type CustomClient } from "@src/services/core/evmClient.service";
 
 export const watchVault = (
-  client: CustomClient,
+  client: PublicClient,
   contractAddress: Address,
   subscriber: (events: VaultEvent[]) => void | Promise<void>,
   pollingInterval = 5_000,
@@ -21,7 +20,7 @@ export const watchVault = (
 };
 
 export const getMissedEvents = async (
-  client: CustomClient,
+  client: PublicClient,
   contractAddress: Address,
   owner: Address,
   token: Address,

@@ -1,8 +1,7 @@
-import { accountService } from "@src/services/ledger/accounts.service";
+import { Address } from "viem";
 import { useState } from "react";
 
-export const useCopyAddress = () => {
-  const address = accountService.getMainAccount()!.address;
+export const useCopyAddress = (address: Address) => {
   const [showCopiedTooltip, setShowCopiedTooltip] = useState(false);
 
   const handleCopyAddress = async () => {
@@ -18,6 +17,5 @@ export const useCopyAddress = () => {
   return {
     showCopiedTooltip,
     handleCopyAddress,
-    address,
   };
 };

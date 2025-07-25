@@ -68,7 +68,7 @@ export class LedgerService extends EventEmitter {
     private readonly tesService: TesService,
   ) {
     super();
-    this.address = this.clientService.client.account.address;
+    this.address = this.clientService.writeClient!.account.address;
     this.faucetRpc = this.faucetRpcClient.getService(this.faucetUrl, {
       namespace: "faucet",
     });
@@ -122,7 +122,7 @@ export class LedgerService extends EventEmitter {
 
   private async getEncryptionParams(user: Address) {
     const { publicKey: encryptionPublicKey, active: senderActive } =
-      await isUserRegistered(user, this.vault, this.clientService.client);
+      await isUserRegistered(user, this.vault, this.clientService.readClient!);
     if (!senderActive) {
       this.logger.warn(
         `${user} PEPK is not registered, getting trusted encryption token`,
@@ -179,6 +179,7 @@ export class LedgerService extends EventEmitter {
           const shortLivedTes = new TesService(
             tesUrl,
             this.accountService,
+            this.clientService,
             this.queue,
           );
           commitment = await shortLivedTes.decrypt(
@@ -279,7 +280,7 @@ export class LedgerService extends EventEmitter {
   }
 
   async syncStatus() {
-    const currentBlock = await this.clientService.client.getBlockNumber();
+    const currentBlock = await this.clientService.readClient!.getBlockNumber();
     const processedBlock = this.syncService.getProcessedBlock();
     return {
       processedBlock,
@@ -297,11 +298,12 @@ export class LedgerService extends EventEmitter {
     // so that old commitments processed before 'real-time' incoming
     await this.enqueue(
       async () => {
-        watchVault(this.clientService.client, this.vault, (events) => {
+        watchVault(this.clientService.readClient!, this.vault, (events) => {
           this.eventsCache.push(...events);
           this.eventsHandlerDebounced();
         });
-        const currentBlock = await this.clientService.client.getBlockNumber();
+        const currentBlock =
+          await this.clientService.readClient!.getBlockNumber();
         const tesSyncEvents = await this.tesService.syncWithTes(
           this.token,
           await this.syncService.getLastSyncedBlock(),
@@ -313,7 +315,7 @@ export class LedgerService extends EventEmitter {
         );
         await this.syncService.setLastSyncedBlock(tesSyncEvents.syncedBlock);
         const syncEvents = await this.syncService.runOnchainSync(
-          this.clientService.client,
+          this.clientService.readClient!,
           this.vault,
           this.address,
           this.token,
@@ -344,7 +346,7 @@ export class LedgerService extends EventEmitter {
         const { proofData, depositStruct /* depositCommitmentData */ } =
           await prepareDeposit(
             this.token,
-            this.clientService.client,
+            this.address,
             value,
             encryptionPublicKey,
             fee,
@@ -354,7 +356,7 @@ export class LedgerService extends EventEmitter {
 
         const depositParams = {
           depositStruct,
-          client: this.clientService.client,
+          client: this.clientService.writeClient!,
           contract: this.vault,
           proof: proofData.calldata_proof,
         };
@@ -363,7 +365,7 @@ export class LedgerService extends EventEmitter {
           tokenAddress: depositStruct.token,
           receiverAddress: this.vault,
           amount: depositStruct.total_deposit_amount + depositStruct.fee,
-          client: this.clientService.client,
+          client: this.clientService.writeClient!,
         });
 
         const gas = await getDepositTxGas(depositParams);
@@ -374,20 +376,20 @@ export class LedgerService extends EventEmitter {
 
         const metaTransaction = await createSignedMetaTx(
           {
-            from: this.clientService.client.account.address,
+            from: this.address,
             to: this.vault,
             value: 0,
             gas,
             nonce: await getForwarderNonce(
-              this.clientService.client.account.address,
+              this.address,
               this.forwarder,
-              this.clientService.client,
+              this.clientService.readClient!,
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
             data: getDepositTxData(depositStruct, proofData.calldata_proof),
           },
           this.forwarder,
-          this.clientService.client,
+          this.clientService.writeClient!,
         );
 
         await this.tesService.executeMetaTransaction(
@@ -449,7 +451,7 @@ export class LedgerService extends EventEmitter {
 
         const partialWithdrawParams = {
           transactionStruct,
-          client: this.clientService.client,
+          client: this.clientService.writeClient!,
           contract: this.vault,
           proof: proofData.calldata_proof,
         };
@@ -462,20 +464,20 @@ export class LedgerService extends EventEmitter {
 
         const metaTransaction = await createSignedMetaTx(
           {
-            from: this.clientService.client.account.address,
+            from: this.address,
             to: this.vault,
             value: 0,
             gas,
             nonce: await getForwarderNonce(
-              this.clientService.client.account.address,
+              this.address,
               this.forwarder,
-              this.clientService.client,
+              this.clientService.readClient!,
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600,
             data: getSpendTxData(transactionStruct, proofData.calldata_proof),
           },
           this.forwarder,
-          this.clientService.client,
+          this.clientService.writeClient!,
         );
 
         await this.tesService.executeMetaTransaction(
@@ -521,7 +523,7 @@ export class LedgerService extends EventEmitter {
         );
 
         const withdrawParams = {
-          client: this.clientService.client,
+          client: this.clientService.writeClient!,
           contract: this.vault,
           token: this.token,
           withdrawItems,
@@ -538,20 +540,20 @@ export class LedgerService extends EventEmitter {
 
         const metaTransaction = await createSignedMetaTx(
           {
-            from: this.clientService.client.account.address,
+            from: this.address,
             to: this.vault,
             value: 0,
             gas,
             nonce: await getForwarderNonce(
-              this.clientService.client.account.address,
+              this.address,
               this.forwarder,
-              this.clientService.client,
+              this.clientService.readClient!,
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
             data: getWithdrawTxData(withdrawParams),
           },
           this.forwarder,
-          this.clientService.client,
+          this.clientService.writeClient!,
         );
 
         await this.tesService.executeMetaTransaction(
@@ -618,27 +620,27 @@ export class LedgerService extends EventEmitter {
 
         const sendParams = {
           transactionStruct,
-          client: this.clientService.client,
+          client: this.clientService.writeClient!,
           contract: this.vault,
           proof: proofData.calldata_proof,
         };
 
         const metaTransaction = await createSignedMetaTx(
           {
-            from: this.clientService.client.account.address,
+            from: this.address,
             to: this.vault,
             value: 0,
             gas: await getSpendTxGas(sendParams),
             nonce: await getForwarderNonce(
-              this.clientService.client.account.address,
+              this.address,
               this.forwarder,
-              this.clientService.client,
+              this.clientService.readClient!,
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
             data: getSpendTxData(transactionStruct, proofData.calldata_proof),
           },
           this.forwarder,
-          this.clientService.client,
+          this.clientService.writeClient!,
         );
 
         await this.tesService.executeMetaTransaction(

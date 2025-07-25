@@ -1,21 +1,11 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import {
-  Description,
-  Field,
-  Label,
-  Textarea,
-  Input,
-  Button,
-} from "@headlessui/react";
+import { Description, Field, Label, Input, Button } from "@headlessui/react";
 import clsx from "clsx";
 import { LedgerContext } from "@src/context/ledger.context";
 import { useNavigate } from "react-router-dom";
-import { primaryButtonStyle, linkButtonStyle } from "@src/components/Button";
-import { generatePrivateKey } from "viem/accounts";
+import { primaryButtonStyle } from "@src/components/Button";
 import { optimismSepolia } from "viem/chains";
-import { Hash } from "viem";
-import { accountService } from "@src/services/ledger/accounts.service";
 
 export default function RegisterForm() {
   const {
@@ -24,45 +14,34 @@ export default function RegisterForm() {
     formState: { errors, isSubmitting },
     setValue,
     clearErrors,
-  } = useForm<{ password: string; privateKey?: string }>({
+  } = useForm<{ password: string }>({
     mode: "onSubmit",
     reValidateMode: "onSubmit",
   });
 
   const navigate = useNavigate();
 
-  const { initializeLedger, connected } = useContext(LedgerContext);
+  const { onboard, initialized } = useContext(LedgerContext);
 
   const [error, setError] = useState<string>();
 
   const onSubmit = useCallback(
-    async (data: { password: string; privateKey?: string }) => {
+    async (data: { password: string }) => {
       try {
-        await initializeLedger(
-          data.password,
-          optimismSepolia,
-          data.privateKey as Hash | undefined,
-        );
+        onboard(data.password, optimismSepolia);
       } catch (error) {
-        const message = (error as Error).message;
-        const defaultMessage = accountService.hasMainAccount()
-          ? "Invalid password"
-          : "Failed to register";
-        setError(message || defaultMessage);
+        const message = (error as Error).message ?? "Invalid password";
+        setError(message);
       }
     },
-    [initializeLedger],
+    [onboard],
   );
 
   useEffect(() => {
-    if (connected) {
+    if (initialized) {
       navigate("/panel/wallet");
     }
-  }, [connected, navigate]);
-
-  const generateRandomPrivateKey = useCallback(() => {
-    setValue("privateKey", generatePrivateKey());
-  }, [setValue]);
+  }, [initialized, navigate]);
 
   const onEnter = (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -77,67 +56,13 @@ export default function RegisterForm() {
     setError(undefined);
   };
 
-  const onPrivateKeyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setValue("privateKey", e.target.value);
-    clearErrors("privateKey");
-    setError(undefined);
-  };
-
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
       onKeyDown={onEnter}
       className="mx-auto mt-5 w-96 px-5 md:px-0"
     >
-      {!accountService.hasMainAccount() && (
-        <Field>
-          <Label className="text-base/6 font-medium text-white">
-            Private key
-          </Label>
-          <Description className="text-base/6 dark:text-white/50">
-            Encrypted with password and stored in your browser
-          </Description>
-          <div className="relative">
-            <Textarea
-              className="mt-1 block w-full resize-none rounded-lg border-none dark:bg-white/5 pt-2.5 px-3 pb-3 text-base/6 dark:text-white leading-7 focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25"
-              rows={2}
-              {...register("privateKey", {
-                required: "Private key is required",
-                maxLength: 66,
-                minLength: 66,
-              })}
-              disabled={isSubmitting}
-              placeholder="0x00..."
-              onChange={onPrivateKeyChange}
-              onKeyDown={onEnter}
-            />
-            <div className="absolute bottom-0 right-0 px-2">
-              <Button
-                type="button"
-                className={linkButtonStyle}
-                onClick={generateRandomPrivateKey}
-              >
-                Random
-              </Button>
-            </div>
-          </div>
-        </Field>
-      )}
-      <div className="h-6 text-base/6 mt-1 text-red-400">
-        {errors.privateKey && (
-          <p className="error-message">
-            {typeof errors.privateKey.message === "string" &&
-            errors.privateKey.message
-              ? errors.privateKey.message
-              : "Invalid private key"}
-          </p>
-        )}
-      </div>
-      <Field
-        className={clsx({
-          "mt-2": !accountService.hasMainAccount(),
-        })}
-      >
+      <Field>
         <Label className="text-base/6 font-medium dark:text-white">
           Password
         </Label>
@@ -176,7 +101,7 @@ export default function RegisterForm() {
           className={primaryButtonStyle}
           disabled={isSubmitting}
         >
-          {accountService.hasMainAccount() ? "Login" : "Register"}
+          Open
         </Button>
       </div>
     </form>

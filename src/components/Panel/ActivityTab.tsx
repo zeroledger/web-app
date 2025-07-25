@@ -224,17 +224,15 @@ export default function ActivityTab({ active }: { active: boolean }) {
   const [groupedTransactions, setGroupedTransactions] =
     useState<GroupedTransactions>({});
   const [error, setError] = useState<string | null>(null);
-  const { decimals, ledgerServices, connected, isConnecting } =
+  const { decimals, ledgerServices, initialized, isConnecting } =
     useContext(LedgerContext);
 
   useEffect(() => {
     const loadTransactions = async () => {
-      if (!connected || !ledgerServices) return;
-
       setLoading(true);
       setError(null);
       try {
-        const txs = await ledgerServices.ledgerService.getTransactions();
+        const txs = await ledgerServices!.ledgerService.getTransactions();
         if (txs) {
           setGroupedTransactions(txs);
         }
@@ -246,10 +244,10 @@ export default function ActivityTab({ active }: { active: boolean }) {
       }
     };
 
-    if (active) {
+    if (active && initialized && ledgerServices && !isConnecting) {
       loadTransactions();
     }
-  }, [ledgerServices, active, connected]);
+  }, [ledgerServices, active, initialized, isConnecting]);
 
   const transactionGroups = Object.entries(groupedTransactions);
 

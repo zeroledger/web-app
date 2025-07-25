@@ -1,4 +1,4 @@
-import { Address, Chain, Hex } from "viem";
+import { Address, Chain, Hex, PublicClient } from "viem";
 import { FORWARDER_ABI } from "./metatx.abi";
 import { CustomClient } from "@src/services/core/evmClient.service";
 import { forwardRequestType } from "./metatx.constants";
@@ -16,7 +16,7 @@ const getForwarderDomain = (
 export async function getForwarderNonce(
   user: Address,
   forwarderAddress: Address,
-  client: CustomClient,
+  client: PublicClient,
 ) {
   return client.readContract({
     address: forwarderAddress,

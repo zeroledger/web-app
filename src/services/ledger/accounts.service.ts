@@ -1,8 +1,15 @@
 import { EventEmitter } from "node:events";
-import { type PrivateKeyAccount, type Hex, Hash, keccak256, toHex } from "viem";
+import {
+  type PrivateKeyAccount,
+  type Hex,
+  Hash,
+  keccak256,
+  toHex,
+  Address,
+} from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { APP_PREFIX_KEY } from "@src/common.constants";
 import { decrypt, encrypt } from "@zeroledger/vycrypt";
+import { CustomClient } from "../core/evmClient.service";
 
 export type EncryptedAccountsStore = Record<
   string,
@@ -36,12 +43,7 @@ export const types = {
 export class AccountService extends EventEmitter {
   private PKS_STORE_KEY: string;
 
-  private _account?: PrivateKeyAccount;
-  private _password?: string;
-  private _loggedIn = false;
-  private _pk?: Hash;
   private _viewPk?: Hash;
-
   private _viewAccount?: PrivateKeyAccount;
   private _delegationSignature?: Hex;
 
@@ -61,62 +63,18 @@ export class AccountService extends EventEmitter {
   }
 
   /****************
-   * Main account *
-   ****************/
-
-  private encryptedMainPrivateKey() {
-    return localStorage.getItem(`${this.PKS_STORE_KEY}.main`) as Hex | null;
-  }
-
-  getMainAccount() {
-    return this._account;
-  }
-
-  isLoggedIn() {
-    return this._loggedIn;
-  }
-
-  hasMainAccount() {
-    return Boolean(this.encryptedMainPrivateKey());
-  }
-
-  private async create(password: string, privateKey: Hex) {
-    this._account = privateKeyToAccount(privateKey);
-    const { pubK } = this.deriveEphemeralEncryptionKeys(password);
-    const encryptedMainPublicKey = await encrypt(privateKey, pubK);
-
-    localStorage.setItem(`${this.PKS_STORE_KEY}.main`, encryptedMainPublicKey);
-    this._loggedIn = true;
-  }
-
-  async open(password: string, privateKey?: Hex) {
-    const encryptedMainPk = this.encryptedMainPrivateKey();
-    this._password = password;
-    if (privateKey && !encryptedMainPk) {
-      this._pk = privateKey;
-      await this.create(password, privateKey);
-      return;
-    }
-
-    const { pk } = this.deriveEphemeralEncryptionKeys(password);
-
-    this._pk = (await decrypt(pk, encryptedMainPk!)) as Hash;
-    this._account = privateKeyToAccount(this._pk);
-
-    this._loggedIn = true;
-  }
-
-  /****************
    * View account *
    ****************/
 
-  private encryptedViewPrivateKey() {
-    return localStorage.getItem(`${this.PKS_STORE_KEY}.view`) as Hex | null;
+  private encryptedViewPrivateKey(address: Address) {
+    return localStorage.getItem(
+      `${this.PKS_STORE_KEY}.view.${address}`,
+    ) as Hex | null;
   }
 
-  private encryptedDelegationSignature() {
+  private encryptedDelegationSignature(address: Address) {
     return localStorage.getItem(
-      `${this.PKS_STORE_KEY}.delegation`,
+      `${this.PKS_STORE_KEY}.delegation.${address}`,
     ) as Hex | null;
   }
 
@@ -132,10 +90,12 @@ export class AccountService extends EventEmitter {
     return this._delegationSignature;
   }
 
-  async setupViewAccount() {
-    const encryptedViewPk = this.encryptedViewPrivateKey();
-    const encryptedDelegationSignature = this.encryptedDelegationSignature();
-    const { pk, pubK } = this.deriveEphemeralEncryptionKeys(this._password!);
+  async setupViewAccount(password: string, client: CustomClient) {
+    const mainAccountAddress = client.account.address;
+    const encryptedViewPk = this.encryptedViewPrivateKey(mainAccountAddress);
+    const encryptedDelegationSignature =
+      this.encryptedDelegationSignature(mainAccountAddress);
+    const { pk, pubK } = this.deriveEphemeralEncryptionKeys(password);
     if (encryptedViewPk && encryptedDelegationSignature) {
       this._viewPk = (await decrypt(pk, encryptedViewPk)) as Hash;
       this._viewAccount = privateKeyToAccount(this._viewPk);
@@ -146,44 +106,38 @@ export class AccountService extends EventEmitter {
       return;
     }
 
-    if (this._account && this._password) {
-      this._viewPk = keccak256(
-        keccak256(toHex(`${this.appPrefixKey}_${this._password}`)),
-      );
-      this._viewAccount = privateKeyToAccount(this._viewPk);
-      this._delegationSignature = await this._account.signTypedData({
-        domain,
-        types,
-        primaryType: "Config",
-        message: {
-          operation: "delegate decryption",
-          protocol: "zeroledger",
-          owner: this._account.address,
-          delegate: this._viewAccount.address,
-        },
-      });
-      localStorage.setItem(
-        `${this.PKS_STORE_KEY}.view`,
-        await encrypt(this._viewPk, pubK),
-      );
-      localStorage.setItem(
-        `${this.PKS_STORE_KEY}.delegation`,
-        await encrypt(this._delegationSignature, pubK),
-      );
-    }
+    this._viewPk = keccak256(
+      keccak256(toHex(`${this.appPrefixKey}_${password}`)),
+    );
+    this._viewAccount = privateKeyToAccount(this._viewPk);
+    this._delegationSignature = await client.signTypedData({
+      domain,
+      types,
+      primaryType: "Config",
+      message: {
+        operation: "delegate decryption",
+        protocol: "zeroledger",
+        owner: client.account.address,
+        delegate: this._viewAccount.address,
+      },
+    });
+    localStorage.setItem(
+      `${this.PKS_STORE_KEY}.view.${mainAccountAddress}`,
+      await encrypt(this._viewPk, pubK),
+    );
+    localStorage.setItem(
+      `${this.PKS_STORE_KEY}.delegation.${mainAccountAddress}`,
+      await encrypt(this._delegationSignature, pubK),
+    );
   }
 
-  async reset() {
-    delete this._account;
+  async reset(mainAccountAddress: Address) {
     delete this._viewAccount;
-    delete this._password;
-    delete this._pk;
     delete this._viewPk;
     delete this._delegationSignature;
-    localStorage.removeItem(`${this.PKS_STORE_KEY}.main`);
-    localStorage.removeItem(`${this.PKS_STORE_KEY}.view`);
-    localStorage.removeItem(`${this.PKS_STORE_KEY}.delegation`);
+    localStorage.removeItem(`${this.PKS_STORE_KEY}.view.${mainAccountAddress}`);
+    localStorage.removeItem(
+      `${this.PKS_STORE_KEY}.delegation.${mainAccountAddress}`,
+    );
   }
 }
-
-export const accountService = new AccountService(APP_PREFIX_KEY);

@@ -1,5 +1,5 @@
 import { type CustomClient } from "@src/services/core/evmClient.service";
-import { Address, Hash } from "viem";
+import { Address, Hash, PublicClient } from "viem";
 import { VAULT_ABI, REGISTRY_ABI } from "./vault.abi";
 
 export type RegistryParams = {
@@ -7,7 +7,10 @@ export type RegistryParams = {
   address: Address;
 };
 
-export function getRegistry(vaultAddress: Address, client: CustomClient) {
+export function getRegistry(
+  vaultAddress: Address,
+  client: PublicClient | CustomClient,
+) {
   return client.readContract({
     address: vaultAddress,
     abi: VAULT_ABI,
@@ -18,7 +21,7 @@ export function getRegistry(vaultAddress: Address, client: CustomClient) {
 export async function isUserRegistered(
   userAddress: Address,
   vaultAddress: Address,
-  client: CustomClient,
+  client: PublicClient,
 ) {
   const registry = await getRegistry(vaultAddress, client);
   const [publicKey, active] = await client.readContract({
