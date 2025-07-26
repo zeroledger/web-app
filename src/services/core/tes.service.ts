@@ -12,15 +12,6 @@ import { MemoryQueue } from "@src/services/core/queue";
 import type { SignedMetaTransaction } from "@src/utils/metatx";
 import { EvmClientService } from "./evmClient.service";
 
-interface ChallengeResponse {
-  random: Hex;
-  expiration: number;
-}
-
-interface TepkResponse {
-  tepk: Hex;
-}
-
 const AUTH_TOKEN_ABI = parseAbiParameters(
   "address authAddress,bytes authSignature,address ownerAddress,bytes delegationSignature",
 );
@@ -38,7 +29,6 @@ export default class TesService {
     this.delegationSignature = this.accountService.getDelegationSignature()!;
   }
 
-  private authToken?: Hex;
   private timeout = 0;
   private logger = new Logger(TesService.name);
   private viewAccount: NonNullable<
@@ -48,19 +38,31 @@ export default class TesService {
   private delegationSignature: NonNullable<
     ReturnType<AccountService["getDelegationSignature"]>
   >;
+  private csrf: string = "";
 
   private async challenge() {
     this.logger.log("Run challenge for tes auth");
     const response = await fetch(
-      `${this.tesUrl}/challenge/${this.viewAccount.address}`,
+      `${this.tesUrl}/challenge/init/${this.viewAccount.address}`,
     );
-    const { random, expiration } = (await response.json()) as ChallengeResponse;
+    const { random } = (await response.json()) as {
+      random: Hex;
+    };
     const authToken = await this.getAuthToken(random);
-    this.logger.log(
-      `Update auth token $(len: ${authToken.length}) with timeout ${expiration}`,
-    );
-    this.authToken = authToken;
-    this.timeout = expiration;
+    this.logger.log(`Create auth token $(len: ${authToken.length})`);
+    const resolveResp = await fetch(`${this.tesUrl}/challenge/solve`, {
+      headers: new Headers({
+        authorization: `Bearer ${authToken}`,
+      }),
+      credentials: "include",
+    });
+    this.logger.log(`Challenge resolved`);
+    const { exp, csrf } = (await resolveResp.json()) as {
+      exp: number;
+      csrf: string;
+    };
+    this.csrf = csrf;
+    this.timeout = exp * 1000;
   }
 
   private signChallenge(random: Hex) {
@@ -79,14 +81,9 @@ export default class TesService {
     return token;
   }
 
-  private setAccessToken(headers: Headers) {
-    headers.append("access_token", this.authToken!);
-    return headers;
-  }
-
   private manageAuth() {
     return this.memoryQueue.schedule("TesService.manageAuth", async () => {
-      if (!this.authToken || this.timeout < Date.now()) {
+      if (this.timeout < Date.now() || !this.csrf) {
         await this.challenge();
       }
     });
@@ -94,10 +91,10 @@ export default class TesService {
 
   async getTrustedEncryptionToken() {
     await this.manageAuth();
-    const response = await fetch(`${this.tesUrl}/encryption/tepk`, {
-      headers: this.setAccessToken(new Headers()),
-    });
-    const { tepk } = (await response.json()) as TepkResponse;
+    const response = await fetch(`${this.tesUrl}/encryption/tepk`);
+    const { tepk } = (await response.json()) as {
+      tepk: Hex;
+    };
     return tepk;
   }
 
@@ -112,10 +109,12 @@ export default class TesService {
 
     const response = await fetch(`${this.tesUrl}/encryption/decrypt`, {
       method: "POST",
-      headers: this.setAccessToken(
-        new Headers({ "Content-Type": "application/json" }),
-      ),
+      headers: new Headers({
+        "Content-Type": "application/json",
+        "x-custom-tes-csrf": this.csrf,
+      }),
       body: JSON.stringify(requestData),
+      credentials: "include",
     });
 
     return deSerializeCommitment((await response.json()).decryptedCommitment);
@@ -127,7 +126,8 @@ export default class TesService {
       const response = await fetch(
         `${this.tesUrl}/indexer?owner=${this.mainAccountAddress}&token=${token}&fromBlock=${fromBlock}&toBlock=${toBlock}`,
         {
-          headers: this.setAccessToken(new Headers()),
+          headers: new Headers({ "x-custom-tes-csrf": this.csrf }),
+          credentials: "include",
         },
       );
       const data: {
@@ -169,8 +169,10 @@ export default class TesService {
   }
 
   async quote(token: Address) {
+    await this.manageAuth();
     const response = await fetch(`${this.tesUrl}/paymaster/quote/${token}`, {
-      headers: this.setAccessToken(new Headers()),
+      headers: new Headers({ "x-custom-tes-csrf": this.csrf }),
+      credentials: "include",
     });
 
     const data = (await response.json()) as {
@@ -187,18 +189,19 @@ export default class TesService {
     metatx: SignedMetaTransaction,
     coveredGas: string,
   ) {
-    console.log(`send metatx: ${JSON.stringify({ metatx, coveredGas })}`);
+    await this.manageAuth();
     return fetch(`${this.tesUrl}/paymaster/execute`, {
       method: "POST",
-      headers: this.setAccessToken(
-        new Headers({ "Content-Type": "application/json" }),
-      ),
+      headers: new Headers({
+        "Content-Type": "application/json",
+        "x-custom-tes-csrf": this.csrf,
+      }),
+      credentials: "include",
       body: JSON.stringify({ metatx, coveredGas }),
     });
   }
 
   reset() {
-    delete this.authToken;
     this.timeout = 0;
   }
 }

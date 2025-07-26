@@ -25,18 +25,17 @@ export const AccountServiceEvents = {
   ACCOUNT_SERVICE_CHANGE: "ACCOUNT_SERVICE_CHANGE",
 } as const;
 
-export const domain = {
-  name: "TES Decryption Delegation",
+const domain = {
+  name: "TES Login",
   version: "0.0.1",
 } as const;
 
 // The named list of all type definitions
-export const types = {
-  Config: [
-    { name: "operation", type: "string" },
+const types = {
+  LoginSetup: [
     { name: "protocol", type: "string" },
-    { name: "owner", type: "address" },
-    { name: "delegate", type: "address" },
+    { name: "main_account", type: "address" },
+    { name: "view_account", type: "address" },
   ],
 } as const;
 
@@ -113,12 +112,11 @@ export class AccountService extends EventEmitter {
     this._delegationSignature = await client.signTypedData({
       domain,
       types,
-      primaryType: "Config",
+      primaryType: "LoginSetup",
       message: {
-        operation: "delegate decryption",
         protocol: "zeroledger",
-        owner: client.account.address,
-        delegate: this._viewAccount.address,
+        main_account: client.account.address,
+        view_account: this._viewAccount.address,
       },
     });
     localStorage.setItem(
