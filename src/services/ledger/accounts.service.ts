@@ -26,13 +26,13 @@ export const AccountServiceEvents = {
 } as const;
 
 const domain = {
-  name: "TES Login",
+  name: "View Account Authorization",
   version: "0.0.1",
 } as const;
 
 // The named list of all type definitions
 const types = {
-  LoginSetup: [
+  Authorize: [
     { name: "protocol", type: "string" },
     { name: "main_account", type: "address" },
     { name: "view_account", type: "address" },
@@ -112,7 +112,7 @@ export class AccountService extends EventEmitter {
     this._delegationSignature = await client.signTypedData({
       domain,
       types,
-      primaryType: "LoginSetup",
+      primaryType: "Authorize",
       message: {
         protocol: "zeroledger",
         main_account: client.account.address,

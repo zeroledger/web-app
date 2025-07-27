@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router-dom";
 import Error from "@src/components/Error";
 import { Auth, PrivateRoutes } from "./routes";
 import PanelRoute from "./routes/PanelRoute";
+import { DelegationSigning } from "./components/DelegationSigning";
 
 const Router = createBrowserRouter([
   {
@@ -22,6 +23,10 @@ const Router = createBrowserRouter([
         element: <PanelRoute />,
       },
     ],
+  },
+  {
+    path: "/delegation",
+    element: <DelegationSigning />,
   },
 ]);
 
