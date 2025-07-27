@@ -2,9 +2,12 @@ import { Field, Label, Input } from "@headlessui/react";
 import clsx from "clsx";
 import { UseFormReturn } from "react-hook-form";
 import { useContext } from "react";
-import { LedgerContext } from "@src/context/ledger.context";
+import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
 import { getMaxFormattedValue } from "@src/utils/common";
+import { TOKEN_ADDRESS } from "@src/common.constants";
+import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
+import { useMetadata } from "@src/hooks/useMetadata";
 
 interface SpendFormData {
   recipient: string;
@@ -24,7 +27,9 @@ export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
     clearErrors,
     setValue,
   } = formMethods;
-  const { privateBalance, decimals } = useContext(LedgerContext);
+  const { privateBalance } = useContext(LedgerContext);
+  const { evmClientService } = useContext(EvmClientsContext);
+  const { decimals } = useMetadata(TOKEN_ADDRESS, evmClientService);
 
   const validateAmount = (value: string) => {
     if (!value) return "Amount is required";

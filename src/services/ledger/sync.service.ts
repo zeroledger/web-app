@@ -126,4 +126,8 @@ export default class SyncService {
     // Return all collected events
     return allCommitmentCreatedEvents.concat(allCommitmentRemovedEvents);
   }
+
+  async reset() {
+    await this._store.clear();
+  }
 }

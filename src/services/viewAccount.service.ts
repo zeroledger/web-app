@@ -1,4 +1,3 @@
-import { EventEmitter } from "node:events";
 import {
   type PrivateKeyAccount,
   type Hex,
@@ -9,7 +8,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { decrypt, encrypt } from "@zeroledger/vycrypt";
-import { CustomClient } from "../core/evmClient.service";
+import { EvmClientService } from "@src/services/core/evmClient.service";
 
 export type EncryptedAccountsStore = Record<
   string,
@@ -20,10 +19,6 @@ export type EncryptedAccountsStore = Record<
     salt: string;
   }
 >;
-
-export const AccountServiceEvents = {
-  ACCOUNT_SERVICE_CHANGE: "ACCOUNT_SERVICE_CHANGE",
-} as const;
 
 const domain = {
   name: "View Account Authorization",
@@ -39,16 +34,22 @@ const types = {
   ],
 } as const;
 
-export class AccountService extends EventEmitter {
+export class ViewAccountService {
   private PKS_STORE_KEY: string;
 
   private _viewPk?: Hash;
   private _viewAccount?: PrivateKeyAccount;
   private _delegationSignature?: Hex;
+  private _mainAccountAddress: Address;
 
-  constructor(private readonly appPrefixKey: string) {
-    super();
+  constructor(
+    private readonly appPrefixKey: string,
+    private readonly password: string,
+    private readonly evmClientService: EvmClientService,
+  ) {
     this.PKS_STORE_KEY = `${this.appPrefixKey}.encodedAccountData`;
+    this._mainAccountAddress =
+      this.evmClientService.writeClient!.account.address;
   }
 
   /*********
@@ -89,42 +90,55 @@ export class AccountService extends EventEmitter {
     return this._delegationSignature;
   }
 
-  async setupViewAccount(password: string, client: CustomClient) {
-    const mainAccountAddress = client.account.address;
-    const encryptedViewPk = this.encryptedViewPrivateKey(mainAccountAddress);
-    const encryptedDelegationSignature =
-      this.encryptedDelegationSignature(mainAccountAddress);
-    const { pk, pubK } = this.deriveEphemeralEncryptionKeys(password);
-    if (encryptedViewPk && encryptedDelegationSignature) {
-      this._viewPk = (await decrypt(pk, encryptedViewPk)) as Hash;
-      this._viewAccount = privateKeyToAccount(this._viewPk);
-      this._delegationSignature = (await decrypt(
-        pk,
-        encryptedDelegationSignature,
-      )) as Hex;
-      return;
-    }
+  hasEncryptedViewAccount() {
+    return (
+      this.encryptedViewPrivateKey(this._mainAccountAddress) &&
+      this.encryptedDelegationSignature(this._mainAccountAddress)
+    );
+  }
 
+  async unlockViewAccount() {
+    const encryptedViewPk = this.encryptedViewPrivateKey(
+      this._mainAccountAddress,
+    );
+    const encryptedDelegationSignature = this.encryptedDelegationSignature(
+      this._mainAccountAddress,
+    );
+    const { pk } = this.deriveEphemeralEncryptionKeys(this.password);
+    this._viewPk = (await decrypt(pk, encryptedViewPk!)) as Hash;
+    this._viewAccount = privateKeyToAccount(this._viewPk);
+    this._delegationSignature = (await decrypt(
+      pk,
+      encryptedDelegationSignature!,
+    )) as Hex;
+  }
+
+  prepareViewAccount() {
     this._viewPk = keccak256(
-      keccak256(toHex(`${this.appPrefixKey}_${password}`)),
+      keccak256(toHex(`${this.appPrefixKey}_${this.password}`)),
     );
     this._viewAccount = privateKeyToAccount(this._viewPk);
-    this._delegationSignature = await client.signTypedData({
-      domain,
-      types,
-      primaryType: "Authorize",
-      message: {
-        protocol: "zeroledger",
-        main_account: client.account.address,
-        view_account: this._viewAccount.address,
-      },
-    });
+  }
+
+  async authorize() {
+    const { pubK } = this.deriveEphemeralEncryptionKeys(this.password);
+    this._delegationSignature =
+      await this.evmClientService.writeClient!.signTypedData({
+        domain,
+        types,
+        primaryType: "Authorize",
+        message: {
+          protocol: "zeroledger",
+          main_account: this._mainAccountAddress,
+          view_account: this._viewAccount!.address,
+        },
+      });
     localStorage.setItem(
-      `${this.PKS_STORE_KEY}.view.${mainAccountAddress}`,
-      await encrypt(this._viewPk, pubK),
+      `${this.PKS_STORE_KEY}.view.${this._mainAccountAddress}`,
+      await encrypt(this._viewPk!, pubK),
     );
     localStorage.setItem(
-      `${this.PKS_STORE_KEY}.delegation.${mainAccountAddress}`,
+      `${this.PKS_STORE_KEY}.delegation.${this._mainAccountAddress}`,
       await encrypt(this._delegationSignature, pubK),
     );
   }

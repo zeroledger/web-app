@@ -10,12 +10,21 @@ import { usePruneModal } from "./hooks/usePruneModal";
 import { useDepositModal } from "./hooks/useDepositModal";
 import { useFaucet } from "./hooks/useFaucet";
 import { useWithdrawModal } from "./hooks/useWithdrawModal";
-import { LedgerContext } from "@src/context/ledger.context";
+import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useContext } from "react";
 import { SpendModal } from "../Modals/SpendModal";
+import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
+import { useMetadata } from "@src/hooks/useMetadata";
+import { TOKEN_ADDRESS } from "@src/common.constants";
 
 export default function MenuTab() {
-  const { decimals, isConnecting } = useContext(LedgerContext);
+  const { isConnecting } = useContext(LedgerContext);
+  const { evmClientService } = useContext(EvmClientsContext);
+  const { decimals, isMetadataLoading } = useMetadata(
+    TOKEN_ADDRESS,
+    evmClientService,
+  );
+  const isLoading = isMetadataLoading || isConnecting;
   const {
     isDepositModalOpen,
     isDepositModalLoading,
@@ -66,7 +75,7 @@ export default function MenuTab() {
         <button
           className={`${buttonStyle} ${disabledButtonStyle}`}
           onClick={onWithdrawModalOpen}
-          disabled={isFauceting || isConnecting}
+          disabled={isFauceting || isLoading}
         >
           Withdraw
           <ArrowIcon rotate={90} />
@@ -74,14 +83,14 @@ export default function MenuTab() {
         <button
           onClick={onDepositModalOpen}
           className={`${buttonStyle} ${disabledButtonStyle}`}
-          disabled={isFauceting || isConnecting}
+          disabled={isFauceting || isLoading}
         >
           Deposit
           <ArrowIcon />
         </button>
         <button
           className={`${buttonStyle} ${disabledButtonStyle}`}
-          disabled={isFauceting || isConnecting}
+          disabled={isFauceting || isLoading}
         >
           F.A.Q
           <QuestionIcon />
@@ -89,7 +98,7 @@ export default function MenuTab() {
         <button
           className={`${buttonStyle} ${disabledButtonStyle}`}
           onClick={onPruneModalOpen}
-          disabled={isFauceting || isConnecting}
+          disabled={isFauceting || isLoading}
         >
           Prune Wallet
           <TrashIcon />
@@ -97,7 +106,7 @@ export default function MenuTab() {
         <button
           className={`${buttonStyle} ${disabledButtonStyle}`}
           onClick={handleFaucet}
-          disabled={isFauceting || isConnecting}
+          disabled={isFauceting || isLoading}
         >
           Faucet
           <FaucetIcon className="mr-1" />

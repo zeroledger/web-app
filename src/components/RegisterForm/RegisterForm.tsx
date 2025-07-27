@@ -2,10 +2,13 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Description, Field, Label, Input, Button } from "@headlessui/react";
 import clsx from "clsx";
-import { LedgerContext } from "@src/context/ledger.context";
 import { useNavigate } from "react-router-dom";
 import { primaryButtonStyle } from "@src/components/Button";
 import { optimismSepolia } from "viem/chains";
+import { ViewAccountContext } from "@src/context/viewAccount/viewAccount.context";
+import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
+import { useConnectWallet, useWallets } from "@privy-io/react-auth";
+import { LedgerContext } from "@src/context/ledger/ledger.context";
 
 export default function RegisterForm() {
   const {
@@ -21,27 +24,37 @@ export default function RegisterForm() {
 
   const navigate = useNavigate();
 
-  const { onboard, initialized } = useContext(LedgerContext);
-
+  const { setPassword, authorized } = useContext(ViewAccountContext);
+  const { setChain } = useContext(EvmClientsContext);
+  const { connectWallet } = useConnectWallet();
+  const { ledgerService } = useContext(LedgerContext);
+  const { wallets } = useWallets();
   const [error, setError] = useState<string>();
 
   const onSubmit = useCallback(
     async (data: { password: string }) => {
       try {
-        onboard(data.password, optimismSepolia);
+        setPassword(data.password);
+        setChain(optimismSepolia);
+        if (!wallets.length) {
+          connectWallet();
+        }
       } catch (error) {
         const message = (error as Error).message ?? "Invalid password";
         setError(message);
       }
     },
-    [onboard],
+    [setPassword, setChain, connectWallet, wallets],
   );
 
   useEffect(() => {
-    if (initialized) {
+    if (ledgerService && authorized) {
       navigate("/panel/wallet");
     }
-  }, [initialized, navigate]);
+    if (ledgerService && !authorized) {
+      navigate("/view-account-authorization");
+    }
+  }, [ledgerService, authorized, navigate]);
 
   const onEnter = (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {

@@ -1,4 +1,4 @@
-import { LedgerContext } from "@src/context/ledger.context";
+import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
 import { parseUnits } from "viem";
@@ -9,7 +9,7 @@ interface DepositFormData {
 }
 
 export const useDepositModal = () => {
-  const { ledgerServices } = useContext(LedgerContext);
+  const { ledgerService } = useContext(LedgerContext);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isDepositModalLoading, setIsDepositModalLoading] = useState(false);
   const [isDepositModalSuccess, setIsDepositModalSuccess] = useState(false);
@@ -35,9 +35,7 @@ export const useDepositModal = () => {
   const handleDeposit = async (data: DepositFormData, decimals: number) => {
     setIsDepositModalLoading(true);
     try {
-      await ledgerServices?.ledgerService.deposit(
-        parseUnits(data.amount, decimals),
-      );
+      await ledgerService?.deposit(parseUnits(data.amount, decimals));
       setIsDepositModalLoading(false);
       setIsDepositModalSuccess(true);
       setTimeout(() => {

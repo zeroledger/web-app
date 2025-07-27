@@ -1,7 +1,7 @@
 import { useState, useContext } from "react";
 import { useForm } from "react-hook-form";
 import { Address, parseUnits } from "viem";
-import { LedgerContext } from "@src/context/ledger.context";
+import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useSwipe } from "./useSwipe";
 
 interface WithdrawFormData {
@@ -10,7 +10,7 @@ interface WithdrawFormData {
 }
 
 export const useWithdrawModal = (decimals: number) => {
-  const { ledgerServices, privateBalance } = useContext(LedgerContext);
+  const { ledgerService, privateBalance } = useContext(LedgerContext);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalLoading, setIsModalLoading] = useState(false);
   const [isModalSuccess, setIsModalSuccess] = useState(false);
@@ -39,14 +39,9 @@ export const useWithdrawModal = (decimals: number) => {
     try {
       const amount = parseUnits(data.amount, decimals);
       if (amount === privateBalance) {
-        await ledgerServices?.ledgerService?.withdraw(
-          data.recipient as Address,
-        );
+        await ledgerService?.withdraw(data.recipient as Address);
       } else {
-        await ledgerServices?.ledgerService?.partialWithdraw(
-          amount,
-          data.recipient as Address,
-        );
+        await ledgerService?.partialWithdraw(amount, data.recipient as Address);
       }
       setIsModalLoading(false);
       setIsModalSuccess(true);

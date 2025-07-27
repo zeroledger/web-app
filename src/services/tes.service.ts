@@ -7,43 +7,35 @@ import {
   Hex,
   parseAbiParameters,
 } from "viem";
-import { AccountService } from "../ledger";
+import { ViewAccountService } from "@src/services/viewAccount.service";
 import { MemoryQueue } from "@src/services/core/queue";
 import type { SignedMetaTransaction } from "@src/utils/metatx";
-import { EvmClientService } from "./evmClient.service";
+import { EvmClientService } from "@src/services/core/evmClient.service";
 
 const AUTH_TOKEN_ABI = parseAbiParameters(
   "address authAddress,bytes authSignature,address ownerAddress,bytes delegationSignature",
 );
 
-export default class TesService {
+export class TesService {
   constructor(
     public readonly tesUrl: string,
-    public readonly accountService: AccountService,
+    public readonly viewAccountService: ViewAccountService,
     public readonly evmClientService: EvmClientService,
     private readonly memoryQueue: MemoryQueue,
   ) {
-    this.viewAccount = this.accountService.getViewAccount()!;
     this.mainAccountAddress =
       this.evmClientService.writeClient!.account.address;
-    this.delegationSignature = this.accountService.getDelegationSignature()!;
   }
 
   private timeout = 0;
   private logger = new Logger(TesService.name);
-  private viewAccount: NonNullable<
-    ReturnType<AccountService["getViewAccount"]>
-  >;
   private mainAccountAddress: Address;
-  private delegationSignature: NonNullable<
-    ReturnType<AccountService["getDelegationSignature"]>
-  >;
   private csrf: string = "";
 
   private async challenge() {
     this.logger.log("Run challenge for tes auth");
     const response = await fetch(
-      `${this.tesUrl}/challenge/init/${this.viewAccount.address}`,
+      `${this.tesUrl}/challenge/init/${this.viewAccountService.getViewAccount()!.address}`,
     );
     const { random } = (await response.json()) as {
       random: Hex;
@@ -66,17 +58,17 @@ export default class TesService {
   }
 
   private signChallenge(random: Hex) {
-    return this.viewAccount.signMessage({
+    return this.viewAccountService.getViewAccount()!.signMessage({
       message: random,
     });
   }
 
   async getAuthToken(random: Hex) {
     const token = encodeAbiParameters(AUTH_TOKEN_ABI, [
-      this.viewAccount.address,
+      this.viewAccountService.getViewAccount()!.address,
       await this.signChallenge(random),
       this.mainAccountAddress,
-      this.delegationSignature,
+      this.viewAccountService.getDelegationSignature()!,
     ]);
     return token;
   }

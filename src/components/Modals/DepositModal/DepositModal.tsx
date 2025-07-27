@@ -4,9 +4,11 @@ import clsx from "clsx";
 import { Loader } from "@src/components/Loader";
 import { BackButton } from "@src/components/Buttons/BackButton";
 import { SuccessMessage } from "@src/components/Modals/SuccessMessage";
-import { LedgerContext } from "@src/context/ledger.context";
 import { ErrorMessage } from "@src/components/Modals/ErrorMessage";
 import { DepositForm } from "./DepositForm";
+import { useMetadata } from "@src/hooks/useMetadata";
+import { TOKEN_ADDRESS } from "@src/common.constants";
+import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
 
 interface DepositFormData {
   amount: string;
@@ -32,7 +34,8 @@ export default function DepositModal({
   formMethods,
 }: DepositModalProps) {
   const { handleSubmit } = formMethods;
-  const { decimals } = useContext(LedgerContext);
+  const { evmClientService } = useContext(EvmClientsContext);
+  const { decimals } = useMetadata(TOKEN_ADDRESS, evmClientService);
 
   const onSubmit = (data: DepositFormData) => {
     onDeposit(data, decimals);

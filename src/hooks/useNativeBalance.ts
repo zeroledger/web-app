@@ -1,20 +1,20 @@
 import { useContext, useCallback } from "react";
 import useSWR from "swr";
-import { LedgerContext } from "@src/context/ledger.context";
 import { swrKeyForClient } from "@src/utils/swrKey";
+import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
 
 export default function useNativeBalance() {
-  const { ledgerServices, initialized } = useContext(LedgerContext);
+  const { evmClientService } = useContext(EvmClientsContext);
   const fetcher = useCallback(async () => {
-    if (ledgerServices && initialized) {
-      return ledgerServices.evmClientService.readClient!.getBalance({
-        address: ledgerServices.evmClientService.writeClient!.account.address,
+    if (evmClientService) {
+      return evmClientService.readClient!.getBalance({
+        address: evmClientService!.writeClient!.account.address,
       });
     }
     return 0n;
-  }, [ledgerServices, initialized]);
+  }, [evmClientService]);
   return useSWR(
-    ["/balance", swrKeyForClient(ledgerServices?.evmClientService.writeClient)],
+    ["/balance", swrKeyForClient(evmClientService!.writeClient)],
     fetcher,
   );
 }

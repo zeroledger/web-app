@@ -7,11 +7,14 @@ const recordEntityKey = {
 };
 
 export default class CommitmentsService {
-  constructor(readonly dataSource: DataSource) {}
+  constructor(readonly dataSource: DataSource) {
+    this._store = this.dataSource.getEntityLevel(recordEntityKey);
+  }
+
+  private _store: ReturnType<DataSource["getEntityLevel"]>;
 
   async findOneSafe(hash: BigIntString): Promise<LedgerRecordDto | null> {
-    const store = this.dataSource.getEntityLevel(recordEntityKey);
-    const data = (await store.get(hash)) as string | undefined;
+    const data = (await this._store.get(hash)) as string | undefined;
     if (!data) {
       return null;
     }
@@ -19,8 +22,7 @@ export default class CommitmentsService {
   }
 
   async findOne(hash: BigIntString): Promise<LedgerRecordDto> {
-    const store = this.dataSource.getEntityLevel(recordEntityKey);
-    const data = (await store.get(hash)) as string | undefined;
+    const data = (await this._store.get(hash)) as string | undefined;
     if (!data) {
       throw new Error("NOTE_NOT_FOUND");
     }
@@ -28,8 +30,7 @@ export default class CommitmentsService {
   }
 
   async findMany(hashes: BigIntString[]): Promise<LedgerRecordDto[]> {
-    const store = this.dataSource.getEntityLevel(recordEntityKey);
-    const data = (await store.getMany(hashes)) as string[] | undefined;
+    const data = (await this._store.getMany(hashes)) as string[] | undefined;
     if (!data) {
       throw new Error("NOTE_NOT_FOUND");
     }
@@ -39,7 +40,7 @@ export default class CommitmentsService {
   async saveMany(items: LedgerRecordDto[]) {
     const batch = items.map((item) => ({
       type: "put" as const,
-      sublevel: this.dataSource.getEntityLevel(recordEntityKey),
+      sublevel: this._store,
       key: item.hash,
       value: JSON.stringify(item),
     }));
@@ -48,21 +49,19 @@ export default class CommitmentsService {
   }
 
   async save(data: LedgerRecordDto) {
-    const store = this.dataSource.getEntityLevel(recordEntityKey);
-    await store.put(data.hash, JSON.stringify(data));
+    await this._store.put(data.hash, JSON.stringify(data));
   }
 
   async delete(hash: BigIntString) {
-    const store = this.dataSource.getEntityLevel(recordEntityKey);
     const commitment = await this.findOneSafe(hash);
-    await store.del(hash);
+    await this._store.del(hash);
     return commitment;
   }
 
   async deleteMany(hashes: BigIntString[]) {
     const batch = hashes.map((hash) => ({
       type: "del" as const,
-      sublevel: this.dataSource.getEntityLevel(recordEntityKey),
+      sublevel: this._store,
       key: hash,
     }));
 
@@ -70,13 +69,8 @@ export default class CommitmentsService {
   }
 
   async all() {
-    const store = this.dataSource.getEntityLevel(recordEntityKey);
-    const data = (await store.values().all()) as string[];
+    const data = (await this._store.values().all()) as string[];
     return data.map((item) => LedgerRecordDto.of(item));
-  }
-
-  async clear() {
-    return this.dataSource.getEntityLevel(recordEntityKey).clear();
   }
 
   async findCommitments(amount: bigint) {
@@ -123,5 +117,9 @@ export default class CommitmentsService {
       selectedCommitmentRecords,
       totalAmount: accumulatedAmount,
     };
+  }
+
+  async reset() {
+    await this._store.clear();
   }
 }

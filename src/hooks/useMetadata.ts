@@ -7,18 +7,17 @@ import { Address } from "viem";
 
 export function useMetadata(
   tokenAddress: Address,
-  evmClientService: EvmClientService | undefined,
-  initialized: boolean,
+  evmClientService?: EvmClientService,
 ) {
   const fetcher = useCallback(() => {
-    if (evmClientService && initialized) {
+    if (evmClientService) {
       return metadata({
         tokenAddress,
         client: evmClientService.writeClient!,
       });
     }
     return Promise.resolve(["", 0n, 0] as const);
-  }, [evmClientService, initialized, tokenAddress]);
+  }, [evmClientService, tokenAddress]);
 
   const {
     data: onchainWalletData,

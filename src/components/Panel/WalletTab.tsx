@@ -5,20 +5,22 @@ import { shortString } from "@src/utils/common";
 import { useSendModal } from "./hooks/useSendModal";
 import { useCopyAddress } from "./hooks/useCopyAddress";
 import { formatUnits } from "viem";
-import { LedgerContext } from "@src/context/ledger.context";
+import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useContext, useEffect, useState } from "react";
+import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
+import { useMetadata } from "@src/hooks/useMetadata";
+import { TOKEN_ADDRESS } from "@src/common.constants";
 
 export default function WalletTab() {
-  const {
-    privateBalance,
-    isConnecting,
-    error,
-    decimals,
-    ledgerServices,
-    initialized,
-  } = useContext(LedgerContext);
-  const address =
-    ledgerServices!.evmClientService.writeClient!.account.address!;
+  const { ledgerService, privateBalance, isConnecting, error } =
+    useContext(LedgerContext);
+  const { evmClientService } = useContext(EvmClientsContext);
+  const { decimals, isMetadataLoading } = useMetadata(
+    TOKEN_ADDRESS,
+    evmClientService,
+  );
+  const isLoading = isMetadataLoading || isConnecting;
+  const address = evmClientService!.writeClient!.account.address!;
   const { showCopiedTooltip, handleCopyAddress } = useCopyAddress(address);
   const {
     isModalOpen,
@@ -34,15 +36,14 @@ export default function WalletTab() {
 
   useEffect(() => {
     const fetchSyncStatus = async () => {
-      if (!ledgerServices || !initialized) return;
-      const { processedBlock, currentBlock } =
-        await ledgerServices.ledgerService.syncStatus();
+      if (!ledgerService) return;
+      const { processedBlock, currentBlock } = await ledgerService.syncStatus();
       setBlocksToSync(currentBlock - processedBlock);
     };
     fetchSyncStatus();
     const interval = setInterval(fetchSyncStatus, 300);
     return () => clearInterval(interval);
-  }, [ledgerServices, initialized]);
+  }, [ledgerService, isLoading]);
 
   return (
     <div className="flex flex-col items-center justify-center h-full px-4 pt-4">
@@ -57,7 +58,7 @@ export default function WalletTab() {
           </div>
         </>
       )}
-      {!isConnecting && !error && initialized && (
+      {!isLoading && !error && (
         <div className="text-4xl h-12 font-extrabold text-white">{`$${formatUnits(privateBalance, decimals).slice(0, 12)}`}</div>
       )}
       <div className="flex items-center gap-2 mt-2 mb-4 relative">

@@ -28,13 +28,13 @@ import {
   withdrawGasSponsoredLimit,
 } from "@src/utils/vault";
 import { catchService } from "@src/services/core/catch.service";
-import TesService from "@src/services/core/tes.service";
+import { TesService } from "@src/services/tes.service";
 import CommitmentsService from "./commitments.service";
 import CommitmentsHistoryService from "./history.service";
 import SyncService from "./sync.service";
 import { HistoryRecordDto, LedgerRecordDto } from "./ledger.dto";
-import { EvmClientService } from "../core/evmClient.service";
-import { AccountService } from "./accounts.service";
+import { EvmClientService } from "@src/services/core/evmClient.service";
+import { ViewAccountService } from "@src/services/viewAccount.service";
 import { compareEvents, EventLike } from "@src/utils/events";
 import { logStringify } from "@src/utils/common";
 import { createSignedMetaTx, getForwarderNonce } from "@src/utils/metatx";
@@ -54,7 +54,7 @@ export class LedgerService extends EventEmitter {
   private updateBothBalancesDebounced: ReturnType<typeof debounce>;
 
   constructor(
-    private readonly accountService: AccountService,
+    private readonly viewAccountService: ViewAccountService,
     private readonly clientService: EvmClientService,
     private readonly vault: Address,
     private readonly forwarder: Address,
@@ -178,7 +178,7 @@ export class LedgerService extends EventEmitter {
         } else if (tesUrl.length && tesUrl !== this.tesService.tesUrl) {
           const shortLivedTes = new TesService(
             tesUrl,
-            this.accountService,
+            this.viewAccountService,
             this.clientService,
             this.queue,
           );
@@ -193,7 +193,7 @@ export class LedgerService extends EventEmitter {
           );
           commitment = decryptCommitment(
             encryptedCommitment,
-            this.accountService.viewPrivateKey()!,
+            this.viewAccountService.viewPrivateKey()!,
           );
         }
 
@@ -668,8 +668,9 @@ export class LedgerService extends EventEmitter {
     );
   }
 
-  reset() {
+  async reset() {
     this.updateBothBalancesDebounced.clear();
     this.eventsHandlerDebounced.clear();
+    this.tesService.reset();
   }
 }

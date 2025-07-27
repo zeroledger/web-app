@@ -1,8 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
 import Error from "@src/components/Error";
-import { Auth, PrivateRoutes } from "./routes";
-import PanelRoute from "./routes/PanelRoute";
-import { DelegationSigning } from "./components/DelegationSigning";
+import { Auth, PrivateRoutes, PanelRoute, Authorization } from "./routes";
 
 const Router = createBrowserRouter([
   {
@@ -22,11 +20,11 @@ const Router = createBrowserRouter([
         path: "/panel/:tab",
         element: <PanelRoute />,
       },
+      {
+        path: "/view-account-authorization",
+        element: <Authorization />,
+      },
     ],
-  },
-  {
-    path: "/delegation",
-    element: <DelegationSigning />,
   },
 ]);
 

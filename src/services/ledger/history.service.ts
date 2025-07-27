@@ -320,4 +320,9 @@ export default class CommitmentsHistoryService {
     const pointers = await this._getPointers();
     return !pointers.headId;
   }
+
+  async reset() {
+    await this._store.clear();
+    await this._pointersStore.clear();
+  }
 }

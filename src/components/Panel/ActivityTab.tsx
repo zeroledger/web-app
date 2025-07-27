@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { formatUnits } from "viem";
 import { shortString } from "@src/utils/common";
-import { LedgerContext } from "@src/context/ledger.context";
+import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useContext } from "react";
 import { HistoryRecordDto } from "@src/services/ledger";
 import {
@@ -9,6 +9,9 @@ import {
   DisclosureButton,
   DisclosurePanel,
 } from "@headlessui/react";
+import { TOKEN_ADDRESS } from "@src/common.constants";
+import { useMetadata } from "@src/hooks/useMetadata";
+import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
 
 const formatAmount = (
   amount: bigint,
@@ -224,15 +227,21 @@ export default function ActivityTab({ active }: { active: boolean }) {
   const [groupedTransactions, setGroupedTransactions] =
     useState<GroupedTransactions>({});
   const [error, setError] = useState<string | null>(null);
-  const { decimals, ledgerServices, initialized, isConnecting } =
-    useContext(LedgerContext);
+  const { ledgerService, isConnecting } = useContext(LedgerContext);
+  const { evmClientService } = useContext(EvmClientsContext);
+  const { decimals, isMetadataLoading } = useMetadata(
+    TOKEN_ADDRESS,
+    evmClientService,
+  );
+
+  const isLoading = isMetadataLoading || isConnecting;
 
   useEffect(() => {
     const loadTransactions = async () => {
       setLoading(true);
       setError(null);
       try {
-        const txs = await ledgerServices!.ledgerService.getTransactions();
+        const txs = await ledgerService!.getTransactions();
         if (txs) {
           setGroupedTransactions(txs);
         }
@@ -244,10 +253,10 @@ export default function ActivityTab({ active }: { active: boolean }) {
       }
     };
 
-    if (active && initialized && ledgerServices && !isConnecting) {
+    if (active && !isLoading) {
       loadTransactions();
     }
-  }, [ledgerServices, active, initialized, isConnecting]);
+  }, [active, isLoading, ledgerService]);
 
   const transactionGroups = Object.entries(groupedTransactions);
 
@@ -255,7 +264,7 @@ export default function ActivityTab({ active }: { active: boolean }) {
     <div className="h-full pt-4">
       <div className="h-full overflow-y-auto px-4">
         <ul className="flex flex-col gap-4 h-full">
-          {isConnecting || loading ? (
+          {isLoading || loading ? (
             Array.from({ length: 10 }).map((_, idx) => (
               <TransactionSkeleton key={idx} />
             ))

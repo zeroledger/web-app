@@ -20,14 +20,6 @@ import { ConnectedWallet } from "@privy-io/react-auth";
 export type CustomClient = PublicClient<Transport, Chain, Account, RpcSchema> &
   WalletClient<Transport, Chain, Account, RpcSchema>;
 
-type OpenParams = {
-  wsUrl: string;
-  httpUrl: string;
-  pollingInterval: number;
-  chain: Chain;
-  wallet: ConnectedWallet;
-};
-
 export class EvmClientService {
   private _readClient?: PublicClient;
   private _writeClient?: CustomClient;
@@ -40,18 +32,30 @@ export class EvmClientService {
     return this._writeClient;
   }
 
-  async open({ wsUrl, httpUrl, pollingInterval, chain, wallet }: OpenParams) {
-    const provider = await wallet.getEthereumProvider();
+  constructor(
+    private readonly wsUrl: string,
+    private readonly httpUrl: string,
+    private readonly pollingInterval: number,
+    private readonly chain: Chain,
+    private readonly wallet: ConnectedWallet,
+  ) {}
+
+  async open() {
+    const provider = await this.wallet.getEthereumProvider();
     this._writeClient = createWalletClient({
-      account: wallet.address as Address,
-      chain,
+      account: this.wallet.address as Address,
+      chain: this.chain,
       transport: custom(provider),
     }).extend(publicActions);
-    const transport = fallback([webSocket(wsUrl), http(httpUrl), http()]);
+    const transport = fallback([
+      webSocket(this.wsUrl),
+      http(this.httpUrl),
+      http(),
+    ]);
     this._readClient = createClient({
-      chain,
+      chain: this.chain,
       transport,
-      pollingInterval,
+      pollingInterval: this.pollingInterval,
     }).extend(publicActions);
   }
 

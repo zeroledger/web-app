@@ -16,7 +16,7 @@ describe("CommitmentsService", () => {
   });
 
   afterEach(async () => {
-    await service.clear();
+    await service.reset();
   });
 
   it("should save and find a record", async () => {
@@ -71,7 +71,7 @@ describe("CommitmentsService", () => {
   it("should clear all records", async () => {
     const recs = [createRecord("1", "100"), createRecord("2", "200")];
     await service.saveMany(recs);
-    await service.clear();
+    await service.reset();
     const all = await service.all();
     expect(all).toHaveLength(0);
   });
