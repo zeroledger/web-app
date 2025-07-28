@@ -107,3 +107,20 @@ export const getMaxFormattedValue = (
   const amount = rawValue > privateBalance ? privateBalance : rawValue;
   return formatUnits(amount, decimals);
 };
+
+export const formatBalance = (value: bigint, decimals: number): string => {
+  const formatted = formatUnits(value, decimals);
+
+  // Split by decimal point
+  const parts = formatted.split(".");
+  const integerPart = parts[0];
+  const decimalPart = parts[1] || "";
+
+  // If there's a decimal part, limit to 2 digits
+  if (decimalPart.length > 0) {
+    return `${integerPart}.${decimalPart.slice(0, 2)}`;
+  }
+
+  // If no decimal part, just return the integer part
+  return integerPart;
+};

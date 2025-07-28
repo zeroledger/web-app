@@ -1,10 +1,9 @@
 import { primaryButtonStyle } from "../Button";
 import { SpendModal } from "@src/components/Modals/SpendModal";
 import { ShareIcon } from "./ShareIcon";
-import { shortString } from "@src/utils/common";
+import { shortString, formatBalance } from "@src/utils/common";
 import { useSendModal } from "./hooks/useSendModal";
 import { useCopyAddress } from "./hooks/useCopyAddress";
-import { formatUnits } from "viem";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useContext, useEffect, useState } from "react";
 import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
@@ -59,7 +58,7 @@ export default function WalletTab() {
         </>
       )}
       {!isLoading && !error && (
-        <div className="text-4xl h-12 font-extrabold text-white">{`$${formatUnits(privateBalance, decimals).slice(0, 12)}`}</div>
+        <div className="text-4xl h-12 font-extrabold text-white">{`$${formatBalance(privateBalance, decimals)}`}</div>
       )}
       <div className="flex items-center gap-2 mt-2 mb-4 relative">
         <a

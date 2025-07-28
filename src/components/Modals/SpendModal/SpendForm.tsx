@@ -9,6 +9,8 @@ import { TOKEN_ADDRESS } from "@src/common.constants";
 import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
 import { useMetadata } from "@src/hooks/useMetadata";
 
+const amountRegex = /^\d*\.?\d*$/;
+
 interface SpendFormData {
   recipient: string;
   amount: string;
@@ -30,13 +32,6 @@ export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
   const { privateBalance } = useContext(LedgerContext);
   const { evmClientService } = useContext(EvmClientsContext);
   const { decimals } = useMetadata(TOKEN_ADDRESS, evmClientService);
-
-  const validateAmount = (value: string) => {
-    if (!value) return "Amount is required";
-    if (value === "0" || value[0] === "-")
-      return "Amount must be greater than 0";
-    return true;
-  };
 
   return (
     <div className="w-full">
@@ -81,10 +76,14 @@ export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
           )}
           {...register("amount", {
             required: "Amount is required",
-            validate: validateAmount,
+            pattern: {
+              value: amountRegex,
+              message: "Amount must be a positive number",
+            },
           })}
           placeholder="0.00"
           onChange={(e) => {
+            if (!amountRegex.test(e.target.value)) return;
             setValue(
               "amount",
               getMaxFormattedValue(e.target.value, decimals, privateBalance),

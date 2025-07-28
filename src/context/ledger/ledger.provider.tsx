@@ -27,8 +27,12 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
 
   useEffect(() => {
     if (
-      (ready && wallets.length > 0 && !isConnecting && !ledgerService,
-      viewAccount && evmClientService)
+      ready &&
+      wallets.length > 0 &&
+      !isConnecting &&
+      !ledgerService &&
+      viewAccount &&
+      evmClientService
     ) {
       const initializeLedger = async () => {
         try {
@@ -69,9 +73,10 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
   );
 
   useEffect(() => {
-    if (syncState === "done" && wallets.length === 0) {
+    if (wallets.length === 0 && ledgerService) {
       resetSyncState();
       ledgerService?.reset();
+      setLedgerService(undefined);
     }
   }, [syncState, wallets, ledgerService, resetSyncState]);
 

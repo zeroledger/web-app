@@ -1,4 +1,4 @@
-import { Address } from "viem";
+import { Address, formatEther, parseEther } from "viem";
 import { EventEmitter } from "node:events";
 import debounce from "debounce";
 import { FaucetRpc, FaucetRequestDto } from "@src/services/core/faucet.dto";
@@ -659,10 +659,24 @@ export class LedgerService extends EventEmitter {
 
   async faucet(amount: string) {
     return this.enqueue(
-      () =>
-        this.faucetRpc.obtainTestTokens(
-          new FaucetRequestDto(this.token, this.address, amount, "0.0001"),
-        ),
+      async () => {
+        const nativeBalance = await this.clientService.readClient!.getBalance({
+          address: this.address,
+        });
+        const expectedBalance = parseEther("0.0001");
+        const nativeBalanceToRequest =
+          nativeBalance > expectedBalance
+            ? undefined
+            : formatEther(expectedBalance - nativeBalance);
+        return this.faucetRpc.obtainTestTokens(
+          new FaucetRequestDto(
+            this.token,
+            this.address,
+            amount,
+            nativeBalanceToRequest,
+          ),
+        );
+      },
       "LedgerService.faucet",
       480_000,
     );
