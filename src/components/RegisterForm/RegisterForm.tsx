@@ -48,6 +48,7 @@ export default function RegisterForm() {
   );
 
   useEffect(() => {
+    console.log("[web-app] view account authorized: ", authorized);
     if (ledgerService && authorized) {
       navigate("/panel/wallet");
     }
