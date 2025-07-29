@@ -5,13 +5,13 @@ import { shortString, formatBalance } from "@src/utils/common";
 import { useTwoStepSpendModal } from "./hooks/useTwoStepSpendModal";
 import { useCopyAddress } from "./hooks/useCopyAddress";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react";
 import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
 import { useMetadata } from "@src/hooks/useMetadata";
 import { TOKEN_ADDRESS } from "@src/common.constants";
 
 export default function WalletTab() {
-  const { ledgerService, privateBalance, isConnecting, error } =
+  const { privateBalance, isConnecting, error, blocksToSync } =
     useContext(LedgerContext);
   const { evmClientService } = useContext(EvmClientsContext);
   const { decimals, isMetadataLoading } = useMetadata(
@@ -34,18 +34,6 @@ export default function WalletTab() {
     currentStep,
     metaTransactionData,
   } = useTwoStepSpendModal(decimals);
-  const [blocksToSync, setBlocksToSync] = useState<bigint>(0n);
-
-  useEffect(() => {
-    const fetchSyncStatus = async () => {
-      if (!ledgerService) return;
-      const { processedBlock, currentBlock } = await ledgerService.syncStatus();
-      setBlocksToSync(currentBlock - processedBlock);
-    };
-    fetchSyncStatus();
-    const interval = setInterval(fetchSyncStatus, 300);
-    return () => clearInterval(interval);
-  }, [ledgerService, isLoading]);
 
   return (
     <div className="flex flex-col items-center justify-center h-full px-4 pt-4">
@@ -56,7 +44,9 @@ export default function WalletTab() {
           <div className="w-48 h-12 bg-gray-700 rounded-lg animate-pulse" />
           <div className="mt-1">
             Syncing{" "}
-            {blocksToSync > 0n ? `${blocksToSync.toString()} blocks` : ""}
+            {blocksToSync && blocksToSync > 0n
+              ? `${blocksToSync.toString()} blocks`
+              : ""}
           </div>
         </>
       )}

@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { memo, useMemo } from "react";
 import { Loader } from "@src/components/Loader";
 import { BackButton } from "@src/components/Buttons/BackButton";
 import { SuccessMessage } from "@src/components/Modals/SuccessMessage";
@@ -91,6 +92,7 @@ const prepareTransactionDetails = (
   decimals?: number,
 ) => {
   if (!transactionDetails) return [];
+  console.log(transactionDetails.token);
   return [
     {
       label: "Type",
@@ -111,6 +113,10 @@ const prepareTransactionDetails = (
     {
       label: "To",
       value: shortString(transactionDetails.to),
+    },
+    {
+      label: "Value",
+      value: `$${formatUnits(transactionDetails.value, decimals || 18)}`,
     },
     {
       label: "Inputs",
@@ -138,12 +144,12 @@ const prepareTransactionDetails = (
     },
     {
       label: "Fee",
-      value: shortString(formatUnits(transactionDetails.value, decimals || 18)),
+      value: `$${formatUnits(transactionDetails.fee, decimals || 18)}`,
     },
   ];
 };
 
-export default function TwoStepSpendModal({
+function TwoStepSpendModal({
   isOpen,
   isLoading,
   isSuccess,
@@ -157,6 +163,7 @@ export default function TwoStepSpendModal({
   metaTransactionData,
   decimals,
 }: TwoStepSpendModalProps) {
+  console.log("TwoStepSpendModal render", { isOpen, currentStep });
   const { handleSubmit } = formMethods;
 
   const style = useDynamicHeight("h-dvh");
@@ -168,13 +175,18 @@ export default function TwoStepSpendModal({
     }
   };
 
-  const getSigningData = prepareSigningData(
-    metaTransactionData?.metaTransaction,
+  const getSigningData = useMemo(
+    () => prepareSigningData(metaTransactionData?.metaTransaction),
+    [metaTransactionData?.metaTransaction],
   );
 
-  const getTransactionDetails = prepareTransactionDetails(
-    metaTransactionData?.transactionDetails,
-    decimals,
+  const getTransactionDetails = useMemo(
+    () =>
+      prepareTransactionDetails(
+        metaTransactionData?.transactionDetails,
+        decimals,
+      ),
+    [metaTransactionData?.transactionDetails, decimals],
   );
 
   return (
@@ -287,3 +299,5 @@ export default function TwoStepSpendModal({
     </div>
   );
 }
+
+export default memo(TwoStepSpendModal);

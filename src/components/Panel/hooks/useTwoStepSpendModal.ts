@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Address, parseUnits } from "viem";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
@@ -106,17 +106,32 @@ export const useTwoStepSpendModal = (decimals: number) => {
       }
     });
 
-  return {
-    isModalOpen,
-    isModalLoading,
-    isModalSuccess,
-    isModalError,
-    currentStep,
-    form,
-    onModalOpen,
-    handleFormSubmit,
-    handleSign,
-    handleBack,
-    metaTransactionData,
-  };
+  return useMemo(
+    () => ({
+      isModalOpen,
+      isModalLoading,
+      isModalSuccess,
+      isModalError,
+      currentStep,
+      form,
+      onModalOpen,
+      handleFormSubmit,
+      handleSign,
+      handleBack,
+      metaTransactionData,
+    }),
+    [
+      isModalOpen,
+      isModalLoading,
+      isModalSuccess,
+      isModalError,
+      currentStep,
+      form,
+      onModalOpen,
+      handleFormSubmit,
+      handleSign,
+      handleBack,
+      metaTransactionData,
+    ],
+  );
 };

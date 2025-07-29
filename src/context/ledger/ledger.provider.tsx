@@ -81,15 +81,50 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
   }, [syncState, wallets, ledgerService, resetSyncState]);
 
   const privateBalance = usePrivateBalance(TOKEN_ADDRESS, ledgerService);
+  const [blocksToSync, setBlocksToSync] = useState<bigint>();
+  const [syncFinished, setSyncFinished] = useState(false);
+
+  // Poll for sync status
+  useEffect(() => {
+    if (!ledgerService || syncFinished) return;
+
+    const fetchSyncStatus = async () => {
+      try {
+        const { processedBlock, currentBlock } =
+          await ledgerService.syncStatus();
+        setBlocksToSync(currentBlock - processedBlock);
+        if (currentBlock - processedBlock === 0n) {
+          setSyncFinished(true);
+        }
+      } catch (error) {
+        console.error("Failed to fetch sync status:", error);
+      }
+    };
+
+    fetchSyncStatus();
+    const interval = setInterval(fetchSyncStatus, 300);
+    return () => clearInterval(interval);
+  }, [ledgerService, syncFinished]);
 
   const value = useMemo(
     () => ({
       ledgerService,
       privateBalance,
-      isConnecting: isConnecting || syncState === "inProgress",
+      isConnecting:
+        isConnecting ||
+        syncState === "inProgress" ||
+        (blocksToSync !== undefined && blocksToSync !== 0n),
       error,
+      blocksToSync,
     }),
-    [ledgerService, privateBalance, isConnecting, error, syncState],
+    [
+      ledgerService,
+      privateBalance,
+      isConnecting,
+      error,
+      syncState,
+      blocksToSync,
+    ],
   );
 
   return (

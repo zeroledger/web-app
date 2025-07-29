@@ -104,6 +104,7 @@ export class LedgerService extends EventEmitter {
         ),
       1000,
     );
+    this.logger.log(`LedgerService initialized with token ${this.token}`);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -746,6 +747,7 @@ export class LedgerService extends EventEmitter {
           transactionDetails: {
             type: "send",
             vaultContract: this.vault,
+            token: this.token,
             from: this.address,
             to: recipient,
             value: value,

@@ -6,7 +6,9 @@ export const LedgerContext = createContext<{
   privateBalance: bigint;
   isConnecting: boolean;
   error?: Error;
+  blocksToSync?: bigint;
 }>({
   privateBalance: 0n,
   isConnecting: false,
+  blocksToSync: undefined,
 });
