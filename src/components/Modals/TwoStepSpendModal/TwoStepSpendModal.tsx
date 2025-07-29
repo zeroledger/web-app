@@ -9,9 +9,16 @@ import { useDynamicHeight } from "@src/hooks/useDynamicHeight";
 import { SpendForm } from "../SpendModal/SpendForm";
 import { SigningPreview } from "@src/components/SigningPreview";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
-import { shortString } from "@src/utils/common";
-import { toHex, formatUnits } from "viem";
 import { TransactionDetails } from "@src/services/ledger/ledger.service";
+import {
+  Disclosure,
+  DisclosureButton,
+  DisclosurePanel,
+} from "@headlessui/react";
+import {
+  prepareSigningData,
+  prepareTransactionDetails,
+} from "./TwoStepSpendModal.utils";
 
 interface SpendFormData {
   recipient: string;
@@ -37,118 +44,6 @@ interface TwoStepSpendModalProps {
   decimals?: number;
 }
 
-const prepareSigningData = (metaTransaction?: UnsignedMetaTransaction) => {
-  if (!metaTransaction) return [];
-  return [
-    {
-      label: "Forwarder Contract",
-      value: shortString(metaTransaction.to),
-    },
-    {
-      label: "Gas",
-      value: shortString(metaTransaction.gas.toString()),
-    },
-    { label: "Nonce", value: toHex(metaTransaction.nonce) },
-    {
-      label: "Deadline",
-      value: new Intl.DateTimeFormat("en-US", {
-        weekday: "long",
-        hour: "numeric",
-        minute: "numeric",
-        second: "numeric",
-      }).format(new Date(parseInt(metaTransaction.deadline.toString()) * 1000)),
-    },
-    {
-      label: "User Transaction",
-      value: (
-        <a
-          href={`https://calldata.swiss-knife.xyz/decoder?calldata=${metaTransaction.data}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className=" text-gray-300 hover:text-gray-200 transition-colors underline"
-        >
-          {shortString(metaTransaction.data)}
-        </a>
-      ),
-    },
-  ];
-};
-
-const formatTransactionDetailsType = (type: TransactionDetails["type"]) => {
-  switch (type) {
-    case "deposit":
-      return "Deposit";
-    case "partialWithdraw":
-      return "Partial Withdraw";
-    case "withdraw":
-      return "Withdraw";
-    case "send":
-      return "Send";
-  }
-};
-
-const prepareTransactionDetails = (
-  transactionDetails?: TransactionDetails,
-  decimals?: number,
-) => {
-  if (!transactionDetails) return [];
-  console.log(transactionDetails.token);
-  return [
-    {
-      label: "Type",
-      value: formatTransactionDetailsType(transactionDetails.type),
-    },
-    {
-      label: "Vault Contract",
-      value: shortString(transactionDetails.vaultContract),
-    },
-    {
-      label: "Token",
-      value: shortString(transactionDetails.token),
-    },
-    {
-      label: "From",
-      value: shortString(transactionDetails.from),
-    },
-    {
-      label: "To",
-      value: shortString(transactionDetails.to),
-    },
-    {
-      label: "Value",
-      value: `$${formatUnits(transactionDetails.value, decimals || 18)}`,
-    },
-    {
-      label: "Inputs",
-      value: (
-        <>
-          {transactionDetails.inputs.map((input) => (
-            <div key={input}>{shortString(input.toString())}</div>
-          ))}
-        </>
-      ),
-    },
-    {
-      label: "Outputs",
-      value: (
-        <>
-          {transactionDetails.outputs.map((output) => (
-            <div key={output}>{shortString(output.toString())}</div>
-          ))}
-        </>
-      ),
-    },
-    {
-      label: "Paymaster",
-      value: shortString(transactionDetails.paymaster),
-    },
-    {
-      label: "Fee",
-      value: `$${formatUnits(transactionDetails.fee, decimals || 18)}`,
-    },
-  ];
-};
-
 function TwoStepSpendModal({
   isOpen,
   isLoading,
@@ -163,7 +58,6 @@ function TwoStepSpendModal({
   metaTransactionData,
   decimals,
 }: TwoStepSpendModalProps) {
-  console.log("TwoStepSpendModal render", { isOpen, currentStep });
   const { handleSubmit } = formMethods;
 
   const style = useDynamicHeight("h-dvh");
@@ -214,7 +108,7 @@ function TwoStepSpendModal({
               : "translate-x-full md:translate-x-0 md:scale-95",
           )}
         >
-          <div className="py-4">
+          <div className="py-4 flex-shrink-0">
             {!isLoading && !isSuccess && !isError && (
               <BackButton onClick={onBack} />
             )}
@@ -256,42 +150,57 @@ function TwoStepSpendModal({
             !isSuccess &&
             !isError &&
             currentStep === "preview" && (
-              <div className="flex-1 flex flex-col items-center justify-center">
-                <SigningPreview
-                  isSigning={isLoading}
-                  isSuccess={isSuccess}
-                  isError={isError}
-                  title={`Sign & Send ${type} Meta Transaction`}
-                  description={`Review the transaction details before signing`}
-                  messageData={getSigningData}
-                  onSign={onSign}
-                  buttonText={`Sign & Send`}
-                  successText={`${type} Successful!`}
-                  errorText="Transaction Failed"
-                  warningText="This action cannot be undone"
-                  extraContent={
-                    <div className="bg-gray-700 rounded-lg p-4 border border-gray-600 mb-6">
-                      <h3 className="text-white font-semibold mb-3">
-                        Transaction Details
-                      </h3>
-                      <div className="space-y-3 text-sm">
-                        {getTransactionDetails.map((detail) => (
-                          <div
-                            key={detail.label}
-                            className="flex justify-between"
-                          >
-                            <span className="text-gray-400">
-                              {detail.label}:
-                            </span>
-                            <span className="text-white font-mono">
-                              {detail.value}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  }
-                />
+              <div className="flex-1 flex flex-col overflow-y-auto">
+                <div className="flex-1 flex flex-col items-center justify-start pt-4 pb-6">
+                  <SigningPreview
+                    isSigning={isLoading}
+                    isSuccess={isSuccess}
+                    isError={isError}
+                    title={`Sign & Send ${type} Meta Transaction`}
+                    description={`Review the transaction details before signing`}
+                    messageData={getSigningData}
+                    onSign={onSign}
+                    buttonText={`Sign & Send`}
+                    successText={`${type} Successful!`}
+                    errorText="Transaction Failed"
+                    warningText="This action cannot be undone"
+                    extraContent={
+                      <Disclosure defaultOpen={false}>
+                        <div className="bg-gray-700 rounded-lg border border-gray-600 mb-6 overflow-hidden">
+                          <DisclosureButton className="w-full text-left p-4 hover:bg-gray-600 transition-colors border-b border-gray-600">
+                            <div className="flex justify-between items-center">
+                              <h3 className="text-white font-semibold">
+                                Transaction Details
+                              </h3>
+                              <span className="text-gray-400 text-sm">
+                                Show
+                              </span>
+                            </div>
+                          </DisclosureButton>
+                          <DisclosurePanel>
+                            <div className="p-4">
+                              <div className="space-y-3 text-sm">
+                                {getTransactionDetails.map((detail) => (
+                                  <div
+                                    key={detail.label}
+                                    className="flex justify-between"
+                                  >
+                                    <span className="text-gray-400">
+                                      {detail.label}:
+                                    </span>
+                                    <span className="text-white font-mono">
+                                      {detail.value}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </DisclosurePanel>
+                        </div>
+                      </Disclosure>
+                    }
+                  />
+                </div>
               </div>
             )}
         </div>
