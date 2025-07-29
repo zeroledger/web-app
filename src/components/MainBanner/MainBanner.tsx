@@ -10,7 +10,7 @@ const MainBanner = () => {
       <h1 className="text-center text-3xl font-bol">
         <Typewriter
           onInit={(typewriter) => {
-            typewriter.typeString("Pryx App").start();
+            typewriter.typeString("ZeroLedger").start();
           }}
           options={writerOptions}
         />
