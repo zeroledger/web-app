@@ -34,7 +34,7 @@ export default function PruneConfirmModal({
         <div
           className={clsx(
             "flex flex-col w-full h-full px-6 md:w-[50%]",
-            "md:max-w-md md:rounded-xl bg-gray-900 md:h-[50vh]",
+            "md:max-w-md md:rounded-xl bg-gray-900",
             "overflow-hidden",
             "transition-all duration-500 ease-in-out",
             isOpen
@@ -42,24 +42,26 @@ export default function PruneConfirmModal({
               : "translate-x-full md:translate-x-0 md:scale-95",
           )}
         >
-          <div className="py-4">
+          <div className="flex-1 content-center py-5">
             <BackButton onClick={onCancel} />
+            <form onSubmit={handleSubmit} className="flex pt-20">
+              <div className="flex flex-col items-center justify-center">
+                <h3 className="text-lg font-medium text-white mb-4">
+                  Confirm Data Deletion
+                </h3>
+                <p className="text-white/80 mb-8 text-center">
+                  This will permanently delete all your wallet data, notes, and
+                  transactions. This action cannot be undone.
+                </p>
+                <div className="py-4 w-full">
+                  <MobileConfirmButton
+                    disabled={false}
+                    label="Delete All Data"
+                  />
+                </div>
+              </div>
+            </form>
           </div>
-          <form
-            onSubmit={handleSubmit}
-            className="flex-1 flex flex-col items-center justify-center"
-          >
-            <h3 className="text-lg font-medium text-white mb-4">
-              Confirm Data Deletion
-            </h3>
-            <p className="text-white/80 mb-8 text-center">
-              This will permanently delete all your wallet data, notes, and
-              transactions. This action cannot be undone.
-            </p>
-            <div className="py-4 w-full">
-              <MobileConfirmButton disabled={false} label="Delete All Data" />
-            </div>
-          </form>
         </div>
       </div>
     </div>

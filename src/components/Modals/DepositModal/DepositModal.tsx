@@ -64,7 +64,7 @@ export default function DepositModal({
         <div
           className={clsx(
             "flex flex-col w-full h-full px-6 md:w-[50%]",
-            "md:max-w-md md:rounded-xl bg-gray-900 md:h-[50vh]",
+            "md:max-w-md md:rounded-xl bg-gray-900",
             "overflow-hidden",
             "transition-all duration-500 ease-in-out",
             isOpen
@@ -72,32 +72,32 @@ export default function DepositModal({
               : "translate-x-full md:translate-x-0 md:scale-95",
           )}
         >
-          <div className="py-4">
-            {!isLoading && !isSuccess && <BackButton onClick={onBack} />}
-          </div>
           {isError && (
-            <div className="flex-1 flex items-center justify-center animate-fade-in">
+            <div className="flex-1 content-center flex-col justify-center py-5 animate-fade-in">
               <ErrorMessage />
             </div>
           )}
           {isLoading && (
-            <div className="flex-1 flex items-center justify-center animate-fade-in">
+            <div className="flex-1 content-center mx-auto py-5 animate-fade-in">
               <Loader />
             </div>
           )}
           {isSuccess && (
-            <div className="flex-1 flex items-center justify-center animate-fade-in">
+            <div className="flex-1 content-center flex-col justify-center py-5 animate-fade-in">
               <SuccessMessage message="Deposit Successful!" />
             </div>
           )}
           {!isLoading && !isSuccess && !isError && (
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              onKeyDown={onEnter}
-              className="flex-1 flex flex-col items-center justify-center"
-            >
-              <DepositForm formMethods={formMethods} onEnter={onEnter} />
-            </form>
+            <div className="flex-1 content-center py-5">
+              <BackButton onClick={onBack} />
+              <form
+                onSubmit={handleSubmit(onSubmit)}
+                onKeyDown={onEnter}
+                className="flex pt-20"
+              >
+                <DepositForm formMethods={formMethods} onEnter={onEnter} />
+              </form>
+            </div>
           )}
         </div>
       </div>
