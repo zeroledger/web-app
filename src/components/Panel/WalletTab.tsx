@@ -2,7 +2,7 @@ import { primaryButtonStyle } from "../Button";
 import { TwoStepSpendModal } from "@src/components/Modals/TwoStepSpendModal";
 import { ShareIcon } from "./ShareIcon";
 import { shortString, formatBalance } from "@src/utils/common";
-import { useTwoStepSpendModal } from "./hooks/useTwoStepSpendModal";
+import { useTwoStepSpendModal } from "./hooks/useSpendModal";
 import { useCopyAddress } from "./hooks/useCopyAddress";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useContext } from "react";

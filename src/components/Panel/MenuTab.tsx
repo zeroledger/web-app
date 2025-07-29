@@ -14,8 +14,8 @@ import { TwoStepSpendModal } from "@src/components/Modals/TwoStepSpendModal";
 import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
 import { useMetadata } from "@src/hooks/useMetadata";
 import { TOKEN_ADDRESS } from "@src/common.constants";
-import { useTwoStepWithdrawModal } from "./hooks/useTwoStepWithdrawModal";
-import { useMultiStepDepositModal } from "./hooks/useMultistepDepositModal";
+import { useTwoStepWithdrawModal } from "./hooks/useWithdrawModal";
+import { useMultiStepDepositModal } from "./hooks/useDepositModal";
 
 export default function MenuTab() {
   const { isConnecting } = useContext(LedgerContext);
