@@ -39,8 +39,6 @@ export class TesService {
   private csrf: string = "";
 
   private async challenge() {
-    throw new Error("FakeError");
-    this.logger.log("Run challenge for tes auth");
     const {
       data: { random },
     } = await this.axios.get<{

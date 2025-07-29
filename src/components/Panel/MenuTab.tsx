@@ -7,7 +7,6 @@ import { FaucetIcon } from "@src/components/svg/FaucetIcon";
 import { Loader } from "@src/components/Loader";
 
 import { usePruneModal } from "./hooks/usePruneModal";
-import { useDepositModal } from "./hooks/useDepositModal";
 import { useFaucet } from "./hooks/useFaucet";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useContext } from "react";
@@ -16,6 +15,7 @@ import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
 import { useMetadata } from "@src/hooks/useMetadata";
 import { TOKEN_ADDRESS } from "@src/common.constants";
 import { useTwoStepWithdrawModal } from "./hooks/useTwoStepWithdrawModal";
+import { useMultiStepDepositModal } from "./hooks/useMultistepDepositModal";
 
 export default function MenuTab() {
   const { isConnecting } = useContext(LedgerContext);
@@ -26,15 +26,20 @@ export default function MenuTab() {
   );
   const isLoading = isMetadataLoading || isConnecting;
   const {
-    isDepositModalOpen,
-    isDepositModalLoading,
-    isDepositModalSuccess,
-    isDepositModalError,
-    depositForm,
-    onDepositModalOpen,
-    handleDeposit,
-    handleDepositBack,
-  } = useDepositModal();
+    isModalOpen: isDepositModalOpen,
+    isModalLoading: isDepositModalLoading,
+    isModalSuccess: isDepositModalSuccess,
+    isModalError: isDepositModalError,
+    currentStep: depositCurrentStep,
+    form: depositForm,
+    onModalOpen: onDepositModalOpen,
+    handleFormSubmit: handleDepositFormSubmit,
+    handleParamsApprove: handleDepositParamsApprove,
+    handleSign: handleDepositSign,
+    handleBack: handleDepositBack,
+    depositParamsData,
+    metaTransactionData,
+  } = useMultiStepDepositModal(decimals);
 
   const {
     isModalOpen,
@@ -120,10 +125,15 @@ export default function MenuTab() {
         isOpen={isDepositModalOpen}
         isLoading={isDepositModalLoading}
         isSuccess={isDepositModalSuccess}
-        onDeposit={handleDeposit}
+        onFormSubmit={handleDepositFormSubmit}
+        onApprove={handleDepositParamsApprove}
+        onSign={handleDepositSign}
         onBack={handleDepositBack}
+        currentStep={depositCurrentStep}
         formMethods={depositForm}
         isError={isDepositModalError}
+        metaTransactionData={metaTransactionData}
+        depositParamsData={depositParamsData}
       />
 
       <PruneModal

@@ -26,6 +26,7 @@ import {
   depositGasSponsoredLimit,
   spendGasSponsoredLimit,
   withdrawGasSponsoredLimit,
+  DepositParams,
 } from "@src/utils/vault";
 import { catchService } from "@src/services/core/catch.service";
 import { TesService } from "@src/services/tes.service";
@@ -361,7 +362,7 @@ export class LedgerService extends EventEmitter {
     );
   }
 
-  prepareDepositMetaTransaction(value: bigint) {
+  prepareDepositParamsForApproval(value: bigint) {
     return this.enqueue(
       async () => {
         const { tesUrl, encryptionPublicKey } = await this.getEncryptionParams(
@@ -393,13 +394,41 @@ export class LedgerService extends EventEmitter {
           proof: proofData.calldata_proof,
         };
 
+        return {
+          depositParams,
+          gasToCover,
+        };
+      },
+      "LedgerService.prepareDepositParamsForApproval",
+      480_000,
+      true,
+    );
+  }
+
+  approveDeposit(depositParams: DepositParams) {
+    return this.enqueue(
+      async () => {
         await approve({
-          tokenAddress: depositStruct.token,
+          tokenAddress: depositParams.depositStruct.token,
           receiverAddress: this.vault,
-          amount: value,
+          amount:
+            depositParams.depositStruct.total_deposit_amount +
+            depositParams.depositStruct.fee,
           client: this.clientService.writeClient!,
         });
+      },
+      "LedgerService.approveDeposit",
+      80_000,
+      true,
+    );
+  }
 
+  prepareDepositMetaTransaction(
+    depositParams: DepositParams,
+    gasToCover: bigint,
+  ) {
+    return this.enqueue(
+      async () => {
         const gas = await getDepositTxGas(depositParams);
 
         this.logger.log(
@@ -418,7 +447,10 @@ export class LedgerService extends EventEmitter {
               this.clientService.readClient!,
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
-            data: getDepositTxData(depositStruct, proofData.calldata_proof),
+            data: getDepositTxData(
+              depositParams.depositStruct,
+              depositParams.proof,
+            ),
           } as UnsignedMetaTransaction,
           coveredGas: gasToCover.toString(),
           transactionDetails: {
@@ -427,12 +459,12 @@ export class LedgerService extends EventEmitter {
             token: this.token,
             from: this.address,
             to: this.address,
-            value: value - fee,
-            fee: fee,
-            paymaster: paymasterAddress,
+            value: depositParams.depositStruct.total_deposit_amount,
+            fee: depositParams.depositStruct.fee,
+            paymaster: depositParams.depositStruct.feeRecipient,
             inputs: [],
             outputs: await Promise.all(
-              depositStruct.depositCommitmentParams.map(
+              depositParams.depositStruct.depositCommitmentParams.map(
                 (item) => item.poseidonHash,
               ),
             ),
