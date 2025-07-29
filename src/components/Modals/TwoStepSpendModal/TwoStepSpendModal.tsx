@@ -100,58 +100,56 @@ function TwoStepSpendModal({
         <div
           className={clsx(
             "flex flex-col w-full h-full px-6 md:w-[50%]",
-            "md:max-w-md md:rounded-xl bg-gray-900 md:h-[50vh]",
-            "overflow-hidden",
+            "md:max-w-md md:rounded-xl bg-gray-900",
+            "overflow-hidden relative",
             "transition-all duration-500 ease-in-out",
             isOpen
               ? "translate-x-0 md:scale-100"
               : "translate-x-full md:translate-x-0 md:scale-95",
           )}
         >
-          <div className="py-4 flex-shrink-0">
-            {!isLoading && !isSuccess && !isError && (
-              <BackButton onClick={onBack} />
-            )}
-          </div>
-
           {isError && (
-            <div className="flex-1 flex items-center justify-center animate-fade-in">
+            <div className="flex-1 flex items-center justify-center animate-fade-in pt-20">
               <ErrorMessage />
             </div>
           )}
 
           {isLoading && (
-            <div className="flex-1 flex items-center justify-center animate-fade-in">
+            <div className="flex-1 flex items-center justify-center animate-fade-in pt-20">
               <Loader />
             </div>
           )}
 
           {isSuccess && (
-            <div className="flex-1 flex items-center justify-center animate-fade-in">
+            <div className="flex-1 flex items-center justify-center animate-fade-in pt-20">
               <SuccessMessage message={`${type} Successful!`} />
             </div>
           )}
 
           {!isLoading && !isSuccess && !isError && currentStep === "form" && (
-            <form
-              onSubmit={handleSubmit(onFormSubmit)}
-              onKeyDown={onEnter}
-              className="flex-1 flex flex-col items-center justify-center"
-            >
-              <SpendForm
-                formMethods={formMethods}
-                onEnter={onEnter}
-                type={type}
-              />
-            </form>
+            <div className="flex-1 content-center">
+              <BackButton onClick={onBack} />
+              <form
+                onSubmit={handleSubmit(onFormSubmit)}
+                onKeyDown={onEnter}
+                className="flex pt-20"
+              >
+                <SpendForm
+                  formMethods={formMethods}
+                  onEnter={onEnter}
+                  type={type}
+                />
+              </form>
+            </div>
           )}
 
           {!isLoading &&
             !isSuccess &&
             !isError &&
             currentStep === "preview" && (
-              <div className="flex-1 flex flex-col overflow-y-auto">
-                <div className="flex-1 flex flex-col items-center justify-start pt-4 pb-6">
+              <div className="flex-1 content-center overflow-y-auto">
+                <BackButton onClick={onBack} />
+                <div className="flex flex-col pt-20 pb-6">
                   <SigningPreview
                     isSigning={isLoading}
                     isSuccess={isSuccess}
