@@ -15,6 +15,7 @@ import { MemoryQueue } from "@src/services/core/queue";
 import type { SignedMetaTransaction } from "@src/utils/metatx";
 import { EvmClientService } from "@src/services/core/evmClient.service";
 import { AxiosInstance } from "axios";
+import { catchService } from "@src/services/core/catch.service";
 
 const AUTH_TOKEN_ABI = parseAbiParameters(
   "address authAddress,bytes authSignature,address ownerAddress,bytes delegationSignature",
@@ -38,6 +39,7 @@ export class TesService {
   private csrf: string = "";
 
   private async challenge() {
+    throw new Error("FakeError");
     this.logger.log("Run challenge for tes auth");
     const {
       data: { random },
@@ -80,12 +82,18 @@ export class TesService {
     return token;
   }
 
-  private manageAuth() {
-    return this.memoryQueue.schedule("TesService.manageAuth", async () => {
-      if (this.timeout < Date.now() || !this.csrf) {
-        await this.challenge();
-      }
-    });
+  private async manageAuth() {
+    const [error] = await this.memoryQueue.schedule(
+      "TesService.manageAuth",
+      async () => {
+        if (this.timeout < Date.now() || !this.csrf) {
+          await this.challenge();
+        }
+      },
+    );
+    if (error) {
+      throw error;
+    }
   }
 
   async getTrustedEncryptionToken() {
@@ -159,7 +167,7 @@ export class TesService {
         })),
       };
     } catch (error) {
-      this.logger.error(error);
+      catchService.catch(error as Error);
       return {
         syncedBlock: fromBlock,
         events: [],

@@ -130,8 +130,10 @@ export class LedgerService extends EventEmitter {
     );
     if (err) {
       if (forwardError) {
+        console.log("forwardError");
         throw err;
       } else {
+        console.log("catchError");
         this.catchService.catch(err);
       }
     }
@@ -317,6 +319,7 @@ export class LedgerService extends EventEmitter {
 
   async getBalance() {
     const commitments = await this.commitmentsService.all();
+    this.logger.log(`GetBalance: commitments amount - ${commitments.length}`);
     return commitments.reduce((acc, c) => acc + BigInt(c.value), 0n);
   }
 
@@ -341,6 +344,7 @@ export class LedgerService extends EventEmitter {
           `Update last synced block after tes sync to ${tesSyncEvents.syncedBlock}`,
         );
         await this.syncService.setLastSyncedBlock(tesSyncEvents.syncedBlock);
+
         const syncEvents = await this.syncService.runOnchainSync(
           this.clientService.readClient!,
           this.vault,
@@ -350,6 +354,7 @@ export class LedgerService extends EventEmitter {
         );
         this.eventsCache.push(...syncEvents);
         await this.handleEventsBatch();
+        this.updateBothBalancesDebounced();
       },
       "LedgerService.start",
       240_000,
@@ -436,6 +441,7 @@ export class LedgerService extends EventEmitter {
       },
       "LedgerService.prepareDepositMetaTransaction",
       480_000,
+      true,
     );
   }
 
@@ -474,6 +480,10 @@ export class LedgerService extends EventEmitter {
           throw new Error("No commitments found to cover the requested amount");
         }
 
+        this.logger.log(
+          `PartialWithdraw: selectedCommitmentRecords: ${selectedCommitmentRecords.length}, totalAmount: ${totalMovingAmount}`,
+        );
+
         const publicOutputs = [
           { owner: recipient, amount: value - fee },
           {
@@ -491,7 +501,7 @@ export class LedgerService extends EventEmitter {
           token: this.token,
           totalMovingAmount,
           privateSpendAmount: 0n,
-          publicSpendAmount: value + fee,
+          publicSpendAmount: value,
           spender: this.address,
           spenderEncryptionPublicKey: encryptionPublicKey,
           spenderTesUrl: tesUrl,
@@ -545,6 +555,7 @@ export class LedgerService extends EventEmitter {
       },
       "LedgerService.preparePartialWithdrawMetaTransaction",
       480_000,
+      true,
     );
   }
 
@@ -652,6 +663,7 @@ export class LedgerService extends EventEmitter {
       },
       "LedgerService.prepareWithdrawMetaTransaction",
       480_000,
+      true,
     );
   }
 
@@ -684,7 +696,7 @@ export class LedgerService extends EventEmitter {
         const gasToCover = spendGasSponsoredLimit(1, 3, 1);
         const fee = gasPrice * gasToCover;
         const { selectedCommitmentRecords, totalAmount } =
-          await this.commitmentsService.findCommitments(value + fee);
+          await this.commitmentsService.findCommitments(value - fee);
 
         if (selectedCommitmentRecords.length === 0) {
           throw new Error("No commitments found to cover the requested amount");
@@ -711,7 +723,7 @@ export class LedgerService extends EventEmitter {
           commitments: selectedCommitmentRecords,
           token: this.token,
           totalMovingAmount: totalAmount,
-          privateSpendAmount: value,
+          privateSpendAmount: value - fee,
           publicSpendAmount: fee,
           spender: this.address,
           spenderEncryptionPublicKey,
@@ -750,7 +762,7 @@ export class LedgerService extends EventEmitter {
             token: this.token,
             from: this.address,
             to: recipient,
-            value: value,
+            value: value - fee,
             fee: fee,
             paymaster: paymasterAddress,
             inputs: transactionStruct.inputsPoseidonHashes,
@@ -760,6 +772,7 @@ export class LedgerService extends EventEmitter {
       },
       "LedgerService.prepareSendMetaTransaction",
       480_000,
+      true,
     );
   }
 

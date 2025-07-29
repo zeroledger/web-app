@@ -93,6 +93,9 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
         const { processedBlock, currentBlock } =
           await ledgerService.syncStatus();
         setBlocksToSync(currentBlock - processedBlock);
+        console.log(
+          `currentBlock: ${currentBlock}, processedBlock: ${processedBlock}, blocksToSync: ${currentBlock - processedBlock}`,
+        );
         if (currentBlock - processedBlock === 0n) {
           setSyncFinished(true);
         }
@@ -102,7 +105,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
     };
 
     fetchSyncStatus();
-    const interval = setInterval(fetchSyncStatus, 300);
+    const interval = setInterval(fetchSyncStatus, 500);
     return () => clearInterval(interval);
   }, [ledgerService, syncFinished]);
 

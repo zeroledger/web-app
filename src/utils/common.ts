@@ -103,9 +103,26 @@ export const getMaxFormattedValue = (
   decimals: number,
   privateBalance: bigint,
 ) => {
-  const rawValue = parseUnits(value, decimals);
-  const amount = rawValue > privateBalance ? privateBalance : rawValue;
-  return formatUnits(amount, decimals);
+  // If the value is empty or just a dot, return it as-is
+  if (value === "" || value === ".") {
+    return value;
+  }
+
+  // Handle partial decimal numbers
+  let normalizedValue = value;
+  if (value.endsWith(".")) {
+    normalizedValue = value + "0";
+  }
+
+  try {
+    const rawValue = parseUnits(normalizedValue, decimals);
+    const amount =
+      rawValue > privateBalance ? formatUnits(privateBalance, decimals) : value;
+    return amount;
+  } catch {
+    // If parsing fails, return the original value
+    return value;
+  }
 };
 
 export const formatBalance = (value: bigint, decimals: number): string => {

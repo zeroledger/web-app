@@ -91,13 +91,13 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
           }
           setMetaTransactionData(metaTransactionData);
           setCurrentStep("preview");
+          setIsModalLoading(false);
         } catch (error) {
           console.error("Failed to prepare withdraw transaction:", error);
           setIsModalError(true);
+          setIsModalLoading(false);
           await delay(3000);
           handleBack();
-        } finally {
-          setIsModalLoading(false);
         }
       }),
     [ledgerService, decimals, privateBalance, handleBack],

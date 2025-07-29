@@ -82,7 +82,8 @@ export default class SyncService {
 
     // Process blocks in chunks of 500
     while (this._processedBlock < currentBlock) {
-      const toBlock = this._processedBlock + MAX_BLOCKS_PER_REQUEST - 1n;
+      const startBlock = this._processedBlock + 1n;
+      const toBlock = startBlock + MAX_BLOCKS_PER_REQUEST - 1n;
       const endBlock = toBlock > currentBlock ? currentBlock : toBlock;
 
       const commitmentCreatedEvents = await getMissedEvents(
@@ -91,7 +92,7 @@ export default class SyncService {
         address,
         token,
         "CommitmentCreated",
-        this._processedBlock,
+        startBlock,
         endBlock,
       );
 
@@ -103,7 +104,7 @@ export default class SyncService {
         address,
         token,
         "CommitmentRemoved",
-        this._processedBlock,
+        startBlock,
         endBlock,
       );
 
@@ -112,7 +113,7 @@ export default class SyncService {
       allCommitmentRemovedEvents.push(...commitmentRemovedEvents);
 
       // Move to next block range
-      this._processedBlock = endBlock + 1n;
+      this._processedBlock = endBlock;
 
       // Rate limiting: wait 100ms before next request (except for the last iteration)
       if (this._processedBlock < currentBlock) {

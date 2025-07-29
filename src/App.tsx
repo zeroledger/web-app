@@ -4,6 +4,7 @@ import { PrivyContextProvider } from "@src/context/privy.context";
 import router from "./router";
 import { ViewAccountProvider } from "./context/viewAccount/viewAccount.provider";
 import { EvmClientsProvider } from "./context/evmClients/evmClients.provider";
+import { Notification } from "./components/Notification";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <ViewAccountProvider>
           <LedgerProvider>
             <RouterProvider router={router} />
+            <Notification />
           </LedgerProvider>
         </ViewAccountProvider>
       </EvmClientsProvider>
