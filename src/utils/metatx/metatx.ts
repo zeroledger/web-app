@@ -26,7 +26,7 @@ export async function getForwarderNonce(
   });
 }
 
-export type MetaTransactionBody = {
+export type UnsignedMetaTransaction = {
   from: Address;
   to: Address;
   value: 0;
@@ -37,7 +37,7 @@ export type MetaTransactionBody = {
 };
 
 export async function createSignedMetaTx(
-  request: MetaTransactionBody,
+  request: UnsignedMetaTransaction,
   forwarderAddress: Address,
   client: CustomClient,
 ) {

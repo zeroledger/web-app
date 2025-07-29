@@ -37,12 +37,31 @@ import { EvmClientService } from "@src/services/core/evmClient.service";
 import { ViewAccountService } from "@src/services/viewAccount.service";
 import { compareEvents, EventLike } from "@src/utils/events";
 import { logStringify } from "@src/utils/common";
-import { createSignedMetaTx, getForwarderNonce } from "@src/utils/metatx";
+import {
+  createSignedMetaTx,
+  getForwarderNonce,
+  UnsignedMetaTransaction,
+} from "@src/utils/metatx";
+import { AxiosInstance } from "axios";
+import { computePoseidon } from "@src/utils/poseidon";
 
 export const LedgerServiceEvents = {
   PRIVATE_BALANCE_CHANGE: "PRIVATE_BALANCE_CHANGE",
   ONCHAIN_BALANCE_CHANGE: "ONCHAIN_BALANCE_CHANGE",
 } as const;
+
+export type TransactionDetails = {
+  type: "deposit" | "partialWithdraw" | "withdraw" | "send";
+  vaultContract: Address;
+  token: Address;
+  from: Address;
+  to: Address;
+  value: bigint;
+  fee: bigint;
+  paymaster: Address;
+  inputs: bigint[];
+  outputs: bigint[];
+};
 
 export class LedgerService extends EventEmitter {
   private readonly address: Address;
@@ -66,6 +85,7 @@ export class LedgerService extends EventEmitter {
     private readonly commitmentsHistoryService: CommitmentsHistoryService,
     private readonly syncService: SyncService,
     private readonly tesService: TesService,
+    private readonly axios: AxiosInstance,
   ) {
     super();
     this.address = this.clientService.writeClient!.account.address;
@@ -99,6 +119,7 @@ export class LedgerService extends EventEmitter {
     fn: () => Promise<T>,
     correlationId?: string,
     timeout?: number,
+    forwardError?: boolean,
   ) {
     const [err, result] = await this.queue.schedule(
       "walletService",
@@ -107,7 +128,11 @@ export class LedgerService extends EventEmitter {
       timeout,
     );
     if (err) {
-      this.catchService.catch(err);
+      if (forwardError) {
+        throw err;
+      } else {
+        this.catchService.catch(err);
+      }
     }
     return result;
   }
@@ -181,6 +206,7 @@ export class LedgerService extends EventEmitter {
             this.viewAccountService,
             this.clientService,
             this.queue,
+            this.axios,
           );
           commitment = await shortLivedTes.decrypt(
             event.blockNumber!.toString(),
@@ -329,7 +355,7 @@ export class LedgerService extends EventEmitter {
     );
   }
 
-  deposit(value: bigint) {
+  prepareDepositMetaTransaction(value: bigint) {
     return this.enqueue(
       async () => {
         const { tesUrl, encryptionPublicKey } = await this.getEncryptionParams(
@@ -347,7 +373,7 @@ export class LedgerService extends EventEmitter {
           await prepareDeposit(
             this.token,
             this.address,
-            value,
+            value - fee,
             encryptionPublicKey,
             fee,
             paymasterAddress,
@@ -364,7 +390,7 @@ export class LedgerService extends EventEmitter {
         await approve({
           tokenAddress: depositStruct.token,
           receiverAddress: this.vault,
-          amount: depositStruct.total_deposit_amount + depositStruct.fee,
+          amount: value,
           client: this.clientService.writeClient!,
         });
 
@@ -374,8 +400,8 @@ export class LedgerService extends EventEmitter {
           `Deposit: gas without forwarding: ${gas.toString()}, coveredGas: ${gasToCover.toString()}`,
         );
 
-        const metaTransaction = await createSignedMetaTx(
-          {
+        return {
+          metaTransaction: {
             from: this.address,
             to: this.vault,
             value: 0,
@@ -387,25 +413,50 @@ export class LedgerService extends EventEmitter {
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
             data: getDepositTxData(depositStruct, proofData.calldata_proof),
-          },
-          this.forwarder,
-          this.clientService.writeClient!,
-        );
-
-        await this.tesService.executeMetaTransaction(
-          metaTransaction,
-          gasToCover.toString(),
-        );
-        // await deposit(depositParams);
-
-        return true;
+          } as UnsignedMetaTransaction,
+          coveredGas: gasToCover.toString(),
+          transactionDetails: {
+            type: "deposit",
+            vaultContract: this.vault,
+            token: this.token,
+            from: this.address,
+            to: this.address,
+            value: value - fee,
+            fee: fee,
+            paymaster: paymasterAddress,
+            inputs: [],
+            outputs: await Promise.all(
+              depositStruct.depositCommitmentParams.map(
+                (item) => item.poseidonHash,
+              ),
+            ),
+          } as TransactionDetails,
+        };
       },
-      "LedgerService.deposit",
+      "LedgerService.prepareDepositMetaTransaction",
       480_000,
     );
   }
 
-  partialWithdraw(value: bigint, recipient: Address) {
+  deposit(metaTransaction: UnsignedMetaTransaction, coveredGas: string) {
+    return this.enqueue(
+      async () => {
+        const signedMetaTransaction = await createSignedMetaTx(
+          metaTransaction,
+          this.forwarder,
+          this.clientService.writeClient!,
+        );
+        return await this.tesService.executeMetaTransaction(
+          signedMetaTransaction,
+          coveredGas,
+        );
+      },
+      "LedgerService.deposit",
+      80_000,
+      true,
+    );
+  }
+  preparePartialWithdrawMetaTransaction(value: bigint, recipient: Address) {
     return this.enqueue(
       async () => {
         const { gasPrice, paymasterAddress } = await this.tesService.quote(
@@ -416,14 +467,14 @@ export class LedgerService extends EventEmitter {
         const fee = gasPrice * gasToCover;
 
         const { selectedCommitmentRecords, totalAmount: totalMovingAmount } =
-          await this.commitmentsService.findCommitments(value + fee);
+          await this.commitmentsService.findCommitments(value);
 
         if (selectedCommitmentRecords.length === 0) {
           throw new Error("No commitments found to cover the requested amount");
         }
 
         const publicOutputs = [
-          { owner: recipient, amount: value },
+          { owner: recipient, amount: value - fee },
           {
             owner: paymasterAddress,
             amount: fee,
@@ -462,8 +513,8 @@ export class LedgerService extends EventEmitter {
           `PartialWithdraw: gas without forwarding: ${gas.toString()}, coveredGas: ${gasToCover.toString()}`,
         );
 
-        const metaTransaction = await createSignedMetaTx(
-          {
+        return {
+          metaTransaction: {
             from: this.address,
             to: this.vault,
             value: 0,
@@ -475,26 +526,50 @@ export class LedgerService extends EventEmitter {
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600,
             data: getSpendTxData(transactionStruct, proofData.calldata_proof),
-          },
-          this.forwarder,
-          this.clientService.writeClient!,
-        );
-
-        await this.tesService.executeMetaTransaction(
-          metaTransaction,
-          gasToCover.toString(),
-        );
-
-        // await spend(partialWithdrawParams);
-
-        return true;
+          } as UnsignedMetaTransaction,
+          coveredGas: gasToCover.toString(),
+          transactionDetails: {
+            type: "partialWithdraw",
+            vaultContract: this.vault,
+            token: this.token,
+            from: this.address,
+            to: recipient,
+            value: value - fee,
+            fee: fee,
+            paymaster: paymasterAddress,
+            inputs: transactionStruct.inputsPoseidonHashes,
+            outputs: transactionStruct.outputsPoseidonHashes,
+          } as TransactionDetails,
+        };
       },
-      "LedgerService.partialWithdraw",
+      "LedgerService.preparePartialWithdrawMetaTransaction",
       480_000,
     );
   }
 
-  withdraw(recipient: Address) {
+  partialWithdraw(
+    metaTransaction: UnsignedMetaTransaction,
+    coveredGas: string,
+  ) {
+    return this.enqueue(
+      async () => {
+        const signedMetaTransaction = await createSignedMetaTx(
+          metaTransaction,
+          this.forwarder,
+          this.clientService.writeClient!,
+        );
+        return await this.tesService.executeMetaTransaction(
+          signedMetaTransaction,
+          coveredGas,
+        );
+      },
+      "LedgerService.partialWithdraw",
+      80_000,
+      true,
+    );
+  }
+
+  prepareWithdrawMetaTransaction(recipient: Address) {
     return this.enqueue(
       async () => {
         const commitments = await this.commitmentsService.all();
@@ -513,7 +588,7 @@ export class LedgerService extends EventEmitter {
         });
 
         if (withdrawItems.length === 0) {
-          return false;
+          throw new Error("No commitments found to cover the requested amount");
         }
 
         const gasToCover = withdrawGasSponsoredLimit(withdrawItems.length);
@@ -538,8 +613,8 @@ export class LedgerService extends EventEmitter {
           `Withdraw: gas without forwarding: ${gas.toString()}, coveredGas: ${gasToCover.toString()}`,
         );
 
-        const metaTransaction = await createSignedMetaTx(
-          {
+        return {
+          metaTransaction: {
             from: this.address,
             to: this.vault,
             value: 0,
@@ -551,26 +626,54 @@ export class LedgerService extends EventEmitter {
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
             data: getWithdrawTxData(withdrawParams),
-          },
-          this.forwarder,
-          this.clientService.writeClient!,
-        );
-
-        await this.tesService.executeMetaTransaction(
-          metaTransaction,
-          gasToCover.toString(),
-        );
-
-        // await withdraw(withdrawParams);
-
-        return true;
+          } as UnsignedMetaTransaction,
+          coveredGas: gasToCover.toString(),
+          transactionDetails: {
+            type: "withdraw",
+            vaultContract: withdrawParams.contract,
+            from: this.address,
+            to: withdrawParams.recipient,
+            value: withdrawParams.withdrawItems.reduce(
+              (acc, item) => acc + item.amount,
+              0n,
+            ),
+            token: withdrawParams.token,
+            fee: withdrawParams.fee,
+            paymaster: withdrawParams.feeRecipient,
+            inputs: await Promise.all(
+              withdrawParams.withdrawItems.map((item) =>
+                computePoseidon({ amount: item.amount, entropy: item.sValue }),
+              ),
+            ),
+            outputs: [],
+          } as TransactionDetails,
+        };
       },
-      "LedgerService.withdraw",
+      "LedgerService.prepareWithdrawMetaTransaction",
       480_000,
     );
   }
 
-  send(value: bigint, recipient: Address) {
+  withdraw(metaTransaction: UnsignedMetaTransaction, coveredGas: string) {
+    return this.enqueue(
+      async () => {
+        const signedMetaTransaction = await createSignedMetaTx(
+          metaTransaction,
+          this.forwarder,
+          this.clientService.writeClient!,
+        );
+        return await this.tesService.executeMetaTransaction(
+          signedMetaTransaction,
+          coveredGas,
+        );
+      },
+      "LedgerService.withdraw",
+      80_000,
+      true,
+    );
+  }
+
+  prepareSendMetaTransaction(value: bigint, recipient: Address) {
     return this.enqueue(
       async () => {
         const { gasPrice, paymasterAddress } = await this.tesService.quote(
@@ -625,8 +728,8 @@ export class LedgerService extends EventEmitter {
           proof: proofData.calldata_proof,
         };
 
-        const metaTransaction = await createSignedMetaTx(
-          {
+        return {
+          metaTransaction: {
             from: this.address,
             to: this.vault,
             value: 0,
@@ -638,22 +741,42 @@ export class LedgerService extends EventEmitter {
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
             data: getSpendTxData(transactionStruct, proofData.calldata_proof),
-          },
+          } as UnsignedMetaTransaction,
+          coveredGas: gasToCover.toString(),
+          transactionDetails: {
+            type: "send",
+            vaultContract: this.vault,
+            from: this.address,
+            to: recipient,
+            value: value,
+            fee: fee,
+            paymaster: paymasterAddress,
+            inputs: transactionStruct.inputsPoseidonHashes,
+            outputs: transactionStruct.outputsPoseidonHashes,
+          } as TransactionDetails,
+        };
+      },
+      "LedgerService.prepareSendMetaTransaction",
+      480_000,
+    );
+  }
+
+  send(metaTransaction: UnsignedMetaTransaction, coveredGas: string) {
+    return this.enqueue(
+      async () => {
+        const signedMetaTransaction = await createSignedMetaTx(
+          metaTransaction,
           this.forwarder,
           this.clientService.writeClient!,
         );
-
-        await this.tesService.executeMetaTransaction(
-          metaTransaction,
-          gasToCover.toString(),
+        return this.tesService.executeMetaTransaction(
+          signedMetaTransaction,
+          coveredGas,
         );
-
-        // await spend(sendParams);
-
-        return true;
       },
       "LedgerService.send",
-      480_000,
+      80_000,
+      true,
     );
   }
 

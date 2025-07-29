@@ -9,13 +9,13 @@ import { Loader } from "@src/components/Loader";
 import { usePruneModal } from "./hooks/usePruneModal";
 import { useDepositModal } from "./hooks/useDepositModal";
 import { useFaucet } from "./hooks/useFaucet";
-import { useWithdrawModal } from "./hooks/useWithdrawModal";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useContext } from "react";
-import { SpendModal } from "../Modals/SpendModal";
+import { TwoStepSpendModal } from "@src/components/Modals/TwoStepSpendModal";
 import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
 import { useMetadata } from "@src/hooks/useMetadata";
 import { TOKEN_ADDRESS } from "@src/common.constants";
+import { useTwoStepWithdrawModal } from "./hooks/useTwoStepWithdrawModal";
 
 export default function MenuTab() {
   const { isConnecting } = useContext(LedgerContext);
@@ -41,11 +41,14 @@ export default function MenuTab() {
     isModalLoading,
     isModalSuccess,
     isModalError,
+    currentStep: withdrawCurrentStep,
     form,
     onModalOpen: onWithdrawModalOpen,
-    handleWithdraw,
+    handleFormSubmit: handleWithdrawFormSubmit,
+    handleSign: handleWithdrawSign,
     handleBack: handleWithdrawBack,
-  } = useWithdrawModal(decimals);
+    metaTransactionData: withdrawMetaTransactionData,
+  } = useTwoStepWithdrawModal(decimals);
 
   const { isPruneModalOpen, onPruneModalOpen, onPruneModalClose, handlePrune } =
     usePruneModal();
@@ -129,15 +132,18 @@ export default function MenuTab() {
         onCancel={onPruneModalClose}
       />
 
-      <SpendModal
+      <TwoStepSpendModal
         isOpen={isModalOpen}
         isLoading={isModalLoading}
         isSuccess={isModalSuccess}
-        onSpend={handleWithdraw}
+        currentStep={withdrawCurrentStep}
+        onFormSubmit={handleWithdrawFormSubmit}
+        onSign={handleWithdrawSign}
         onBack={handleWithdrawBack}
         formMethods={form}
         isError={isModalError}
         type="Withdraw"
+        metaTransactionData={withdrawMetaTransactionData}
       />
     </div>
   );

@@ -2,7 +2,7 @@ import { ViewAccountAuthorization } from "@src/components/ViewAccountAuthorizati
 
 export default function Authorization() {
   return (
-    <div className="dark:text-white flex flex-col h-dvh justify-center overflow-hidden">
+    <div className="dark:text-white px-6 flex flex-col h-dvh justify-center overflow-hidden">
       <ViewAccountAuthorization />
     </div>
   );

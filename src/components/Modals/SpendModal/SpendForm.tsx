@@ -97,10 +97,7 @@ export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
         </div>
       </Field>
       <div className="py-4">
-        <MobileConfirmButton
-          disabled={isSubmitting}
-          label={`Confirm ${type}`}
-        />
+        <MobileConfirmButton disabled={isSubmitting} label={`Review ${type}`} />
       </div>
     </div>
   );

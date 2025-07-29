@@ -1,15 +1,17 @@
 import clsx from "clsx";
 import { Button } from "@src/components/Button";
 import { primaryButtonStyle } from "@src/components/Button";
-import { shortString } from "@src/utils/common";
-import { ReactNode, useState } from "react";
+import { ReactNode } from "react";
 
 export interface SigningData {
   label: string;
-  value: string;
+  value: string | ReactNode;
 }
 
 export interface SigningPreviewProps {
+  isSigning: boolean;
+  isSuccess: boolean;
+  isError: boolean;
   title: string;
   description: string;
   messageData: SigningData[];
@@ -20,46 +22,25 @@ export interface SigningPreviewProps {
   successText?: string;
   errorText?: string;
   warningText?: string;
-  children?: ReactNode;
+  extraContent?: ReactNode;
 }
 
 export default function SigningPreview({
+  isSigning,
+  isSuccess,
+  isError,
   title,
   description,
   messageData,
   onSign,
-  onSuccess,
-  onError,
   buttonText = "Sign",
   successText = "Success!",
   errorText = "Error",
   warningText,
-  children,
+  extraContent,
 }: SigningPreviewProps) {
-  const [isSigning, setIsSigning] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [isError, setIsError] = useState(false);
-
-  const handleSign = () => {
-    setIsSigning(true);
-    setTimeout(async () => {
-      try {
-        setIsError(false);
-        await onSign();
-        setIsSuccess(true);
-        onSuccess?.();
-      } catch (error) {
-        console.error(error);
-        setIsError(true);
-        onError?.(error as Error);
-      } finally {
-        setIsSigning(false);
-      }
-    }, 500);
-  };
-
   return (
-    <div className="mx-auto mt-5 w-96 px-5 md:px-0 transition-all duration-500 ease-in-out">
+    <div className="mx-auto w-full transition-all duration-500 ease-in-out">
       {/* Header */}
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold text-white mb-2">{title}</h1>
@@ -115,19 +96,14 @@ export default function SigningPreview({
       <div className="bg-gray-700 rounded-lg p-4 border border-gray-600 mb-6">
         <h3 className="text-white font-semibold mb-3">Message Data</h3>
         <div className="space-y-3 text-sm">
-          {messageData.map((data, index) => (
-            <div key={index} className="flex justify-between">
+          {messageData.map((data) => (
+            <div key={data.label} className="flex justify-between">
               <span className="text-gray-400">{data.label}:</span>
-              <span className="text-white font-mono">
-                {shortString(data.value)}
-              </span>
+              <span className="text-white font-mono">{data.value}</span>
             </div>
           ))}
         </div>
       </div>
-
-      {/* Custom Content */}
-      {children && <div className="mb-6">{children}</div>}
 
       {/* Status Messages */}
       <div
@@ -156,6 +132,9 @@ export default function SigningPreview({
         )}
       </div>
 
+      {/* Warning */}
+      {extraContent}
+
       {/* Sign Button */}
       <div className="flex justify-center mb-6">
         <Button
@@ -165,7 +144,7 @@ export default function SigningPreview({
             (isSigning || isSuccess) && "opacity-50 cursor-not-allowed",
           )}
           disabled={isSigning || isSuccess}
-          onClick={handleSign}
+          onClick={onSign}
         >
           {isSigning ? (
             <div className="flex items-center space-x-2 animate-fade-in">

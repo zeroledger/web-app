@@ -44,6 +44,7 @@ export const initialize = async (
     viewAccountService,
     evmClientService,
     queue,
+    axiosInstance,
   );
   return new LedgerService(
     viewAccountService,
@@ -58,5 +59,6 @@ export const initialize = async (
     commitmentsHistoryService,
     syncService,
     tesService,
+    axiosInstance,
   );
 };

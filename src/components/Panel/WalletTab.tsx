@@ -1,8 +1,8 @@
 import { primaryButtonStyle } from "../Button";
-import { SpendModal } from "@src/components/Modals/SpendModal";
+import { TwoStepSpendModal } from "@src/components/Modals/TwoStepSpendModal";
 import { ShareIcon } from "./ShareIcon";
 import { shortString, formatBalance } from "@src/utils/common";
-import { useSendModal } from "./hooks/useSendModal";
+import { useTwoStepSpendModal } from "./hooks/useTwoStepSpendModal";
 import { useCopyAddress } from "./hooks/useCopyAddress";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useContext, useEffect, useState } from "react";
@@ -28,9 +28,12 @@ export default function WalletTab() {
     isModalError,
     form,
     onModalOpen,
-    handleSend,
+    handleFormSubmit,
+    handleSign,
     handleBack,
-  } = useSendModal(decimals);
+    currentStep,
+    metaTransactionData,
+  } = useTwoStepSpendModal(decimals);
   const [blocksToSync, setBlocksToSync] = useState<bigint>(0n);
 
   useEffect(() => {
@@ -87,15 +90,18 @@ export default function WalletTab() {
         </button>
       </div>
 
-      <SpendModal
+      <TwoStepSpendModal
         isOpen={isModalOpen}
         isLoading={isModalLoading}
         isSuccess={isModalSuccess}
         isError={isModalError}
-        onSpend={handleSend}
+        onFormSubmit={handleFormSubmit}
+        onSign={handleSign}
         onBack={handleBack}
         formMethods={form}
+        currentStep={currentStep}
         type="Payment"
+        metaTransactionData={metaTransactionData}
       />
     </div>
   );

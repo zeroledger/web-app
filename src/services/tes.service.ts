@@ -1,5 +1,8 @@
 import { Logger } from "@src/utils/logger";
-import { deSerializeCommitment } from "@src/utils/vault/metadata";
+import {
+  deSerializeCommitment,
+  serializeCommitment,
+} from "@src/utils/vault/metadata";
 import {
   Address,
   encodeAbiParameters,
@@ -11,6 +14,7 @@ import { ViewAccountService } from "@src/services/viewAccount.service";
 import { MemoryQueue } from "@src/services/core/queue";
 import type { SignedMetaTransaction } from "@src/utils/metatx";
 import { EvmClientService } from "@src/services/core/evmClient.service";
+import { AxiosInstance } from "axios";
 
 const AUTH_TOKEN_ABI = parseAbiParameters(
   "address authAddress,bytes authSignature,address ownerAddress,bytes delegationSignature",
@@ -22,6 +26,7 @@ export class TesService {
     public readonly viewAccountService: ViewAccountService,
     public readonly evmClientService: EvmClientService,
     private readonly memoryQueue: MemoryQueue,
+    private readonly axios: AxiosInstance,
   ) {
     this.mainAccountAddress =
       this.evmClientService.writeClient!.account.address;
@@ -34,25 +39,27 @@ export class TesService {
 
   private async challenge() {
     this.logger.log("Run challenge for tes auth");
-    const response = await fetch(
+    const {
+      data: { random },
+    } = await this.axios.get<{
+      random: Hex;
+    }>(
       `${this.tesUrl}/challenge/init/${this.viewAccountService.getViewAccount()!.address}`,
     );
-    const { random } = (await response.json()) as {
-      random: Hex;
-    };
     const authToken = await this.getAuthToken(random);
     this.logger.log(`Create auth token $(len: ${authToken.length})`);
-    const resolveResp = await fetch(`${this.tesUrl}/challenge/solve`, {
-      headers: new Headers({
-        authorization: `Bearer ${authToken}`,
-      }),
-      credentials: "include",
-    });
-    this.logger.log(`Challenge resolved`);
-    const { exp, csrf } = (await resolveResp.json()) as {
+    const {
+      data: { exp, csrf },
+    } = await this.axios.get<{
       exp: number;
       csrf: string;
-    };
+    }>(`${this.tesUrl}/challenge/solve`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+      withCredentials: true,
+    });
+    this.logger.log(`Challenge resolved`);
     this.csrf = csrf;
     this.timeout = exp * 1000;
   }
@@ -83,11 +90,10 @@ export class TesService {
 
   async getTrustedEncryptionToken() {
     await this.manageAuth();
-    const response = await fetch(`${this.tesUrl}/encryption/tepk`);
-    const { tepk } = (await response.json()) as {
+    const { data } = await this.axios.get<{
       tepk: Hex;
-    };
-    return tepk;
+    }>(`${this.tesUrl}/encryption/tepk`);
+    return data.tepk;
   }
 
   async decrypt(block: string, token: Address, poseidonHash: string) {
@@ -99,30 +105,23 @@ export class TesService {
       poseidonHash,
     };
 
-    const response = await fetch(`${this.tesUrl}/encryption/decrypt`, {
-      method: "POST",
-      headers: new Headers({
+    const response = await this.axios.post<{
+      decryptedCommitment: ReturnType<typeof serializeCommitment>;
+    }>(`${this.tesUrl}/encryption/decrypt`, requestData, {
+      headers: {
         "Content-Type": "application/json",
         "x-custom-tes-csrf": this.csrf,
-      }),
-      body: JSON.stringify(requestData),
-      credentials: "include",
+      },
+      withCredentials: true,
     });
 
-    return deSerializeCommitment((await response.json()).decryptedCommitment);
+    return deSerializeCommitment(response.data.decryptedCommitment);
   }
 
   async syncWithTes(token: Address, fromBlock: string, toBlock: string) {
     try {
       await this.manageAuth();
-      const response = await fetch(
-        `${this.tesUrl}/indexer?owner=${this.mainAccountAddress}&token=${token}&fromBlock=${fromBlock}&toBlock=${toBlock}`,
-        {
-          headers: new Headers({ "x-custom-tes-csrf": this.csrf }),
-          credentials: "include",
-        },
-      );
-      const data: {
+      const { data } = await this.axios.get<{
         events: {
           eventName: "CommitmentCreated" | "CommitmentRemoved";
           args: {
@@ -136,7 +135,15 @@ export class TesService {
           transactionHash: string;
         }[];
         syncedBlock: string;
-      } = await response.json();
+      }>(
+        `${this.tesUrl}/indexer?owner=${this.mainAccountAddress}&token=${token}&fromBlock=${fromBlock}&toBlock=${toBlock}`,
+        {
+          headers: {
+            "x-custom-tes-csrf": this.csrf,
+          },
+          withCredentials: true,
+        },
+      );
 
       return {
         syncedBlock: data.syncedBlock,
@@ -162,15 +169,16 @@ export class TesService {
 
   async quote(token: Address) {
     await this.manageAuth();
-    const response = await fetch(`${this.tesUrl}/paymaster/quote/${token}`, {
-      headers: new Headers({ "x-custom-tes-csrf": this.csrf }),
-      credentials: "include",
-    });
-
-    const data = (await response.json()) as {
+    const { data } = await this.axios.get<{
       gasPrice: string;
       paymasterAddress: Address;
-    };
+    }>(`${this.tesUrl}/paymaster/quote/${token}`, {
+      headers: {
+        "x-custom-tes-csrf": this.csrf,
+      },
+      withCredentials: true,
+    });
+
     return {
       gasPrice: BigInt(data.gasPrice),
       paymasterAddress: data.paymasterAddress,
@@ -182,15 +190,20 @@ export class TesService {
     coveredGas: string,
   ) {
     await this.manageAuth();
-    return fetch(`${this.tesUrl}/paymaster/execute`, {
-      method: "POST",
-      headers: new Headers({
-        "Content-Type": "application/json",
-        "x-custom-tes-csrf": this.csrf,
-      }),
-      credentials: "include",
-      body: JSON.stringify({ metatx, coveredGas }),
-    });
+    await this.axios.post(
+      `${this.tesUrl}/paymaster/execute`,
+      {
+        metatx,
+        coveredGas,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "x-custom-tes-csrf": this.csrf,
+        },
+        withCredentials: true,
+      },
+    );
   }
 
   reset() {
