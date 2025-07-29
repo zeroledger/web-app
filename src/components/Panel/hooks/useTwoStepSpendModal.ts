@@ -1,4 +1,4 @@
-import { useState, useContext, useMemo } from "react";
+import { useState, useContext, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { Address, parseUnits } from "viem";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
@@ -38,73 +38,85 @@ export const useTwoStepSpendModal = (decimals: number) => {
     },
   });
 
-  const onModalOpen = async () =>
-    await asyncOperationPromise.then(() => {
-      setIsModalSuccess(false);
-      setIsModalLoading(false);
-      setIsModalError(false);
-      setCurrentStep("form");
-      setMetaTransactionData(undefined);
-      disableSwipe();
-      setIsModalOpen(true);
-    });
+  const onModalOpen = useCallback(
+    async () =>
+      await asyncOperationPromise.then(() => {
+        setIsModalSuccess(false);
+        setIsModalLoading(false);
+        setIsModalError(false);
+        setCurrentStep("form");
+        setMetaTransactionData(undefined);
+        disableSwipe();
+        setIsModalOpen(true);
+      }),
+    [disableSwipe],
+  );
 
-  const handleBack = async () =>
-    await asyncOperationPromise.then(async () => {
-      setIsModalOpen(false);
-      await delay(500);
-      form.reset();
-      setMetaTransactionData(undefined);
-      setCurrentStep("form");
-      enableSwipe();
-    });
+  const handleBack = useCallback(
+    async () =>
+      await asyncOperationPromise.then(async () => {
+        setIsModalOpen(false);
+        await delay(500);
+        form.reset();
+        setMetaTransactionData(undefined);
+        setCurrentStep("form");
+        enableSwipe();
+      }),
+    [form, enableSwipe],
+  );
 
-  const handleFormSubmit = async (data: SpendFormData) =>
-    await asyncOperationPromise.then(async () => {
-      try {
-        setIsModalLoading(true);
+  const handleFormSubmit = useCallback(
+    async (data: SpendFormData) =>
+      await asyncOperationPromise.then(async () => {
+        try {
+          setIsModalLoading(true);
 
-        // This is a placeholder - in reality, you would call the ledger service
-        // to prepare the metatransaction data
-        const metaTransactionData =
-          await ledgerService!.prepareSendMetaTransaction(
-            parseUnits(data.amount, decimals),
-            data.recipient as Address,
+          // This is a placeholder - in reality, you would call the ledger service
+          // to prepare the metatransaction data
+          const metaTransactionData =
+            await ledgerService!.prepareSendMetaTransaction(
+              parseUnits(data.amount, decimals),
+              data.recipient as Address,
+            );
+
+          setMetaTransactionData(metaTransactionData);
+          setCurrentStep("preview");
+        } catch (error) {
+          console.error("Failed to prepare metaTransaction:", error);
+          setIsModalError(true);
+          await delay(3000);
+          handleBack();
+        } finally {
+          setIsModalLoading(false);
+        }
+      }),
+    [ledgerService, decimals, handleBack],
+  );
+
+  const handleSign = useCallback(
+    async () =>
+      await asyncOperationPromise.then(async () => {
+        if (!metaTransactionData) return;
+
+        try {
+          setIsModalLoading(true);
+
+          await ledgerService!.send(
+            metaTransactionData.metaTransaction,
+            metaTransactionData.coveredGas,
           );
-
-        setMetaTransactionData(metaTransactionData);
-        setCurrentStep("preview");
-      } catch (error) {
-        console.error("Failed to prepare metaTransaction:", error);
-        setIsModalError(true);
-        await delay(3000);
-        handleBack();
-      } finally {
-        setIsModalLoading(false);
-      }
-    });
-
-  const handleSign = async () =>
-    await asyncOperationPromise.then(async () => {
-      if (!metaTransactionData) return;
-
-      try {
-        setIsModalLoading(true);
-
-        await ledgerService!.send(
-          metaTransactionData.metaTransaction,
-          metaTransactionData.coveredGas,
-        );
-        setIsModalSuccess(true);
-      } catch (error) {
-        setIsModalError(true);
-        console.error(error);
-      } finally {
-        setIsModalLoading(false);
-        await delay(2000);
-        handleBack();
-      }
-    });
+          setIsModalSuccess(true);
+        } catch (error) {
+          setIsModalError(true);
+          console.error(error);
+        } finally {
+          setIsModalLoading(false);
+          await delay(2000);
+          handleBack();
+        }
+      }),
+    [ledgerService, metaTransactionData, handleBack],
+  );
 
   return useMemo(
     () => ({
