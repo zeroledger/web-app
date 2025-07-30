@@ -1,4 +1,8 @@
-import { CircuitSignals, plonk, PlonkProof, PublicSignals } from "snarkjs";
+import {
+  type CircuitSignals,
+  type PlonkProof,
+  type PublicSignals,
+} from "snarkjs";
 
 import depositWasmUrl from "@src/assets/deposit/deposit.wasm?url";
 import depositWasmZkey from "@src/assets/deposit/deposit.zkey?url";
@@ -62,49 +66,11 @@ export type CircuitType =
   | "spend32"
   | "spend161";
 
-class Prover {
-  private depositWasm: Promise<Uint8Array<ArrayBuffer>>;
-  private depositZkey: Promise<Uint8Array<ArrayBuffer>>;
-  private spend11Wasm: Promise<Uint8Array<ArrayBuffer>>;
-  private spend11Zkey: Promise<Uint8Array<ArrayBuffer>>;
-  private spend12Wasm: Promise<Uint8Array<ArrayBuffer>>;
-  private spend12Zkey: Promise<Uint8Array<ArrayBuffer>>;
-  private spend13Wasm: Promise<Uint8Array<ArrayBuffer>>;
-  private spend13Zkey: Promise<Uint8Array<ArrayBuffer>>;
-  private spend21Wasm: Promise<Uint8Array<ArrayBuffer>>;
-  private spend21Zkey: Promise<Uint8Array<ArrayBuffer>>;
-  private spend22Wasm: Promise<Uint8Array<ArrayBuffer>>;
-  private spend22Zkey: Promise<Uint8Array<ArrayBuffer>>;
-  private spend23Wasm: Promise<Uint8Array<ArrayBuffer>>;
-  private spend23Zkey: Promise<Uint8Array<ArrayBuffer>>;
-  private spend31Wasm: Promise<Uint8Array<ArrayBuffer>>;
-  private spend31Zkey: Promise<Uint8Array<ArrayBuffer>>;
-  private spend32Wasm: Promise<Uint8Array<ArrayBuffer>>;
-  private spend32Zkey: Promise<Uint8Array<ArrayBuffer>>;
-  private spend161Wasm: Promise<Uint8Array<ArrayBuffer>>;
-  private spend161Zkey: Promise<Uint8Array<ArrayBuffer>>;
+const snarkjs = import("snarkjs");
 
+class Prover {
   constructor() {
-    this.depositZkey = this.urlBuffLoader(depositWasmZkey);
-    this.depositWasm = this.urlBuffLoader(depositWasmUrl);
-    this.spend11Zkey = this.urlBuffLoader(spend11Zkey);
-    this.spend11Wasm = this.urlBuffLoader(spend11WasmUrl);
-    this.spend12Zkey = this.urlBuffLoader(spend12Zkey);
-    this.spend12Wasm = this.urlBuffLoader(spend12WasmUrl);
-    this.spend13Zkey = this.urlBuffLoader(spend13Zkey);
-    this.spend13Wasm = this.urlBuffLoader(spend13WasmUrl);
-    this.spend21Zkey = this.urlBuffLoader(spend21Zkey);
-    this.spend21Wasm = this.urlBuffLoader(spend21WasmUrl);
-    this.spend22Zkey = this.urlBuffLoader(spend22Zkey);
-    this.spend22Wasm = this.urlBuffLoader(spend22WasmUrl);
-    this.spend23Zkey = this.urlBuffLoader(spend23Zkey);
-    this.spend23Wasm = this.urlBuffLoader(spend23WasmUrl);
-    this.spend31Zkey = this.urlBuffLoader(spend31Zkey);
-    this.spend31Wasm = this.urlBuffLoader(spend31WasmUrl);
-    this.spend32Zkey = this.urlBuffLoader(spend32Zkey);
-    this.spend32Wasm = this.urlBuffLoader(spend32WasmUrl);
-    this.spend161Zkey = this.urlBuffLoader(spend161Zkey);
-    this.spend161Wasm = this.urlBuffLoader(spend161WasmUrl);
+    this.provedDeps = this.provedDeps.bind(this);
   }
 
   private urlBuffLoader(url: string) {
@@ -119,25 +85,55 @@ class Prover {
   private provedDeps(circuitType: CircuitType) {
     switch (circuitType) {
       case "deposit":
-        return [this.depositWasm, this.depositZkey];
+        return [
+          this.urlBuffLoader(depositWasmUrl),
+          this.urlBuffLoader(depositWasmZkey),
+        ];
       case "spend11":
-        return [this.spend11Wasm, this.spend11Zkey];
+        return [
+          this.urlBuffLoader(spend11WasmUrl),
+          this.urlBuffLoader(spend11Zkey),
+        ];
       case "spend12":
-        return [this.spend12Wasm, this.spend12Zkey];
+        return [
+          this.urlBuffLoader(spend12WasmUrl),
+          this.urlBuffLoader(spend12Zkey),
+        ];
       case "spend13":
-        return [this.spend13Wasm, this.spend13Zkey];
+        return [
+          this.urlBuffLoader(spend13WasmUrl),
+          this.urlBuffLoader(spend13Zkey),
+        ];
       case "spend21":
-        return [this.spend21Wasm, this.spend21Zkey];
+        return [
+          this.urlBuffLoader(spend21WasmUrl),
+          this.urlBuffLoader(spend21Zkey),
+        ];
       case "spend22":
-        return [this.spend22Wasm, this.spend22Zkey];
+        return [
+          this.urlBuffLoader(spend22WasmUrl),
+          this.urlBuffLoader(spend22Zkey),
+        ];
       case "spend23":
-        return [this.spend23Wasm, this.spend23Zkey];
+        return [
+          this.urlBuffLoader(spend23WasmUrl),
+          this.urlBuffLoader(spend23Zkey),
+        ];
       case "spend31":
-        return [this.spend31Wasm, this.spend31Zkey];
+        return [
+          this.urlBuffLoader(spend31WasmUrl),
+          this.urlBuffLoader(spend31Zkey),
+        ];
       case "spend32":
-        return [this.spend32Wasm, this.spend32Zkey];
+        return [
+          this.urlBuffLoader(spend32WasmUrl),
+          this.urlBuffLoader(spend32Zkey),
+        ];
       case "spend161":
-        return [this.spend161Wasm, this.spend161Zkey];
+        return [
+          this.urlBuffLoader(spend161WasmUrl),
+          this.urlBuffLoader(spend161Zkey),
+        ];
       default:
         throw new Error(`Invalid circuitType ${circuitType}`);
     }
@@ -146,6 +142,7 @@ class Prover {
   async runPlonkProof(circuitType: CircuitType, inputs: CircuitSignals) {
     // 1. Fetch the WASM witness calculator
     const [wasmBuff, zkeyBuff] = await this.provedDeps(circuitType);
+    const { plonk } = await snarkjs;
 
     // 3. Compute proof + public signals in one call
     //    fullProve = calc witness → generate proof
@@ -162,6 +159,8 @@ class Prover {
     proof: PlonkProof,
     publicSignals: PublicSignals,
   ) {
+    const { plonk } = await snarkjs;
+
     // Get calldata for Solidity verifier
     const calldata = await plonk.exportSolidityCallData(proof, publicSignals);
     // calldata is a string like: '[proofArray][pubSignalsArray]'

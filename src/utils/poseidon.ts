@@ -1,6 +1,9 @@
-import { buildPoseidon } from "circomlibjs";
+const dynamicLoadPoseidon = async () => {
+  const { buildPoseidon } = await import("circomlibjs");
+  return buildPoseidon();
+};
 
-const poseidon_ = buildPoseidon();
+const dynamicPoseidon = dynamicLoadPoseidon();
 
 export async function computePoseidon({
   amount,
@@ -9,6 +12,6 @@ export async function computePoseidon({
   amount: bigint;
   entropy: bigint;
 }): Promise<bigint> {
-  const poseidon = await poseidon_;
+  const poseidon = await dynamicPoseidon;
   return BigInt(poseidon.F.toString(poseidon([amount, entropy])));
 }
