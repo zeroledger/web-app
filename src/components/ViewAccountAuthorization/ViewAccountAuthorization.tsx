@@ -48,18 +48,20 @@ export default function ViewAccountAuthorization() {
   };
 
   return (
-    <SigningPreview
-      isSigning={isSigning}
-      isSuccess={isSuccess}
-      isError={isError}
-      title="View Account Authorization"
-      description="Signing this message you authorize view account to be used for encryption and decryption of your transactions and trusted encryption service authentication."
-      messageData={messageData}
-      onSign={handleSign}
-      buttonText="Authorize"
-      successText="Success!"
-      errorText="Error"
-      warningText="View account is never in custody of your funds."
-    />
+    <div className="mx-auto w-full md:max-w-md px-3">
+      <SigningPreview
+        isSigning={isSigning}
+        isSuccess={isSuccess}
+        isError={isError}
+        title="View Account Authorization"
+        description="Signing this message you authorize view account to be used for encryption and decryption of your transactions and trusted encryption service authentication."
+        messageData={messageData}
+        onSign={handleSign}
+        buttonText="Authorize"
+        successText="Success!"
+        errorText="Error"
+        warningText="View account is never in custody of your funds."
+      />
+    </div>
   );
 }

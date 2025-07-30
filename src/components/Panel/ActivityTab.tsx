@@ -3,7 +3,7 @@ import { formatUnits } from "viem";
 import { shortString } from "@src/utils/common";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useContext } from "react";
-import { HistoryRecordDto } from "@src/services/ledger";
+import { type HistoryRecordDto } from "@src/services/ledger";
 import {
   Disclosure,
   DisclosureButton,

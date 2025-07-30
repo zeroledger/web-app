@@ -1,4 +1,4 @@
-import { SelectedCommitmentRecord } from "@src/utils/vault";
+import { type SelectedCommitmentRecord } from "@src/utils/vault/types";
 import { DataSource } from "@src/services/core/db/leveldb.service";
 import { LedgerRecordDto } from "./ledger.dto";
 

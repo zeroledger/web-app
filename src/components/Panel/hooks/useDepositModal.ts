@@ -5,7 +5,7 @@ import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useSwipe } from "./useSwipe";
 import { delay } from "@src/utils/common";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
-import { TransactionDetails } from "@src/services/ledger/ledger.service";
+import { type TransactionDetails } from "@src/services/ledger/ledger.service";
 import { type DepositParams } from "@src/utils/vault/types";
 
 interface DepositFormData {

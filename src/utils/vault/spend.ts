@@ -1,6 +1,6 @@
 import { VAULT_ABI } from "./vault.abi";
-import { SpendParams, TransactionStruct } from "./types";
-import { Proof } from "@src/utils/prover";
+import { type SpendParams, type TransactionStruct } from "./types";
+import { type Proof } from "@src/utils/prover";
 import { encodeFunctionData } from "viem";
 import {
   AVERAGE_ERC_20_TRANSFER_COST,

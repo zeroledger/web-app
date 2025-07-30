@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect, useMemo, ReactNode } from "react";
-import { initialize, LedgerService } from "@src/services/ledger";
+import { initialize } from "@src/services/ledger";
 import { ViewAccountContext } from "@src/context/viewAccount/viewAccount.context";
 import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
 import { useWallets } from "@privy-io/react-auth";
@@ -14,6 +14,7 @@ import {
   FAUCET_URL,
 } from "@src/common.constants";
 import { useLedgerSync } from "@src/hooks/useLedgerSync";
+import { type LedgerService } from "@src/services/ledger";
 
 export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
   children,
@@ -125,8 +126,8 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       privateBalance,
       isConnecting,
       error,
-      syncState,
       blocksToSync,
+      syncState,
     ],
   );
 

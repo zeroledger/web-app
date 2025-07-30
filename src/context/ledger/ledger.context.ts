@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import { LedgerService } from "@src/services/ledger";
+import { type LedgerService } from "@src/services/ledger";
 
 export const LedgerContext = createContext<{
   ledgerService?: LedgerService;

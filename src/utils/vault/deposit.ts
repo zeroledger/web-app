@@ -1,6 +1,6 @@
 import { VAULT_ABI } from "./vault.abi";
-import type { DepositParams, DepositStruct } from "./types";
-import type { Proof } from "@src/utils/prover";
+import { type DepositParams, type DepositStruct } from "./types";
+import { type Proof } from "@src/utils/prover";
 import { encodeFunctionData } from "viem";
 import {
   AVERAGE_ERC_20_TRANSFER_COST,

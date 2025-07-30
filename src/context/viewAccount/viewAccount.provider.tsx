@@ -11,6 +11,7 @@ import {
 import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
 import { ViewAccountContext } from "./viewAccount.context";
 import { useWallets } from "@privy-io/react-auth";
+import { catchService } from "@src/services/core/catch.service";
 
 export const ViewAccountProvider: React.FC<{ children?: ReactNode }> = ({
   children,
@@ -27,20 +28,28 @@ export const ViewAccountProvider: React.FC<{ children?: ReactNode }> = ({
 
   useEffect(() => {
     const createViewAccount = async () => {
-      if (password && evmClientService && !viewAccount) {
-        setIsLoading(true);
-        const viewAccount = new ViewAccountService(
-          APP_PREFIX_KEY,
-          password,
-          evmClientService,
-        );
-        if (viewAccount.hasEncryptedViewAccount()) {
-          await viewAccount.unlockViewAccount();
-          setAuthorized(true);
-        } else {
-          viewAccount.prepareViewAccount();
+      try {
+        if (password && evmClientService && !viewAccount) {
+          setIsLoading(true);
+          const viewAccount = new ViewAccountService(
+            APP_PREFIX_KEY,
+            password,
+            evmClientService,
+          );
+          if (viewAccount.hasEncryptedViewAccount()) {
+            await viewAccount.unlockViewAccount();
+            setAuthorized(true);
+          } else {
+            viewAccount.prepareViewAccount();
+          }
+          setViewAccount(viewAccount);
+          setIsLoading(false);
         }
-        setViewAccount(viewAccount);
+      } catch (error) {
+        catchService.catch(error as Error);
+        setPassword(undefined);
+        setViewAccount(undefined);
+        setAuthorized(false);
         setIsLoading(false);
       }
     };

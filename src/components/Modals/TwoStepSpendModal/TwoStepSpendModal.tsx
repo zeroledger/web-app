@@ -9,7 +9,7 @@ import { useDynamicHeight } from "@src/hooks/useDynamicHeight";
 import { SpendForm } from "./SpendForm";
 import { SigningPreview } from "@src/components/SigningPreview";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
-import { TransactionDetails } from "@src/services/ledger/ledger.service";
+import { type TransactionDetails } from "@src/services/ledger/ledger.service";
 import {
   prepareSigningData,
   prepareTransactionDetails,
@@ -178,7 +178,7 @@ function TwoStepSpendModal({
                             className={clsx(
                               "transition-all duration-300 ease-in-out overflow-hidden",
                               isDetailsOpen
-                                ? "max-h-96 opacity-100"
+                                ? "max-h-120 opacity-100"
                                 : "max-h-0 opacity-0",
                             )}
                           >

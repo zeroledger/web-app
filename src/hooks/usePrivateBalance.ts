@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { LedgerService, LedgerServiceEvents } from "@src/services/ledger";
+import { type LedgerService, LedgerServiceEvents } from "@src/services/ledger";
 import { useMetadata } from "./useMetadata";
-import { EvmClientService } from "@src/services/core/evmClient.service";
-import { Address } from "viem";
+import { type EvmClientService } from "@src/services/core/evmClient.service";
+import { type Address } from "viem";
 
 export function usePrivateBalance(
   tokenAddress: Address,

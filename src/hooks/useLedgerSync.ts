@@ -1,4 +1,4 @@
-import { LedgerService } from "@src/services/ledger";
+import { type LedgerService } from "@src/services/ledger";
 import { useCallback, useEffect, useState } from "react";
 
 export function useLedgerSync(

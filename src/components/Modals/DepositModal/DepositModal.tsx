@@ -10,8 +10,8 @@ import { primaryButtonStyle } from "@src/components/Button";
 import { formatEther } from "viem";
 import { shortString } from "@src/utils/common";
 import { UseFormReturn } from "react-hook-form";
-import { UnsignedMetaTransaction } from "@src/utils/metatx";
-import { TransactionDetails } from "@src/services/ledger/ledger.service";
+import { type UnsignedMetaTransaction } from "@src/utils/metatx";
+import { type TransactionDetails } from "@src/services/ledger/ledger.service";
 import { DepositParams } from "@src/utils/vault/types";
 
 interface DepositFormData {

@@ -5,6 +5,7 @@ import {
 } from "@privy-io/react-auth";
 import { optimismSepolia } from "viem/chains";
 import { ReactNode } from "react";
+import { PRIVY_APP_ID } from "@src/common.constants";
 
 interface PrivyContextProviderProps {
   children: ReactNode;
@@ -36,7 +37,7 @@ export const PrivyContextProvider = ({
   children,
 }: PrivyContextProviderProps) => {
   return (
-    <PrivyProvider appId={process.env.VITE_PRIVY_APP_ID!} config={config}>
+    <PrivyProvider appId={PRIVY_APP_ID} config={config}>
       {children}
     </PrivyProvider>
   );

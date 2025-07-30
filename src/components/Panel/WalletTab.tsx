@@ -75,6 +75,7 @@ export default function WalletTab() {
         <button
           onClick={onModalOpen}
           className={`${primaryButtonStyle} w-32 h-12 text-lg flex items-center justify-center rounded-xl`}
+          disabled={isLoading}
         >
           Send
         </button>

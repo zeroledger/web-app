@@ -1,7 +1,7 @@
-import { UnsignedMetaTransaction } from "@src/utils/metatx";
+import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import { shortString } from "@src/utils/common";
 import { toHex, formatUnits } from "viem";
-import { TransactionDetails } from "@src/services/ledger/ledger.service";
+import { type TransactionDetails } from "@src/services/ledger/ledger.service";
 
 export const prepareSigningData = (
   metaTransaction?: UnsignedMetaTransaction,

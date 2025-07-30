@@ -1,7 +1,7 @@
-import { Address, Hex, Log } from "viem";
-import { Proof } from "@src/utils/prover";
+import { type Address, type Hex, type Log } from "viem";
+import { type Proof } from "@src/utils/prover";
 import { VAULT_ABI_EVENTS } from "./vault.abi";
-import { CustomClient } from "@src/services/core/evmClient.service";
+import { type CustomClient } from "@src/services/core/evmClient.service";
 
 export type DepositCommitmentParamsStruct = {
   poseidonHash: bigint;

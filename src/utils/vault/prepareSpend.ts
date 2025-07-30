@@ -1,13 +1,13 @@
 import { generatePrivateKey } from "viem/accounts";
 import { computePoseidon } from "@src/utils/poseidon";
 import { CircuitType, getCircuitType, prover } from "@src/utils/prover";
-import { Address, Hex } from "viem";
+import { type Address, type Hex } from "viem";
 import {
-  SpendInput,
-  TransactionStruct,
-  OutputsOwnersStruct,
-  PublicOutput,
-  SelectedCommitmentRecord,
+  type SpendInput,
+  type TransactionStruct,
+  type OutputsOwnersStruct,
+  type PublicOutput,
+  type SelectedCommitmentRecord,
 } from "./types";
 import { encode } from "./metadata";
 

@@ -7,27 +7,15 @@ import { JsonRpcClient, ServiceClient } from "@src/services/core/rpc";
 import { Logger } from "@src/utils/logger";
 import { MemoryQueue } from "@src/services/core/queue";
 import {
-  prepareDeposit,
-  isUserRegistered,
-  prepareSpend,
   type CommitmentStruct,
-  watchVault,
   type VaultEvent,
-  decodeMetadata,
-  decryptCommitment,
-  VaultCommitmentCreatedEvent,
-  VaultCommitmentRemovedEvent,
-  getDepositTxData,
-  getSpendTxData,
-  getWithdrawTxData,
-  getDepositTxGas,
-  getSpendTxGas,
-  getWithdrawTxGas,
-  depositGasSponsoredLimit,
-  spendGasSponsoredLimit,
-  withdrawGasSponsoredLimit,
-  DepositParams,
-} from "@src/utils/vault";
+  type VaultCommitmentCreatedEvent,
+  type VaultCommitmentRemovedEvent,
+  type DepositParams,
+} from "@src/utils/vault/types";
+import { decodeMetadata, decryptCommitment } from "@src/utils/vault/metadata";
+import { type UnsignedMetaTransaction } from "@src/utils/metatx";
+import { watchVault } from "@src/utils/vault/watcher";
 import { catchService } from "@src/services/core/catch.service";
 import { TesService } from "@src/services/tes.service";
 import CommitmentsService from "./commitments.service";
@@ -38,11 +26,6 @@ import { EvmClientService } from "@src/services/core/evmClient.service";
 import { ViewAccountService } from "@src/services/viewAccount.service";
 import { compareEvents, EventLike } from "@src/utils/events";
 import { logStringify } from "@src/utils/common";
-import {
-  createSignedMetaTx,
-  getForwarderNonce,
-  UnsignedMetaTransaction,
-} from "@src/utils/metatx";
 import { AxiosInstance } from "axios";
 import { computePoseidon } from "@src/utils/poseidon";
 
@@ -63,6 +46,22 @@ export type TransactionDetails = {
   inputs: bigint[];
   outputs: bigint[];
 };
+
+// Dynamic imports for heavy dependencies
+const loadHeavyDependencies = async () => {
+  const [asyncVaultUtils, asyncMetaTxUtils] = await Promise.all([
+    import("@src/utils/vault"),
+    import("@src/utils/metatx"),
+  ]);
+
+  return {
+    asyncVaultUtils,
+    asyncMetaTxUtils,
+  };
+};
+
+// Cache for preloaded modules
+const preloadedModulesPromise = loadHeavyDependencies();
 
 export class LedgerService extends EventEmitter {
   private readonly address: Address;
@@ -150,8 +149,13 @@ export class LedgerService extends EventEmitter {
   }
 
   private async getEncryptionParams(user: Address) {
+    const { asyncVaultUtils } = await preloadedModulesPromise;
     const { publicKey: encryptionPublicKey, active: senderActive } =
-      await isUserRegistered(user, this.vault, this.clientService.readClient!);
+      await asyncVaultUtils.isUserRegistered(
+        user,
+        this.vault,
+        this.clientService.readClient!,
+      );
     if (!senderActive) {
       this.logger.warn(
         `${user} PEPK is not registered, getting trusted encryption token`,
@@ -365,6 +369,7 @@ export class LedgerService extends EventEmitter {
   prepareDepositParamsForApproval(value: bigint) {
     return this.enqueue(
       async () => {
+        const { asyncVaultUtils } = await preloadedModulesPromise;
         const { tesUrl, encryptionPublicKey } = await this.getEncryptionParams(
           this.address,
         );
@@ -373,11 +378,11 @@ export class LedgerService extends EventEmitter {
           this.token,
         );
 
-        const gasToCover = depositGasSponsoredLimit();
+        const gasToCover = asyncVaultUtils.depositGasSponsoredLimit();
         const fee = gasToCover * gasPrice;
 
         const { proofData, depositStruct /* depositCommitmentData */ } =
-          await prepareDeposit(
+          await asyncVaultUtils.prepareDeposit(
             this.token,
             this.address,
             value - fee,
@@ -429,7 +434,9 @@ export class LedgerService extends EventEmitter {
   ) {
     return this.enqueue(
       async () => {
-        const gas = await getDepositTxGas(depositParams);
+        const { asyncVaultUtils, asyncMetaTxUtils } =
+          await preloadedModulesPromise;
+        const gas = await asyncVaultUtils.getDepositTxGas(depositParams);
 
         this.logger.log(
           `Deposit: gas without forwarding: ${gas.toString()}, coveredGas: ${gasToCover.toString()}`,
@@ -441,13 +448,13 @@ export class LedgerService extends EventEmitter {
             to: this.vault,
             value: 0,
             gas,
-            nonce: await getForwarderNonce(
+            nonce: await asyncMetaTxUtils.getForwarderNonce(
               this.address,
               this.forwarder,
               this.clientService.readClient!,
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
-            data: getDepositTxData(
+            data: asyncVaultUtils.getDepositTxData(
               depositParams.depositStruct,
               depositParams.proof,
             ),
@@ -480,7 +487,8 @@ export class LedgerService extends EventEmitter {
   deposit(metaTransaction: UnsignedMetaTransaction, coveredGas: string) {
     return this.enqueue(
       async () => {
-        const signedMetaTransaction = await createSignedMetaTx(
+        const { asyncMetaTxUtils } = await preloadedModulesPromise;
+        const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
           metaTransaction,
           this.forwarder,
           this.clientService.writeClient!,
@@ -498,11 +506,13 @@ export class LedgerService extends EventEmitter {
   preparePartialWithdrawMetaTransaction(value: bigint, recipient: Address) {
     return this.enqueue(
       async () => {
+        const { asyncVaultUtils, asyncMetaTxUtils } =
+          await preloadedModulesPromise;
         const { gasPrice, paymasterAddress } = await this.tesService.quote(
           this.token,
         );
 
-        const gasToCover = spendGasSponsoredLimit(1, 3, 2);
+        const gasToCover = asyncVaultUtils.spendGasSponsoredLimit(1, 3, 2);
         const fee = gasPrice * gasToCover;
 
         const { selectedCommitmentRecords, totalAmount: totalMovingAmount } =
@@ -528,20 +538,21 @@ export class LedgerService extends EventEmitter {
           this.address,
         );
 
-        const { proofData, transactionStruct } = await prepareSpend({
-          commitments: selectedCommitmentRecords,
-          token: this.token,
-          totalMovingAmount,
-          privateSpendAmount: 0n,
-          publicSpendAmount: value,
-          spender: this.address,
-          spenderEncryptionPublicKey: encryptionPublicKey,
-          spenderTesUrl: tesUrl,
-          receiver: this.address,
-          receiverEncryptionPublicKey: encryptionPublicKey,
-          receiverTesUrl: tesUrl,
-          publicOutputs,
-        });
+        const { proofData, transactionStruct } =
+          await asyncVaultUtils.prepareSpend({
+            commitments: selectedCommitmentRecords,
+            token: this.token,
+            totalMovingAmount,
+            privateSpendAmount: 0n,
+            publicSpendAmount: value,
+            spender: this.address,
+            spenderEncryptionPublicKey: encryptionPublicKey,
+            spenderTesUrl: tesUrl,
+            receiver: this.address,
+            receiverEncryptionPublicKey: encryptionPublicKey,
+            receiverTesUrl: tesUrl,
+            publicOutputs,
+          });
 
         const partialWithdrawParams = {
           transactionStruct,
@@ -550,7 +561,7 @@ export class LedgerService extends EventEmitter {
           proof: proofData.calldata_proof,
         };
 
-        const gas = await getSpendTxGas(partialWithdrawParams);
+        const gas = await asyncVaultUtils.getSpendTxGas(partialWithdrawParams);
 
         this.logger.log(
           `PartialWithdraw: gas without forwarding: ${gas.toString()}, coveredGas: ${gasToCover.toString()}`,
@@ -562,13 +573,16 @@ export class LedgerService extends EventEmitter {
             to: this.vault,
             value: 0,
             gas,
-            nonce: await getForwarderNonce(
+            nonce: await asyncMetaTxUtils.getForwarderNonce(
               this.address,
               this.forwarder,
               this.clientService.readClient!,
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600,
-            data: getSpendTxData(transactionStruct, proofData.calldata_proof),
+            data: asyncVaultUtils.getSpendTxData(
+              transactionStruct,
+              proofData.calldata_proof,
+            ),
           } as UnsignedMetaTransaction,
           coveredGas: gasToCover.toString(),
           transactionDetails: {
@@ -597,7 +611,8 @@ export class LedgerService extends EventEmitter {
   ) {
     return this.enqueue(
       async () => {
-        const signedMetaTransaction = await createSignedMetaTx(
+        const { asyncMetaTxUtils } = await preloadedModulesPromise;
+        const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
           metaTransaction,
           this.forwarder,
           this.clientService.writeClient!,
@@ -616,6 +631,8 @@ export class LedgerService extends EventEmitter {
   prepareWithdrawMetaTransaction(recipient: Address) {
     return this.enqueue(
       async () => {
+        const { asyncVaultUtils, asyncMetaTxUtils } =
+          await preloadedModulesPromise;
         const commitments = await this.commitmentsService.all();
 
         const withdrawItems: CommitmentStruct[] = [];
@@ -635,7 +652,9 @@ export class LedgerService extends EventEmitter {
           throw new Error("No commitments found to cover the requested amount");
         }
 
-        const gasToCover = withdrawGasSponsoredLimit(withdrawItems.length);
+        const gasToCover = asyncVaultUtils.withdrawGasSponsoredLimit(
+          withdrawItems.length,
+        );
 
         const { gasPrice, paymasterAddress } = await this.tesService.quote(
           this.token,
@@ -651,7 +670,7 @@ export class LedgerService extends EventEmitter {
           feeRecipient: paymasterAddress,
         };
 
-        const gas = await getWithdrawTxGas(withdrawParams);
+        const gas = await asyncVaultUtils.getWithdrawTxGas(withdrawParams);
 
         this.logger.log(
           `Withdraw: gas without forwarding: ${gas.toString()}, coveredGas: ${gasToCover.toString()}`,
@@ -663,13 +682,13 @@ export class LedgerService extends EventEmitter {
             to: this.vault,
             value: 0,
             gas,
-            nonce: await getForwarderNonce(
+            nonce: await asyncMetaTxUtils.getForwarderNonce(
               this.address,
               this.forwarder,
               this.clientService.readClient!,
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
-            data: getWithdrawTxData(withdrawParams),
+            data: asyncVaultUtils.getWithdrawTxData(withdrawParams),
           } as UnsignedMetaTransaction,
           coveredGas: gasToCover.toString(),
           transactionDetails: {
@@ -702,7 +721,8 @@ export class LedgerService extends EventEmitter {
   withdraw(metaTransaction: UnsignedMetaTransaction, coveredGas: string) {
     return this.enqueue(
       async () => {
-        const signedMetaTransaction = await createSignedMetaTx(
+        const { asyncMetaTxUtils } = await preloadedModulesPromise;
+        const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
           metaTransaction,
           this.forwarder,
           this.clientService.writeClient!,
@@ -721,11 +741,13 @@ export class LedgerService extends EventEmitter {
   prepareSendMetaTransaction(value: bigint, recipient: Address) {
     return this.enqueue(
       async () => {
+        const { asyncVaultUtils, asyncMetaTxUtils } =
+          await preloadedModulesPromise;
         const { gasPrice, paymasterAddress } = await this.tesService.quote(
           this.token,
         );
 
-        const gasToCover = spendGasSponsoredLimit(1, 3, 1);
+        const gasToCover = asyncVaultUtils.spendGasSponsoredLimit(1, 3, 1);
         const fee = gasPrice * gasToCover;
         const { selectedCommitmentRecords, totalAmount } =
           await this.commitmentsService.findCommitments(value - fee);
@@ -751,20 +773,21 @@ export class LedgerService extends EventEmitter {
           tesUrl: receiverTesUrl,
         } = await this.getEncryptionParams(recipient);
 
-        const { proofData, transactionStruct } = await prepareSpend({
-          commitments: selectedCommitmentRecords,
-          token: this.token,
-          totalMovingAmount: totalAmount,
-          privateSpendAmount: value - fee,
-          publicSpendAmount: fee,
-          spender: this.address,
-          spenderEncryptionPublicKey,
-          spenderTesUrl,
-          receiver: recipient,
-          receiverEncryptionPublicKey,
-          receiverTesUrl,
-          publicOutputs,
-        });
+        const { proofData, transactionStruct } =
+          await asyncVaultUtils.prepareSpend({
+            commitments: selectedCommitmentRecords,
+            token: this.token,
+            totalMovingAmount: totalAmount,
+            privateSpendAmount: value - fee,
+            publicSpendAmount: fee,
+            spender: this.address,
+            spenderEncryptionPublicKey,
+            spenderTesUrl,
+            receiver: recipient,
+            receiverEncryptionPublicKey,
+            receiverTesUrl,
+            publicOutputs,
+          });
 
         const sendParams = {
           transactionStruct,
@@ -778,14 +801,17 @@ export class LedgerService extends EventEmitter {
             from: this.address,
             to: this.vault,
             value: 0,
-            gas: await getSpendTxGas(sendParams),
-            nonce: await getForwarderNonce(
+            gas: await asyncVaultUtils.getSpendTxGas(sendParams),
+            nonce: await asyncMetaTxUtils.getForwarderNonce(
               this.address,
               this.forwarder,
               this.clientService.readClient!,
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
-            data: getSpendTxData(transactionStruct, proofData.calldata_proof),
+            data: asyncVaultUtils.getSpendTxData(
+              transactionStruct,
+              proofData.calldata_proof,
+            ),
           } as UnsignedMetaTransaction,
           coveredGas: gasToCover.toString(),
           transactionDetails: {
@@ -811,7 +837,8 @@ export class LedgerService extends EventEmitter {
   send(metaTransaction: UnsignedMetaTransaction, coveredGas: string) {
     return this.enqueue(
       async () => {
-        const signedMetaTransaction = await createSignedMetaTx(
+        const { asyncMetaTxUtils } = await preloadedModulesPromise;
+        const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
           metaTransaction,
           this.forwarder,
           this.clientService.writeClient!,
