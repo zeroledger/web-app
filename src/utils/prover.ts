@@ -69,6 +69,9 @@ export type CircuitType =
 const snarkjs = import("snarkjs");
 
 class Prover {
+  private cache: Map<CircuitType, Promise<[Uint8Array, Uint8Array]>> =
+    new Map();
+
   constructor() {
     this.provedDeps = this.provedDeps.bind(this);
   }
@@ -82,61 +85,92 @@ class Prover {
       .then(toBytesBuff);
   }
 
-  private provedDeps(circuitType: CircuitType) {
+  /**
+   * Preloads all circuit dependencies for better performance
+   * This should be called when user enters wallet pages
+   */
+  preloadAllCircuits(): void {
+    const circuitTypes: CircuitType[] = [
+      "deposit",
+      "spend32",
+      "spend22",
+      "spend23",
+      "spend21",
+      "spend31",
+      "spend12",
+      "spend13",
+      "spend11",
+    ];
+
+    circuitTypes.forEach((circuitType) => {
+      if (this.cache.has(circuitType)) {
+        return;
+      }
+      this.cache.set(circuitType, this.provedDeps(circuitType));
+    });
+  }
+
+  private provedDeps(
+    circuitType: CircuitType,
+  ): Promise<[Uint8Array, Uint8Array]> {
+    // Check cache first
+    const cached = this.cache.get(circuitType);
+    if (cached) {
+      return cached;
+    }
+
+    // Load and cache if not found
+    let wasm: Promise<Uint8Array>;
+    let zkey: Promise<Uint8Array>;
+
     switch (circuitType) {
       case "deposit":
-        return [
-          this.urlBuffLoader(depositWasmUrl),
-          this.urlBuffLoader(depositWasmZkey),
-        ];
+        wasm = this.urlBuffLoader(depositWasmUrl);
+        zkey = this.urlBuffLoader(depositWasmZkey);
+        break;
       case "spend11":
-        return [
-          this.urlBuffLoader(spend11WasmUrl),
-          this.urlBuffLoader(spend11Zkey),
-        ];
+        wasm = this.urlBuffLoader(spend11WasmUrl);
+        zkey = this.urlBuffLoader(spend11Zkey);
+        break;
       case "spend12":
-        return [
-          this.urlBuffLoader(spend12WasmUrl),
-          this.urlBuffLoader(spend12Zkey),
-        ];
+        wasm = this.urlBuffLoader(spend12WasmUrl);
+        zkey = this.urlBuffLoader(spend12Zkey);
+        break;
       case "spend13":
-        return [
-          this.urlBuffLoader(spend13WasmUrl),
-          this.urlBuffLoader(spend13Zkey),
-        ];
+        wasm = this.urlBuffLoader(spend13WasmUrl);
+        zkey = this.urlBuffLoader(spend13Zkey);
+        break;
       case "spend21":
-        return [
-          this.urlBuffLoader(spend21WasmUrl),
-          this.urlBuffLoader(spend21Zkey),
-        ];
+        wasm = this.urlBuffLoader(spend21WasmUrl);
+        zkey = this.urlBuffLoader(spend21Zkey);
+        break;
       case "spend22":
-        return [
-          this.urlBuffLoader(spend22WasmUrl),
-          this.urlBuffLoader(spend22Zkey),
-        ];
+        wasm = this.urlBuffLoader(spend22WasmUrl);
+        zkey = this.urlBuffLoader(spend22Zkey);
+        break;
       case "spend23":
-        return [
-          this.urlBuffLoader(spend23WasmUrl),
-          this.urlBuffLoader(spend23Zkey),
-        ];
+        wasm = this.urlBuffLoader(spend23WasmUrl);
+        zkey = this.urlBuffLoader(spend23Zkey);
+        break;
       case "spend31":
-        return [
-          this.urlBuffLoader(spend31WasmUrl),
-          this.urlBuffLoader(spend31Zkey),
-        ];
+        wasm = this.urlBuffLoader(spend31WasmUrl);
+        zkey = this.urlBuffLoader(spend31Zkey);
+        break;
       case "spend32":
-        return [
-          this.urlBuffLoader(spend32WasmUrl),
-          this.urlBuffLoader(spend32Zkey),
-        ];
+        wasm = this.urlBuffLoader(spend32WasmUrl);
+        zkey = this.urlBuffLoader(spend32Zkey);
+        break;
       case "spend161":
-        return [
-          this.urlBuffLoader(spend161WasmUrl),
-          this.urlBuffLoader(spend161Zkey),
-        ];
+        wasm = this.urlBuffLoader(spend161WasmUrl);
+        zkey = this.urlBuffLoader(spend161Zkey);
+        break;
       default:
         throw new Error(`Invalid circuitType ${circuitType}`);
     }
+
+    // Cache the loaded dependencies
+    this.cache.set(circuitType, Promise.all([wasm, zkey]));
+    return this.cache.get(circuitType)!;
   }
 
   async runPlonkProof(circuitType: CircuitType, inputs: CircuitSignals) {

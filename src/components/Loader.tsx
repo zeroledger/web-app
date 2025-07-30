@@ -1,5 +1,5 @@
-export const Loader = () => (
-  <div role="status">
+export const Loader = ({ className }: { className?: string }) => (
+  <div role="status" className={className}>
     <svg
       aria-hidden="true"
       className="inline w-12 h-12 animate-spin dark:text-gray-700 fill-gray-600"

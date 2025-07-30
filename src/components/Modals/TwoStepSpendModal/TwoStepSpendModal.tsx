@@ -55,7 +55,6 @@ function TwoStepSpendModal({
 }: TwoStepSpendModalProps) {
   const { handleSubmit } = formMethods;
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-
   const style = useDynamicHeight("h-dvh");
 
   const onEnter = (e: React.KeyboardEvent<HTMLElement>) => {

@@ -140,23 +140,14 @@ export default function DepositModal({
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Amount to deposit:</span>
+                      <span className="text-gray-400">Amount:</span>
                       <span className="text-white font-mono">
                         {depositParamsData
                           ? formatEther(
                               depositParamsData.depositParams.depositStruct
-                                .total_deposit_amount,
-                            )
-                          : "0"}{" "}
-                        USD
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Fee:</span>
-                      <span className="text-white font-mono">
-                        {depositParamsData
-                          ? formatEther(
-                              depositParamsData.depositParams.depositStruct.fee,
+                                .total_deposit_amount +
+                                depositParamsData.depositParams.depositStruct
+                                  .fee,
                             )
                           : "0"}{" "}
                         USD
