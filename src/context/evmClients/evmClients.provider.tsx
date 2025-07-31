@@ -40,7 +40,6 @@ export const EvmClientsProvider: React.FC<{ children?: ReactNode }> = ({
         if (chainId !== chain.id) {
           setTargetChain(chain);
           openModal();
-          return;
         }
         evmClientService = new EvmClientService(
           WS_RPC[chain.id],

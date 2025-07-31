@@ -13,11 +13,11 @@ export const TOKEN_ADDRESS: Address =
 
 // expected to have same address on all chains
 export const VAULT_ADDRESS: Address =
-  "0xf27f9eda911278da4988537994141e697e8e0798";
+  "0xf27F9EDA911278dA4988537994141e697E8E0798";
 
 // expected to have same address on all chains
 export const FORWARDER_ADDRESS: Address =
-  "0xd4a838dfa0fd81d5b7a129879c16d7bc8e16fd55";
+  "0xD4a838dfA0fd81D5B7a129879c16d7BC8E16Fd55";
 
 export const FAUCET_URL: Address = import.meta.env.VITE_FAUCET_URL;
 

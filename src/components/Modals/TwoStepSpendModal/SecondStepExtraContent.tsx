@@ -26,7 +26,7 @@ export const SecondStepExtraContent = ({
       <div
         className={clsx(
           "transition-all duration-300 ease-in-out overflow-hidden",
-          isDetailsOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0",
+          isDetailsOpen ? "max-h-120 opacity-100" : "max-h-0 opacity-0",
         )}
       >
         <div className="p-4">

@@ -122,6 +122,10 @@ export default class SyncService {
     }
 
     // Update the last synced block to current block
+    console.log(
+      "[zeroledger-app] runOnchainSync: updating last synced block to",
+      currentBlock.toString(),
+    );
     await this.setLastSyncedBlock(currentBlock.toString());
 
     // Return all collected events

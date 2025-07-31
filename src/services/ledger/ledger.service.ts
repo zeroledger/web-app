@@ -102,7 +102,7 @@ export class LedgerService extends EventEmitter {
     this.eventsHandlerDebounced = debounce(
       () =>
         this.enqueue(
-          () => this.handleEventsBatch(),
+          () => this.handleEventsBatch({ updateBlockNumber: true }),
           "LedgerService.handleEventsBatch",
           80_000,
         ),
@@ -143,6 +143,7 @@ export class LedgerService extends EventEmitter {
   }
 
   private async updateBothBalances() {
+    this.logger.log("updating both balances");
     this.safeEmit(
       LedgerServiceEvents.PRIVATE_BALANCE_CHANGE,
       await this.getBalance(),
@@ -171,7 +172,9 @@ export class LedgerService extends EventEmitter {
     }
   }
 
-  private async handleEventsBatch() {
+  private async handleEventsBatch({
+    updateBlockNumber = false,
+  }: { updateBlockNumber?: boolean } = {}) {
     const events = this.eventsCache.splice(0);
     this.logger.log(`handle ${events.length} events batch`);
     const selectedInOrderEvents = events
@@ -248,9 +251,11 @@ export class LedgerService extends EventEmitter {
             event.transactionIndex!,
           ),
         );
-        await this.syncService.setLastSyncedBlock(
-          event.blockNumber!.toString(),
-        );
+        if (updateBlockNumber) {
+          await this.syncService.setLastSyncedBlock(
+            event.blockNumber!.toString(),
+          );
+        }
         this.updateBothBalancesDebounced();
       }
       if (event.eventName === "CommitmentRemoved") {
@@ -269,9 +274,11 @@ export class LedgerService extends EventEmitter {
             ),
           );
         }
-        await this.syncService.setLastSyncedBlock(
-          event.blockNumber!.toString(),
-        );
+        if (updateBlockNumber) {
+          await this.syncService.setLastSyncedBlock(
+            event.blockNumber!.toString(),
+          );
+        }
         this.updateBothBalancesDebounced();
       }
     }
@@ -335,7 +342,6 @@ export class LedgerService extends EventEmitter {
     // so that old commitments processed before 'real-time' incoming
     await this.enqueue(
       async () => {
-        this.logger.log("starting ledger service");
         watchVault(this.clientService.readClient!, this.vault, (events) => {
           this.eventsCache.push(...events);
           this.eventsHandlerDebounced();
@@ -348,11 +354,7 @@ export class LedgerService extends EventEmitter {
           currentBlock.toString(),
         );
         this.eventsCache.push(...(tesSyncEvents.events as VaultEvent[]));
-        this.logger.log(
-          `Update last synced block after tes sync to ${tesSyncEvents.syncedBlock}`,
-        );
         await this.syncService.setLastSyncedBlock(tesSyncEvents.syncedBlock);
-
         const syncEvents = await this.syncService.runOnchainSync(
           this.clientService.readClient!,
           this.vault,
@@ -363,7 +365,6 @@ export class LedgerService extends EventEmitter {
         this.eventsCache.push(...syncEvents);
         await this.handleEventsBatch();
         this.updateBothBalancesDebounced();
-        this.logger.log("ledger service started");
       },
       "LedgerService.start",
       240_000,
@@ -883,13 +884,17 @@ export class LedgerService extends EventEmitter {
     );
   }
 
-  async reset() {
+  async softReset() {
     this.updateBothBalancesDebounced.clear();
     this.eventsHandlerDebounced.clear();
+    this.eventsCache = [];
+  }
+
+  async reset() {
+    this.softReset();
     this.tesService.reset();
     this.commitmentsService.reset();
     this.commitmentsHistoryService.reset();
     this.syncService.reset();
-    this.eventsCache = [];
   }
 }

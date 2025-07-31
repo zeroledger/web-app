@@ -23,7 +23,8 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
   const [error, setError] = useState<Error>();
   const [ledgerService, setLedgerService] = useState<LedgerService>();
   const { viewAccount, authorized } = useContext(ViewAccountContext);
-  const { evmClientService } = useContext(EvmClientsContext);
+  const { evmClientService, isSwitchChainModalOpen } =
+    useContext(EvmClientsContext);
   const { wallets, ready } = useWallets();
 
   const wallet = wallets[0];
@@ -34,6 +35,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       wallet &&
       !isConnecting &&
       !ledgerService &&
+      !isSwitchChainModalOpen &&
       viewAccount &&
       evmClientService
     ) {
@@ -41,6 +43,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
         try {
           console.log("[zeroledger-app] initializing ledger");
           setIsConnecting(true);
+          setError(undefined);
           const ledgerService = await initialize(
             wallet,
             viewAccount!,
@@ -57,6 +60,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
         } catch (error) {
           console.error(error);
           setError(error as Error);
+          setIsConnecting(false);
         }
       };
       initializeLedger();
@@ -68,6 +72,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
     evmClientService,
     isConnecting,
     ledgerService,
+    isSwitchChainModalOpen,
   ]);
 
   const { syncState, resetSyncState } = useLedgerSync(
@@ -76,12 +81,18 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
   );
 
   useEffect(() => {
-    if (!wallet && ledgerService) {
+    if ((!wallet || isSwitchChainModalOpen) && ledgerService) {
       resetSyncState();
-      ledgerService?.reset();
+      ledgerService?.softReset();
       setLedgerService(undefined);
     }
-  }, [syncState, wallet, ledgerService, resetSyncState]);
+  }, [
+    syncState,
+    wallet,
+    ledgerService,
+    resetSyncState,
+    isSwitchChainModalOpen,
+  ]);
 
   const privateBalance = usePrivateBalance(TOKEN_ADDRESS, ledgerService);
   const [blocksToSync, setBlocksToSync] = useState<bigint>();
