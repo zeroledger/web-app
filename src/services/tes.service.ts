@@ -214,5 +214,6 @@ export class TesService {
 
   reset() {
     this.timeout = 0;
+    this.csrf = "";
   }
 }

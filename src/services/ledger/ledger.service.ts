@@ -883,5 +883,9 @@ export class LedgerService extends EventEmitter {
     this.updateBothBalancesDebounced.clear();
     this.eventsHandlerDebounced.clear();
     this.tesService.reset();
+    this.commitmentsService.reset();
+    this.commitmentsHistoryService.reset();
+    this.syncService.reset();
+    this.eventsCache = [];
   }
 }

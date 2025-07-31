@@ -2,22 +2,23 @@ import clsx from "clsx";
 import { BackButton } from "@src/components/Buttons/BackButton";
 import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
 
-interface PruneConfirmModalProps {
+interface ConfirmModalProps {
   isOpen: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  title: string;
+  description: string;
+  buttonText: string;
 }
 
-export default function PruneConfirmModal({
+export default function ConfirmModal({
   isOpen,
   onConfirm,
   onCancel,
-}: PruneConfirmModalProps) {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onConfirm();
-  };
-
+  title,
+  description,
+  buttonText,
+}: ConfirmModalProps) {
   return (
     <div
       className={clsx(
@@ -44,23 +45,20 @@ export default function PruneConfirmModal({
         >
           <div className="flex-1 content-center py-5">
             <BackButton onClick={onCancel} />
-            <form onSubmit={handleSubmit} className="flex pt-20">
+            <div className="flex pt-20">
               <div className="flex flex-col items-center justify-center">
-                <h3 className="text-lg font-medium text-white mb-4">
-                  Confirm Data Deletion
-                </h3>
-                <p className="text-white/80 mb-8 text-center">
-                  This will permanently delete all your wallet data, notes, and
-                  transactions. This action cannot be undone.
-                </p>
+                <h3 className="text-lg font-medium text-white mb-4">{title}</h3>
+                <p className="text-white/80 mb-8 text-center">{description}</p>
                 <div className="py-4 w-full">
                   <MobileConfirmButton
+                    type="button"
                     disabled={false}
-                    label="Delete All Data"
+                    label={buttonText}
+                    onClick={onConfirm}
                   />
                 </div>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>

@@ -1,12 +1,12 @@
 import { DepositModal } from "@src/components/Modals/DepositModal";
-import { PruneModal } from "@src/components/Modals/PruneModal";
+import { ConfirmModal } from "@src/components/Modals/ConfirmModal";
 import { ArrowIcon } from "@src/components/svg/ArrowIcon";
 import { QuestionIcon } from "@src/components/svg/QuestionIcon";
 import { TrashIcon } from "@src/components/svg/TrashIcon";
 import { FaucetIcon } from "@src/components/svg/FaucetIcon";
 import { Loader } from "@src/components/Loader";
 
-import { usePruneModal } from "./hooks/usePruneModal";
+import { useResetWalletModal } from "./hooks/useResetWalletModal";
 import { useFaucet } from "./hooks/useFaucet";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useContext } from "react";
@@ -55,8 +55,12 @@ export default function MenuTab() {
     metaTransactionData: withdrawMetaTransactionData,
   } = useTwoStepWithdrawModal(decimals);
 
-  const { isPruneModalOpen, onPruneModalOpen, onPruneModalClose, handlePrune } =
-    usePruneModal();
+  const {
+    isResetWalletModalOpen,
+    onResetWalletModalOpen,
+    onResetWalletModalClose,
+    handleResetWallet,
+  } = useResetWalletModal();
 
   const { isFauceting, handleFaucet, amount } = useFaucet();
 
@@ -105,10 +109,10 @@ export default function MenuTab() {
         </button>
         <button
           className={`${buttonStyle} ${disabledButtonStyle}`}
-          onClick={onPruneModalOpen}
+          onClick={onResetWalletModalOpen}
           disabled={isFauceting || isLoading}
         >
-          Prune Wallet
+          Reset Wallet
           <TrashIcon />
         </button>
         <button
@@ -136,10 +140,13 @@ export default function MenuTab() {
         depositParamsData={depositParamsData}
       />
 
-      <PruneModal
-        isOpen={isPruneModalOpen}
-        onConfirm={handlePrune}
-        onCancel={onPruneModalClose}
+      <ConfirmModal
+        isOpen={isResetWalletModalOpen}
+        onConfirm={handleResetWallet}
+        onCancel={onResetWalletModalClose}
+        title="Confirm Wallet Reset"
+        description="This will permanently delete all your wallet data. This action cannot be undone."
+        buttonText="Reset Wallet"
       />
 
       <TwoStepSpendModal
