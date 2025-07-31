@@ -26,10 +26,12 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
   const { evmClientService } = useContext(EvmClientsContext);
   const { wallets, ready } = useWallets();
 
+  const wallet = wallets[0];
+
   useEffect(() => {
     if (
       ready &&
-      wallets.length > 0 &&
+      wallet &&
       !isConnecting &&
       !ledgerService &&
       viewAccount &&
@@ -37,8 +39,8 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
     ) {
       const initializeLedger = async () => {
         try {
+          console.log("[zeroledger-app] initializing ledger");
           setIsConnecting(true);
-          const wallet = wallets[0];
           const ledgerService = await initialize(
             wallet,
             viewAccount!,
@@ -61,11 +63,11 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
     }
   }, [
     ready,
-    wallets,
-    isConnecting,
-    ledgerService,
+    wallet,
     viewAccount,
     evmClientService,
+    isConnecting,
+    ledgerService,
   ]);
 
   const { syncState, resetSyncState } = useLedgerSync(
@@ -74,12 +76,12 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
   );
 
   useEffect(() => {
-    if (wallets.length === 0 && ledgerService) {
+    if (!wallet && ledgerService) {
       resetSyncState();
       ledgerService?.reset();
       setLedgerService(undefined);
     }
-  }, [syncState, wallets, ledgerService, resetSyncState]);
+  }, [syncState, wallet, ledgerService, resetSyncState]);
 
   const privateBalance = usePrivateBalance(TOKEN_ADDRESS, ledgerService);
   const [blocksToSync, setBlocksToSync] = useState<bigint>();
@@ -95,7 +97,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
           await ledgerService.syncStatus();
         setBlocksToSync(currentBlock - processedBlock);
         console.log(
-          `currentBlock: ${currentBlock}, processedBlock: ${processedBlock}, blocksToSync: ${currentBlock - processedBlock}`,
+          `[zeroledger-app] currentBlock: ${currentBlock}, processedBlock: ${processedBlock}, blocksToSync: ${currentBlock - processedBlock}`,
         );
         if (currentBlock - processedBlock === 0n) {
           setSyncFinished(true);

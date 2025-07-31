@@ -30,6 +30,7 @@ export const ViewAccountProvider: React.FC<{ children?: ReactNode }> = ({
     const createViewAccount = async () => {
       try {
         if (password && evmClientService && !viewAccount) {
+          console.log("[zeroledger-app] creating view account");
           setIsLoading(true);
           const viewAccount = new ViewAccountService(
             APP_PREFIX_KEY,

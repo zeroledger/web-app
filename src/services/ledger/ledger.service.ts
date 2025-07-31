@@ -92,8 +92,12 @@ export class LedgerService extends EventEmitter {
     this.faucetRpc = this.faucetRpcClient.getService(this.faucetUrl, {
       namespace: "faucet",
     });
-    this.updateBothBalancesDebounced = debounce(() =>
-      this.updateBothBalances(),
+    this.updateBothBalancesDebounced = debounce(
+      () => this.updateBothBalances(),
+      1000,
+      {
+        immediate: true,
+      },
     );
     this.eventsHandlerDebounced = debounce(
       () =>
@@ -104,7 +108,7 @@ export class LedgerService extends EventEmitter {
         ),
       1000,
     );
-    this.logger.log(`LedgerService initialized with token ${this.token}`);
+    this.logger.log(`LedgerService created with token ${this.token}`);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -130,10 +134,8 @@ export class LedgerService extends EventEmitter {
     );
     if (err) {
       if (forwardError) {
-        console.log("forwardError");
         throw err;
       } else {
-        console.log("catchError");
         this.catchService.catch(err);
       }
     }
@@ -333,6 +335,7 @@ export class LedgerService extends EventEmitter {
     // so that old commitments processed before 'real-time' incoming
     await this.enqueue(
       async () => {
+        this.logger.log("starting ledger service");
         watchVault(this.clientService.readClient!, this.vault, (events) => {
           this.eventsCache.push(...events);
           this.eventsHandlerDebounced();
@@ -360,6 +363,7 @@ export class LedgerService extends EventEmitter {
         this.eventsCache.push(...syncEvents);
         await this.handleEventsBatch();
         this.updateBothBalancesDebounced();
+        this.logger.log("ledger service started");
       },
       "LedgerService.start",
       240_000,

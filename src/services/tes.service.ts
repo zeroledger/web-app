@@ -127,6 +127,8 @@ export class TesService {
   async syncWithTes(token: Address, fromBlock: string, toBlock: string) {
     try {
       await this.manageAuth();
+
+      this.logger.log(`syncing with TES from ${fromBlock} to ${toBlock}`);
       const { data } = await this.axios.get<{
         events: {
           eventName: "CommitmentCreated" | "CommitmentRemoved";

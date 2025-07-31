@@ -17,7 +17,6 @@ const config = {
     walletChainType: "ethereum-only" as const,
     theme: "#101828" as `#${string}`,
     accentColor: "#6A6FF5" as `#${string}`,
-    showWalletLoginFirst: false,
     walletList: [
       "detected_ethereum_wallets",
       "metamask",

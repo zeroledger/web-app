@@ -17,7 +17,7 @@ switch (import.meta.env.VITE_LOG_LVL) {
     break;
 }
 
-console.log("log level", level);
+console.log("[zeroledger-app] log level", level);
 
 export class Logger {
   constructor(private readonly instanceContext?: string) {}
@@ -34,17 +34,17 @@ export class Logger {
 
   static log(message: any, context?: string) {
     if (level >= 2) {
-      console.log(`[${context}] ${message}`);
+      console.log(`[zeroledger-app] [${context}] ${message}`);
     }
   }
   static warn(message: any, context?: string) {
     if (level >= 1) {
-      console.warn(`[${context}] ${message}`);
+      console.warn(`[zeroledger-app] [${context}] ${message}`);
     }
   }
   static error(message: any, context?: string) {
     if (level >= 0) {
-      console.error(`[${context}] ${message}`);
+      console.error(`[zeroledger-app] [${context}] ${message}`);
     }
   }
 }

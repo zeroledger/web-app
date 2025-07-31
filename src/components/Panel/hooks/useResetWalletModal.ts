@@ -15,7 +15,7 @@ export const useResetWalletModal = () => {
 
   const handleResetWallet = useCallback(async () => {
     try {
-      console.log("resetting wallet");
+      console.log("[zeroledger-app] resetting wallet");
       await viewAccount?.reset(evmClientService!.writeClient!.account.address!);
       await ledgerService?.reset();
       setIsResetWalletModalOpen(false);
@@ -25,7 +25,7 @@ export const useResetWalletModal = () => {
       enableSwipe();
       window.location.reload();
     } catch (error) {
-      console.error("Failed to clear data:", error);
+      console.error("[zeroledger-app] Failed to clear data:", error);
     }
   }, [ledgerService, enableSwipe, viewAccount, evmClientService, wallets]);
 
