@@ -1,6 +1,4 @@
-export { default as CommitmentsService } from "./commitments.service";
-export { default as CommitmentsHistoryService } from "./history.service";
-export { default as SyncService } from "./sync.service";
 export * from "./ledger.dto";
-export { LedgerServiceEvents, LedgerService } from "./ledger.service";
+export * from "./events";
+export { type LedgerService } from "./ledger.service";
 export { initialize } from "./initializer";

@@ -17,8 +17,8 @@ import { decodeMetadata, decryptCommitment } from "@src/utils/vault/metadata";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import { watchVault } from "@src/utils/vault/watcher";
 import { catchService } from "@src/services/core/catch.service";
-import { TesService } from "@src/services/tes.service";
-import CommitmentsService from "./commitments.service";
+import { type TesService } from "@src/services/tes.service";
+import type CommitmentsService from "./commitments.service";
 import CommitmentsHistoryService from "./history.service";
 import SyncService from "./sync.service";
 import { HistoryRecordDto, LedgerRecordDto } from "./ledger.dto";
@@ -28,11 +28,7 @@ import { compareEvents, EventLike } from "@src/utils/events";
 import { logStringify } from "@src/utils/common";
 import { AxiosInstance } from "axios";
 import { computePoseidon } from "@src/utils/poseidon";
-
-export const LedgerServiceEvents = {
-  PRIVATE_BALANCE_CHANGE: "PRIVATE_BALANCE_CHANGE",
-  ONCHAIN_BALANCE_CHANGE: "ONCHAIN_BALANCE_CHANGE",
-} as const;
+import { LedgerServiceEvents } from "./events";
 
 export type TransactionDetails = {
   type: "deposit" | "partialWithdraw" | "withdraw" | "send";
@@ -49,14 +45,18 @@ export type TransactionDetails = {
 
 // Dynamic imports for heavy dependencies
 const loadHeavyDependencies = async () => {
-  const [asyncVaultUtils, asyncMetaTxUtils] = await Promise.all([
-    import("@src/utils/vault"),
-    import("@src/utils/metatx"),
-  ]);
+  const [asyncVaultUtils, asyncMetaTxUtils, { TesService }] = await Promise.all(
+    [
+      import("@src/utils/vault"),
+      import("@src/utils/metatx"),
+      import("@src/services/tes.service"),
+    ],
+  );
 
   return {
     asyncVaultUtils,
     asyncMetaTxUtils,
+    TesService,
   };
 };
 
@@ -214,7 +214,8 @@ export class LedgerService extends EventEmitter {
             event.args.poseidonHash!.toString(),
           );
         } else if (tesUrl.length && tesUrl !== this.tesService.tesUrl) {
-          const shortLivedTes = new TesService(
+          const dynamicModules = await preloadedModulesPromise;
+          const shortLivedTes = new dynamicModules.TesService(
             tesUrl,
             this.viewAccountService,
             this.clientService,
