@@ -1,5 +1,5 @@
 import { Address, PublicClient } from "viem";
-import { DataSource } from "@src/services/core/db/leveldb.service";
+import { type DataSource } from "@src/services/core/db/leveldb.service";
 import { getMissedEvents } from "@src/utils/vault/watcher";
 import { VaultEvent } from "@src/utils/vault/types";
 

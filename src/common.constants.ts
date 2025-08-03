@@ -1,5 +1,5 @@
 import { type Address } from "viem";
-import { arbitrumSepolia, baseSepolia, optimismSepolia } from "viem/chains";
+import { optimismSepolia } from "viem/chains";
 
 export const SUPPORTED_CHAINS = [optimismSepolia];
 
@@ -27,18 +27,12 @@ export const PRIVY_APP_ID: Address = import.meta.env.VITE_PRIVY_APP_ID;
 
 export const RPC: { [prop: number]: string } = {
   [optimismSepolia.id]: `https://optimism-sepolia.infura.io/v3/${import.meta.env.VITE_INFURA_RPC_KEY}`,
-  [baseSepolia.id]: `https://base-sepolia.infura.io/v3/${import.meta.env.VITE_INFURA_RPC_KEY}`,
-  [arbitrumSepolia.id]: `https://arbitrum-sepolia.infura.io/v3/${import.meta.env.VITE_INFURA_RPC_KEY}`,
 };
 
 export const WS_RPC: { [prop: number]: string } = {
   [optimismSepolia.id]: `wss://opt-sepolia.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_RPC_KEY}`,
-  [baseSepolia.id]: `wss://base-sepolia.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_RPC_KEY}`,
-  [arbitrumSepolia.id]: `wss://arb-sepolia.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_RPC_KEY}`,
 };
 
 export const pollingInterval: { [prop: number]: number } = {
   [optimismSepolia.id]: 10000,
-  [baseSepolia.id]: 10000,
-  [arbitrumSepolia.id]: 10000,
 };

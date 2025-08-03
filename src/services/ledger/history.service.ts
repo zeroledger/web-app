@@ -1,4 +1,4 @@
-import { DataSource } from "@src/services/core/db/leveldb.service";
+import { type DataSource } from "@src/services/core/db/leveldb.service";
 import { HistoryRecordDto } from "./ledger.dto";
 import { compareEvents } from "@src/utils/events";
 

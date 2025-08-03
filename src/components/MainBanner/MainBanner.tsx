@@ -1,4 +1,6 @@
-import Typewriter from "typewriter-effect";
+import { lazy, Suspense } from "react";
+
+const Typewriter = lazy(() => import("typewriter-effect"));
 
 const writerOptions = {
   delay: 85,
@@ -8,12 +10,14 @@ const MainBanner = () => {
   return (
     <>
       <h1 className="text-center text-3xl font-bol">
-        <Typewriter
-          onInit={(typewriter) => {
-            typewriter.typeString("ZeroLedger").start();
-          }}
-          options={writerOptions}
-        />
+        <Suspense fallback={<span>ZeroLedger</span>}>
+          <Typewriter
+            onInit={(typewriter) => {
+              typewriter.typeString("ZeroLedger").start();
+            }}
+            options={writerOptions}
+          />
+        </Suspense>
       </h1>
     </>
   );
