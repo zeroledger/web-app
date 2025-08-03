@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import tailwindcss from "@tailwindcss/vite";
-import { visualizer } from "rollup-plugin-visualizer";
+// import { visualizer } from "rollup-plugin-visualizer";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -18,10 +18,10 @@ export default defineConfig({
       },
     }),
     tailwindcss(),
-    visualizer({
-      filename: "dist/stats.html",
-      open: false,
-    }),
+    // visualizer({
+    //   filename: "dist/stats.html",
+    //   open: false,
+    // }),
   ],
   build: {
     rollupOptions: {
