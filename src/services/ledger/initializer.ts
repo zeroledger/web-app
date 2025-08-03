@@ -1,9 +1,7 @@
 import { Address } from "viem";
 import axios from "axios";
 
-import { JsonRpcClient } from "@src/services/core/rpc";
-import { MemoryQueue } from "@src/services/core/queue";
-import { FaucetRpc } from "@src/services/core/faucet.dto";
+import { type FaucetRpc } from "@src/services/core/faucet.dto";
 import { type EvmClientService } from "@src/services/core/evmClient.service";
 import { type ViewAccountService } from "@src/services/viewAccount.service";
 import { type ConnectedWallet } from "@privy-io/react-auth";
@@ -13,6 +11,8 @@ const axiosInstance = axios.create();
 // Dynamic imports for heavy dependencies
 const loadHeavyDependencies = async () => {
   const [
+    { MemoryQueue },
+    { JsonRpcClient },
     { DataSource },
     { default: CommitmentsService },
     { default: CommitmentsHistoryService },
@@ -20,6 +20,8 @@ const loadHeavyDependencies = async () => {
     { TesService },
     { LedgerService },
   ] = await Promise.all([
+    import("@src/services/core/queue"),
+    import("@src/services/core/rpc"),
     import("@src/services/core/db/leveldb.service"),
     import("./commitments.service"),
     import("./history.service"),
@@ -29,6 +31,8 @@ const loadHeavyDependencies = async () => {
   ]);
 
   return {
+    MemoryQueue,
+    JsonRpcClient,
     DataSource,
     CommitmentsService,
     CommitmentsHistoryService,
@@ -52,15 +56,10 @@ export const initialize = async (
   tokenAddress: Address,
   faucetUrl: string,
 ) => {
-  // Create lightweight dependencies immediately
-  const queue = new MemoryQueue();
-  const faucetRpcClient = new JsonRpcClient<FaucetRpc>(
-    axiosInstance,
-    wallet.address as Address,
-  );
-
   // Dynamically load heavy dependencies (use preloaded if available)
   const {
+    MemoryQueue,
+    JsonRpcClient,
     DataSource,
     CommitmentsService,
     CommitmentsHistoryService,
@@ -68,6 +67,14 @@ export const initialize = async (
     TesService,
     LedgerService,
   } = await preloadedModulesPromise;
+
+  // Create lightweight dependencies immediately
+  const queue = new MemoryQueue();
+
+  const faucetRpcClient = new JsonRpcClient<FaucetRpc>(
+    axiosInstance,
+    wallet.address as Address,
+  );
 
   // Initialize heavy services
   const zeroLedgerDataSource = new DataSource(appPrefixKey);
