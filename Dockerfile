@@ -14,7 +14,7 @@ RUN npm install
 FROM deps AS build
 COPY ./src ./src
 COPY ./public ./public 
-COPY ./vite.config.ts ./tsconfig.json ./tsconfig.node.json ./postcss.config.cjs ./index.html ./
+COPY ./vite.config.ts ./tsconfig.json ./tsconfig.node.json ./postcss.config.cjs ./index.html .env.production ./
 ENV NODE_ENV=production
 RUN npm run build
 
