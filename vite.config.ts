@@ -23,4 +23,15 @@ export default defineConfig({
       open: false,
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes("viewAccount.service")) {
+            return "viewAccountService";
+          }
+        },
+      },
+    },
+  },
 });
