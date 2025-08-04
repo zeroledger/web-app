@@ -9,7 +9,7 @@ RUN apk add --no-cache make && apk add --no-cache bash
 COPY ./package.json ./package.json
 COPY ./package-lock.json ./package-lock.json
 
-RUN npm ci
+RUN npm install --omit=dev
 
 FROM deps as build
 COPY . .
