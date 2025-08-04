@@ -28,8 +28,7 @@
     "preview": "vite preview",
     "prepare": "husky",
     "prettier": "prettier --write src/**/*.ts",
-    "test": "vitest run",
-    "bundle-size": "npm run build && npx vite-bundle-analyzer dist/stats.html"
+    "test": "vitest run"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.4",

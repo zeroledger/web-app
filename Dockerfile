@@ -9,6 +9,9 @@ RUN apk add --no-cache make && apk add --no-cache bash
 COPY ./package.json ./package.json
 COPY ./package-lock.json ./package-lock.json
 
+# add empty husky
+RUN touch /usr/local/bin/husky && chmod +x /usr/local/bin/husky
+
 RUN npm install --omit=dev
 
 FROM deps as build
