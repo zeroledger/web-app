@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import Error from "@src/components/Error";
 import { LoadingScreen } from "./components/LoadingScreen";
-import { lazy, Suspense } from "react";
+import { lazy } from "react";
 
 const Auth = lazy(() => import("./routes/Auth"));
 const PrivateRoutes = lazy(() => import("./routes/PrivateRoutes"));
@@ -12,42 +12,42 @@ const Router = createBrowserRouter([
   {
     path: "/",
     element: (
-      <Suspense fallback={<LoadingScreen />}>
+      <LoadingScreen>
         <Auth />
-      </Suspense>
+      </LoadingScreen>
     ),
     errorElement: <Error />,
   },
   {
     element: (
-      <Suspense fallback={<LoadingScreen />}>
+      <LoadingScreen>
         <PrivateRoutes />
-      </Suspense>
+      </LoadingScreen>
     ),
     errorElement: <Error />,
     children: [
       {
         path: "/panel",
         element: (
-          <Suspense fallback={<LoadingScreen />}>
+          <LoadingScreen>
             <PanelRoute />
-          </Suspense>
+          </LoadingScreen>
         ),
       },
       {
         path: "/panel/:tab",
         element: (
-          <Suspense fallback={<LoadingScreen />}>
+          <LoadingScreen>
             <PanelRoute />
-          </Suspense>
+          </LoadingScreen>
         ),
       },
       {
         path: "/view-account-authorization",
         element: (
-          <Suspense fallback={<LoadingScreen />}>
+          <LoadingScreen>
             <Authorization />
-          </Suspense>
+          </LoadingScreen>
         ),
       },
     ],

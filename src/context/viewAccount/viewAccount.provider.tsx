@@ -1,5 +1,4 @@
 import { APP_PREFIX_KEY } from "@src/common.constants";
-import { ViewAccountService } from "@src/services/viewAccount.service";
 import {
   ReactNode,
   useCallback,
@@ -12,6 +11,11 @@ import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
 import { ViewAccountContext } from "./viewAccount.context";
 import { useWallets } from "@privy-io/react-auth";
 import { catchService } from "@src/services/core/catch.service";
+import { type ViewAccountService } from "@src/services/viewAccount.service";
+
+const ViewAccountServiceLoader = import(
+  "@src/services/viewAccount.service"
+).then((module) => module.ViewAccountService);
 
 export const ViewAccountProvider: React.FC<{ children?: ReactNode }> = ({
   children,
@@ -32,6 +36,7 @@ export const ViewAccountProvider: React.FC<{ children?: ReactNode }> = ({
         if (password && evmClientService && !viewAccount) {
           console.log("[zeroledger-app] creating view account");
           setIsLoading(true);
+          const ViewAccountService = await ViewAccountServiceLoader;
           const viewAccount = new ViewAccountService(
             APP_PREFIX_KEY,
             password,

@@ -8,7 +8,6 @@ import ActivityTab from "./ActivityTab";
 import MenuTab from "./MenuTab";
 import { SwipeProvider } from "./context/SwipeContext";
 import { useSwipe } from "./hooks/useSwipe";
-import { useCircuitPreloader } from "@src/hooks/useCircuitPreloader";
 
 type TabName = "wallet" | "activity" | "menu";
 
@@ -18,11 +17,6 @@ function PanelContent() {
   const [selectedTab, setSelectedTab] = useState<TabName>("wallet");
   const [direction, setDirection] = useState(0);
   const { isSwipeEnabled } = useSwipe();
-  const { preload } = useCircuitPreloader();
-
-  useEffect(() => {
-    preload();
-  }, [preload]);
 
   const tabs = useMemo(
     () => [

@@ -1,18 +1,9 @@
-import { lazy, Suspense, useEffect, useState } from "react";
-import { Loader } from "@src/components/Loader";
+import { lazy, useEffect, useState } from "react";
 import { prover } from "@src/utils/prover";
+import { LoadingScreen } from "@src/components/LoadingScreen";
 
 // Lazy load the Panel component
 const Panel = lazy(() => import("@src/components/Panel"));
-
-const LoadingScreen = ({ message }: { message?: string }) => {
-  return (
-    <div className="flex-col items-center justify-center h-full content-center">
-      <Loader className="flex justify-center" />
-      <p className="text-gray-200 mt-5">{message}</p>
-    </div>
-  );
-};
 
 const messages = [
   "Preparing wallet modules...",
@@ -27,7 +18,7 @@ export default function PanelRoute() {
     const messageTimer = setTimeout(() => {
       setMessage(messages[1]);
     }, 1_000);
-    prover.preloadAllCircuits();
+    prover.preloadVitalCircuits();
     return () => {
       clearTimeout(messageTimer);
     };
@@ -35,9 +26,9 @@ export default function PanelRoute() {
 
   return (
     <div className="dark:text-white h-dvh flex justify-center items-center overflow-hidden">
-      <Suspense fallback={<LoadingScreen message={message} />}>
+      <LoadingScreen message={message}>
         <Panel />
-      </Suspense>
+      </LoadingScreen>
     </div>
   );
 }

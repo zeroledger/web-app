@@ -1,5 +1,5 @@
 import { RouterProvider } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy } from "react";
 import router from "./router";
 import { LoadingScreen } from "./components/LoadingScreen";
 
@@ -39,19 +39,27 @@ const SwitchChainModal = lazy(
 
 function App() {
   return (
-    <Suspense fallback={<LoadingScreen />}>
+    <LoadingScreen>
       <PrivyContextProvider>
-        <EvmClientsProvider>
-          <ViewAccountProvider>
-            <LedgerProvider>
-              <RouterProvider router={router} />
-              <Notification />
-              <SwitchChainModal />
-            </LedgerProvider>
-          </ViewAccountProvider>
-        </EvmClientsProvider>
+        <LoadingScreen>
+          <EvmClientsProvider>
+            <LoadingScreen>
+              <ViewAccountProvider>
+                <LoadingScreen>
+                  <LedgerProvider>
+                    <LoadingScreen>
+                      <RouterProvider router={router} />
+                      <Notification />
+                      <SwitchChainModal />
+                    </LoadingScreen>
+                  </LedgerProvider>
+                </LoadingScreen>
+              </ViewAccountProvider>
+            </LoadingScreen>
+          </EvmClientsProvider>
+        </LoadingScreen>
       </PrivyContextProvider>
-    </Suspense>
+    </LoadingScreen>
   );
 }
 

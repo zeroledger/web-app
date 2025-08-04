@@ -89,7 +89,7 @@ class Prover {
    * Preloads all circuit dependencies for better performance
    * This should be called when user enters wallet pages
    */
-  preloadAllCircuits(): void {
+  preloadVitalCircuits(): void {
     const circuitTypes: CircuitType[] = [
       "deposit",
       "spend32",
@@ -99,7 +99,6 @@ class Prover {
       "spend31",
       "spend12",
       "spend13",
-      "spend11",
     ];
 
     circuitTypes.forEach((circuitType) => {
