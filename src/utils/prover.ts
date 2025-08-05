@@ -54,17 +54,20 @@ export type Proof = [
   bigint,
 ];
 
-export type CircuitType =
-  | "deposit"
-  | "spend11"
-  | "spend12"
-  | "spend13"
-  | "spend21"
-  | "spend22"
-  | "spend23"
-  | "spend31"
-  | "spend32"
-  | "spend161";
+const circuitTypes = [
+  "deposit",
+  "spend32",
+  "spend22",
+  "spend23",
+  "spend21",
+  "spend31",
+  "spend12",
+  "spend13",
+  "spend11",
+  "spend161",
+] as const;
+
+export type CircuitType = (typeof circuitTypes)[number];
 
 const snarkjs = import("snarkjs");
 
@@ -86,27 +89,19 @@ class Prover {
   }
 
   /**
-   * Preloads all circuit dependencies for better performance
+   * Sequentially preloads all circuits for better performance
    * This should be called when user enters wallet pages
    */
-  preloadVitalCircuits(): void {
-    const circuitTypes: CircuitType[] = [
-      "deposit",
-      "spend32",
-      "spend22",
-      "spend23",
-      "spend21",
-      "spend31",
-      "spend12",
-      "spend13",
-    ];
-
-    circuitTypes.forEach((circuitType) => {
-      if (this.cache.has(circuitType)) {
-        return;
-      }
-      this.cache.set(circuitType, this.provedDeps(circuitType));
-    });
+  async preloadVitalCircuits(index = 0): Promise<void> {
+    const circuit = circuitTypes[index];
+    if (!circuit) return;
+    if (!this.cache.has(circuit)) {
+      const promise = this.provedDeps(circuit);
+      this.cache.set(circuit, promise);
+      await promise;
+    }
+    await this.cache.get(circuit);
+    return this.preloadVitalCircuits(index + 1);
   }
 
   private provedDeps(

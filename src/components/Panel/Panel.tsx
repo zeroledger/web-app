@@ -121,14 +121,14 @@ function PanelContent() {
               </motion.div>
             </AnimatePresence>
           </TabPanels>
-          <TabList className="flex gap-0 sticky bottom-0 z-10 bg-transparent backdrop-blur">
+          <TabList className="flex gap-0 sticky bottom-0 mb-2 z-10 bg-transparent backdrop-blur">
             {tabs.map((tab) => (
               <Tab
                 key={tab.name}
                 className={({ selected }) =>
                   `
                     flex-1 rounded-none
-                    px-3 py-4
+                    px-3 py-5
                     text-base md:text-lg xl:text-xl font-semibold
                     focus:not-data-focus:outline-none
                     data-focus:outline data-focus:outline-white
