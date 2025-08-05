@@ -104,13 +104,14 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
 
     const fetchSyncStatus = async () => {
       try {
-        const { processedBlock, currentBlock } =
-          await ledgerService.syncStatus();
-        setBlocksToSync(currentBlock - processedBlock);
+        const { anchorBlock, currentBlock } = await ledgerService.syncStatus();
+        const blocksToSync =
+          currentBlock <= anchorBlock ? 0n : currentBlock - anchorBlock;
+        setBlocksToSync(blocksToSync);
         console.log(
-          `[zeroledger-app] currentBlock: ${currentBlock}, processedBlock: ${processedBlock}, blocksToSync: ${currentBlock - processedBlock}`,
+          `[zeroledger-app] currentBlock: ${currentBlock}, anchorBlock: ${anchorBlock}, blocksToSync: ${blocksToSync}`,
         );
-        if (currentBlock - processedBlock === 0n) {
+        if (blocksToSync === 0n) {
           setSyncFinished(true);
         }
       } catch (error) {

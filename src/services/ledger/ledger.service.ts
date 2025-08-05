@@ -95,9 +95,6 @@ export class LedgerService extends EventEmitter {
     this.updateBothBalancesDebounced = debounce(
       () => this.updateBothBalances(),
       1000,
-      {
-        immediate: true,
-      },
     );
     this.eventsHandlerDebounced = debounce(
       () =>
@@ -325,9 +322,12 @@ export class LedgerService extends EventEmitter {
 
   async syncStatus() {
     const currentBlock = await this.clientService.readClient!.getBlockNumber();
+    const lastSyncedBlock = BigInt(await this.syncService.getLastSyncedBlock());
     const processedBlock = this.syncService.getProcessedBlock();
+    const anchorBlock =
+      lastSyncedBlock > processedBlock ? lastSyncedBlock : processedBlock;
     return {
-      processedBlock,
+      anchorBlock,
       currentBlock,
     };
   }
@@ -365,7 +365,8 @@ export class LedgerService extends EventEmitter {
         );
         this.eventsCache.push(...syncEvents);
         await this.handleEventsBatch();
-        this.updateBothBalancesDebounced();
+        this.logger.log("call updateBothBalancesDebounced after events");
+        this.updateBothBalancesDebounced.trigger();
       },
       "LedgerService.start",
       240_000,

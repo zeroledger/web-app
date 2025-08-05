@@ -2,6 +2,7 @@ import { Address, PublicClient } from "viem";
 import { type DataSource } from "@src/services/core/db/leveldb.service";
 import { getMissedEvents } from "@src/utils/vault/watcher";
 import { VaultEvent } from "@src/utils/vault/types";
+import { Logger } from "@src/utils/logger";
 
 export const SyncEntityKey = {
   name: `sync_state`,
@@ -14,6 +15,7 @@ export default class SyncService {
 
   private _store: ReturnType<DataSource["getEntityLevel"]>;
   private _processedBlock: bigint = 30538369n;
+  private logger = new Logger(SyncService.name);
 
   /**
    * Get the last synced block number
