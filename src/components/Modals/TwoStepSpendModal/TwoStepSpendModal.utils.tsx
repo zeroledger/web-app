@@ -57,9 +57,29 @@ export const formatTransactionDetailsType = (
   }
 };
 
-export const prepareTransactionDetails = (
+export const prepareMinimalTransactionDetails = (
   transactionDetails?: TransactionDetails,
   decimals?: number,
+) => {
+  if (!transactionDetails) return [];
+  return [
+    {
+      label: "To",
+      value: shortString(transactionDetails.to),
+    },
+    {
+      label: "Value",
+      value: `$${formatUnits(transactionDetails.value, decimals || 18)}`,
+    },
+    {
+      label: "Fee",
+      value: `$${formatUnits(transactionDetails.fee, decimals || 18)}`,
+    },
+  ];
+};
+
+export const prepareFullTransactionDetails = (
+  transactionDetails?: TransactionDetails,
 ) => {
   if (!transactionDetails) return [];
   return [
@@ -78,14 +98,6 @@ export const prepareTransactionDetails = (
     {
       label: "From",
       value: shortString(transactionDetails.from),
-    },
-    {
-      label: "To",
-      value: shortString(transactionDetails.to),
-    },
-    {
-      label: "Value",
-      value: `$${formatUnits(transactionDetails.value, decimals || 18)}`,
     },
     {
       label: "Inputs",
@@ -110,10 +122,6 @@ export const prepareTransactionDetails = (
     {
       label: "Paymaster",
       value: shortString(transactionDetails.paymaster),
-    },
-    {
-      label: "Fee",
-      value: `$${formatUnits(transactionDetails.fee, decimals || 18)}`,
     },
   ];
 };

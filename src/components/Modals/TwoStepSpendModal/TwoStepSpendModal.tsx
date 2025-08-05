@@ -12,7 +12,8 @@ import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import { type TransactionDetails } from "@src/services/ledger/ledger.service";
 import {
   prepareSigningData,
-  prepareTransactionDetails,
+  prepareMinimalTransactionDetails,
+  prepareFullTransactionDetails,
 } from "./TwoStepSpendModal.utils";
 import { SecondStepExtraContent } from "./SecondStepExtraContent";
 
@@ -70,9 +71,15 @@ function TwoStepSpendModal({
     [metaTransactionData?.metaTransaction],
   );
 
-  const getTransactionDetails = useMemo(
+  const fullTransactionDetails = useMemo(
     () =>
-      prepareTransactionDetails(
+      prepareFullTransactionDetails(metaTransactionData?.transactionDetails),
+    [metaTransactionData?.transactionDetails],
+  );
+
+  const minimalTransactionDetails = useMemo(
+    () =>
+      prepareMinimalTransactionDetails(
         metaTransactionData?.transactionDetails,
         decimals,
       ),
@@ -146,24 +153,24 @@ function TwoStepSpendModal({
               currentStep === "preview" && (
                 <>
                   <BackButton onClick={onBack} />
-                  <div className="flex flex-col pt-20 pb-6">
+                  <div className="flex flex-col pt-12 pb-1">
                     <SigningPreview
                       isSigning={isLoading}
                       isSuccess={isSuccess}
                       isError={isError}
                       title={`Sign & Send ${type} Meta Transaction`}
-                      description={`Review the transaction details before signing`}
+                      description={`Review the transaction details before signing. This action cannot be undone`}
                       messageData={getSigningData}
                       onSign={onSign}
                       buttonText={`Sign & Send`}
                       successText={`${type} Successful!`}
                       errorText="Transaction Failed"
-                      warningText="This action cannot be undone"
                       extraContent={
                         <SecondStepExtraContent
                           isDetailsOpen={isDetailsOpen}
                           setIsDetailsOpen={setIsDetailsOpen}
-                          getTransactionDetails={getTransactionDetails}
+                          fullTransactionDetails={fullTransactionDetails}
+                          minimalTransactionDetails={minimalTransactionDetails}
                         />
                       }
                     />

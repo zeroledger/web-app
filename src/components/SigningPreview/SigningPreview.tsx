@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { Button } from "@src/components/Button";
 import { primaryButtonStyle } from "@src/components/Button";
+import { WalletIcon } from "@src/components/svg/WalletIcon";
 import { ReactNode } from "react";
 
 export interface SigningData {
@@ -48,24 +49,12 @@ export default function SigningPreview({
       </div>
 
       {/* Wallet Signing Animation */}
-      <div className="relative mb-6">
+      <div className="relative mb-4">
         <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                <svg
-                  className="w-4 h-4 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  />
-                </svg>
+              <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                <WalletIcon className="w-4 h-4 text-white" />
               </div>
               <span className="text-white font-medium">Wallet</span>
             </div>
@@ -73,27 +62,11 @@ export default function SigningPreview({
               {isSigning ? "Signing..." : "Ready"}
             </div>
           </div>
-
-          {/* Signing Animation */}
-          <div className="space-y-2 overflow-hidden transition-all duration-500 ease-in-out">
-            <div
-              className={`flex items-center space-x-2 transition-all duration-500 ease-in-out ${
-                !isSigning && !isSuccess && !isError
-                  ? "opacity-100 max-h-8 mt-3"
-                  : "opacity-0 max-h-0"
-              }`}
-            >
-              <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse"></div>
-              <span className="text-gray-400 text-sm">
-                Preparing message...
-              </span>
-            </div>
-          </div>
         </div>
       </div>
 
       {/* Message Data */}
-      <div className="bg-gray-700 rounded-lg p-4 border border-gray-600 mb-6">
+      <div className="bg-gray-700 rounded-lg p-4 border border-gray-600 mb-4">
         <h3 className="text-white font-semibold mb-3">Message Data</h3>
         <div className="space-y-3 text-sm">
           {messageData.map((data) => (
