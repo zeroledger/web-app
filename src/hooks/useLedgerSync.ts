@@ -8,6 +8,7 @@ export function useLedgerSync(
   const [syncState, setSyncState] = useState<"idle" | "inProgress" | "done">(
     "idle",
   );
+  const [blocksToSync, setBlocksToSync] = useState<bigint>();
 
   useEffect(() => {
     const syncLedger = async () => {
@@ -22,10 +23,40 @@ export function useLedgerSync(
 
   const resetSyncState = useCallback(() => {
     setSyncState("idle");
+    setBlocksToSync(undefined);
   }, []);
+
+  // Poll for sync status
+  useEffect(() => {
+    if (!ledgerService || syncState === "idle") return;
+
+    if (syncState === "done") {
+      setBlocksToSync(0n);
+      return;
+    }
+
+    const fetchSyncStatus = async () => {
+      try {
+        const { anchorBlock, currentBlock } = await ledgerService.syncStatus();
+        const blocksToSync =
+          currentBlock <= anchorBlock ? 0n : currentBlock - anchorBlock;
+        setBlocksToSync(blocksToSync);
+        console.log(
+          `[zeroledger-app] currentBlock: ${currentBlock}, anchorBlock: ${anchorBlock}, blocksToSync: ${blocksToSync}`,
+        );
+      } catch (error) {
+        console.error("Failed to fetch sync status:", error);
+      }
+    };
+
+    fetchSyncStatus();
+    const interval = setInterval(fetchSyncStatus, 500);
+    return () => clearInterval(interval);
+  }, [ledgerService, syncState]);
 
   return {
     syncState,
     resetSyncState,
+    blocksToSync,
   };
 }

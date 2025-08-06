@@ -12,9 +12,18 @@ import {
   VAULT_ADDRESS,
   FORWARDER_ADDRESS,
   FAUCET_URL,
+  WS_RPC,
+  RPC,
+  pollingInterval,
 } from "@src/common.constants";
 import { useLedgerSync } from "@src/hooks/useLedgerSync";
 import { type LedgerService } from "@src/services/ledger";
+import { EvmClientService } from "@src/services/core/evmClient.service";
+import { usePrevious } from "@src/hooks/usePrevious";
+
+const ViewAccountServiceLoader = import(
+  "@src/services/viewAccount.service"
+).then((module) => module.ViewAccountService);
 
 export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
   children,
@@ -22,32 +31,95 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<Error>();
   const [ledgerService, setLedgerService] = useState<LedgerService>();
-  const { viewAccount, authorized } = useContext(ViewAccountContext);
-  const { evmClientService, isSwitchChainModalOpen } =
-    useContext(EvmClientsContext);
+  const {
+    viewAccount,
+    password,
+    authorized,
+    unlock,
+    setViewAccount,
+    resetViewAccount,
+  } = useContext(ViewAccountContext);
+  const {
+    evmClientServicePromise,
+    initializeEvmClientService,
+    closeEvmClientService,
+    isSwitchChainModalOpen,
+    targetChain,
+  } = useContext(EvmClientsContext);
   const { wallets, ready } = useWallets();
 
   const wallet = wallets[0];
 
+  const prevWallet = usePrevious(wallet);
+
+  const { syncState, resetSyncState, blocksToSync } = useLedgerSync(
+    authorized,
+    ledgerService,
+  );
+
   useEffect(() => {
+    // console.log(`[zeroledger-app] wallet: ${wallet?.address}, ${ready}`);
+    // console.log(`[zeroledger-app] password: ${password}`);
+    // console.log(
+    //   `[zeroledger-app] isSwitchChainModalOpen: ${isSwitchChainModalOpen}`,
+    // );
+    // console.log(`[zeroledger-app] targetChain: ${targetChain?.name}`);
+    // console.log(`[zeroledger-app] prevWallet: ${JSON.stringify(prevWallet)}`);
+    // console.log(`[zeroledger-app] wallet: ${JSON.stringify(wallet)}`);
+
+    if (wallet !== prevWallet && prevWallet !== undefined) {
+      console.log(`[zeroledger-app] wallet changed, resetting`);
+      ledgerService?.softReset();
+      setLedgerService(undefined);
+      closeEvmClientService();
+      resetViewAccount({
+        resetPassword:
+          !wallet ||
+          wallet.address !== prevWallet?.address ||
+          wallet.chainId !== prevWallet.chainId,
+      });
+      resetSyncState();
+      setError(undefined);
+    }
+
+    if (wallet && !evmClientServicePromise) {
+      console.log(`[zeroledger-app] setting evmClientService`);
+      initializeEvmClientService(
+        new EvmClientService(
+          WS_RPC[targetChain.id],
+          RPC[targetChain.id],
+          pollingInterval[targetChain.id],
+          targetChain,
+          wallet,
+        ),
+      );
+    }
+
     if (
       ready &&
       wallet &&
-      !isConnecting &&
+      evmClientServicePromise &&
+      !viewAccount &&
       !ledgerService &&
       !isSwitchChainModalOpen &&
-      viewAccount &&
-      evmClientService
+      password
     ) {
       const initializeLedger = async () => {
         try {
-          console.log("[zeroledger-app] initializing ledger");
+          console.log(`[zeroledger-app] initializing components`);
           setIsConnecting(true);
-          setError(undefined);
+          const readyEvmClientService = await evmClientServicePromise;
+          const ViewAccountService = await ViewAccountServiceLoader;
+          const viewAccount = new ViewAccountService(
+            APP_PREFIX_KEY,
+            password,
+            readyEvmClientService,
+          );
+          await unlock(viewAccount);
           const ledgerService = await initialize(
             wallet,
             viewAccount!,
-            evmClientService!,
+            readyEvmClientService!,
             APP_PREFIX_KEY,
             TES_URL,
             VAULT_ADDRESS,
@@ -55,6 +127,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
             TOKEN_ADDRESS,
             FAUCET_URL,
           );
+          setViewAccount(viewAccount);
           setLedgerService(ledgerService);
           setIsConnecting(false);
         } catch (error) {
@@ -68,62 +141,23 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
   }, [
     ready,
     wallet,
-    viewAccount,
-    evmClientService,
-    isConnecting,
-    ledgerService,
+    password,
     isSwitchChainModalOpen,
-  ]);
-
-  const { syncState, resetSyncState } = useLedgerSync(
-    authorized,
-    ledgerService,
-  );
-
-  useEffect(() => {
-    if ((!wallet || isSwitchChainModalOpen) && ledgerService) {
-      resetSyncState();
-      ledgerService?.softReset();
-      setLedgerService(undefined);
-    }
-  }, [
-    syncState,
-    wallet,
-    ledgerService,
+    unlock,
+    targetChain,
+    closeEvmClientService,
+    initializeEvmClientService,
+    setViewAccount,
+    resetViewAccount,
     resetSyncState,
-    isSwitchChainModalOpen,
+    evmClientServicePromise,
+    viewAccount,
+    ledgerService,
+    setLedgerService,
+    prevWallet,
   ]);
 
   const privateBalance = usePrivateBalance(TOKEN_ADDRESS, ledgerService);
-  const [blocksToSync, setBlocksToSync] = useState<bigint>();
-  const [syncFinished, setSyncFinished] = useState(false);
-
-  // Poll for sync status
-  useEffect(() => {
-    if (!ledgerService || syncFinished) return;
-
-    const fetchSyncStatus = async () => {
-      try {
-        const { anchorBlock, currentBlock } = await ledgerService.syncStatus();
-        const blocksToSync =
-          currentBlock <= anchorBlock ? 0n : currentBlock - anchorBlock;
-        setBlocksToSync(blocksToSync);
-        console.log(
-          `[zeroledger-app] currentBlock: ${currentBlock}, anchorBlock: ${anchorBlock}, blocksToSync: ${blocksToSync}`,
-        );
-        if (blocksToSync === 0n) {
-          setSyncFinished(true);
-        }
-      } catch (error) {
-        console.error("Failed to fetch sync status:", error);
-      }
-    };
-
-    fetchSyncStatus();
-    const interval = setInterval(fetchSyncStatus, 500);
-    return () => clearInterval(interval);
-  }, [ledgerService, syncFinished]);
-
   const value = useMemo(
     () => ({
       ledgerService,

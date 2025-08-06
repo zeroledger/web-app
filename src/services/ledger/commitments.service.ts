@@ -1,14 +1,18 @@
 import { type SelectedCommitmentRecord } from "@src/utils/vault/types";
 import { type DataSource } from "@src/services/core/db/leveldb.service";
 import { LedgerRecordDto } from "./ledger.dto";
+import { Address } from "viem";
 
-const recordEntityKey = {
-  name: `commitments`,
-};
+const recordEntityKey = (address: Address) => ({
+  name: `commitments-${address}`,
+});
 
 export default class CommitmentsService {
-  constructor(readonly dataSource: DataSource) {
-    this._store = this.dataSource.getEntityLevel(recordEntityKey);
+  constructor(
+    readonly dataSource: DataSource,
+    readonly address: Address,
+  ) {
+    this._store = this.dataSource.getEntityLevel(recordEntityKey(address));
   }
 
   private _store: ReturnType<DataSource["getEntityLevel"]>;

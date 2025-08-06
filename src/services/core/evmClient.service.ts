@@ -57,6 +57,7 @@ export class EvmClientService {
       transport,
       pollingInterval: this.pollingInterval,
     }).extend(publicActions);
+    return this;
   }
 
   close() {

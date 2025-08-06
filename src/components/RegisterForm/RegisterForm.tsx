@@ -22,7 +22,7 @@ export default function RegisterForm() {
 
   const navigate = useNavigate();
 
-  const { setPassword, authorized } = useContext(ViewAccountContext);
+  const { setPassword } = useContext(ViewAccountContext);
   const { connectWallet } = useConnectWallet();
   const { ledgerService } = useContext(LedgerContext);
   const { wallets } = useWallets();
@@ -43,13 +43,10 @@ export default function RegisterForm() {
   );
 
   useEffect(() => {
-    if (ledgerService && authorized) {
+    if (ledgerService) {
       navigate("/panel/wallet");
     }
-    if (ledgerService && !authorized) {
-      navigate("/view-account-authorization");
-    }
-  }, [ledgerService, authorized, navigate]);
+  }, [ledgerService, navigate]);
 
   const onEnter = (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {

@@ -35,7 +35,7 @@ export default function ViewAccountAuthorization() {
   const handleSign = async () => {
     try {
       setIsSigning(true);
-      await authorize();
+      await authorize(viewAccount!);
       setIsSuccess(true);
       setIsError(false);
       setIsSigning(false);

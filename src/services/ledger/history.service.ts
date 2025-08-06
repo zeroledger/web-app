@@ -1,14 +1,15 @@
 import { type DataSource } from "@src/services/core/db/leveldb.service";
 import { HistoryRecordDto } from "./ledger.dto";
 import { compareEvents } from "@src/utils/events";
+import { Address } from "viem";
 
-export const HistoryNodesEntityKey = {
-  name: `history_nodes`,
-};
+export const HistoryNodesEntityKey = (address: Address) => ({
+  name: `history_nodes-${address}`,
+});
 
-export const HistoryPointersEntityKey = {
-  name: `history_pointers`,
-};
+export const HistoryPointersEntityKey = (address: Address) => ({
+  name: `history_pointers-${address}`,
+});
 
 type Batch = (
   | {
@@ -41,10 +42,15 @@ export class Node {
 }
 
 export default class CommitmentsHistoryService {
-  constructor(public readonly dataSource: DataSource) {
-    this._store = this.dataSource.getEntityLevel(HistoryNodesEntityKey);
+  constructor(
+    public readonly dataSource: DataSource,
+    readonly address: Address,
+  ) {
+    this._store = this.dataSource.getEntityLevel(
+      HistoryNodesEntityKey(address),
+    );
     this._pointersStore = this.dataSource.getEntityLevel(
-      HistoryPointersEntityKey,
+      HistoryPointersEntityKey(address),
     );
   }
 

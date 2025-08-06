@@ -70,19 +70,21 @@ export const initialize = async (
 
   // Create lightweight dependencies immediately
   const queue = new MemoryQueue();
+  const address = wallet.address as Address;
 
-  const faucetRpcClient = new JsonRpcClient<FaucetRpc>(
-    axiosInstance,
-    wallet.address as Address,
-  );
+  const faucetRpcClient = new JsonRpcClient<FaucetRpc>(axiosInstance, address);
 
   // Initialize heavy services
   const zeroLedgerDataSource = new DataSource(appPrefixKey);
-  const commitmentsService = new CommitmentsService(zeroLedgerDataSource);
+  const commitmentsService = new CommitmentsService(
+    zeroLedgerDataSource,
+    address,
+  );
   const commitmentsHistoryService = new CommitmentsHistoryService(
     zeroLedgerDataSource,
+    address,
   );
-  const syncService = new SyncService(zeroLedgerDataSource);
+  const syncService = new SyncService(zeroLedgerDataSource, address);
   const tesService = new TesService(
     tesUrl,
     viewAccountService,

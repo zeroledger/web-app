@@ -1,16 +1,22 @@
 import clsx from "clsx";
 import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
 import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { catchService } from "@src/services/core/catch.service";
+import { Loader } from "@src/components/Loader";
 
 export default function SwitchChainModal() {
   const { isSwitchChainModalOpen, targetChain, evmClientService } =
     useContext(EvmClientsContext);
 
+  const [evmClientLoading, setEvmClientLoading] = useState(false);
+
   const handleSwitchChain = async () => {
     try {
-      await evmClientService?.writeClient?.switchChain({
+      setEvmClientLoading(true);
+      const readyEvmClientService = await evmClientService;
+      setEvmClientLoading(false);
+      await readyEvmClientService?.writeClient?.switchChain({
         id: targetChain.id,
       });
     } catch (error) {
@@ -19,7 +25,10 @@ export default function SwitchChainModal() {
   };
 
   const handleAddChain = async () => {
-    await evmClientService?.writeClient?.addChain({
+    setEvmClientLoading(true);
+    const readyEvmClientService = await evmClientService;
+    setEvmClientLoading(false);
+    await readyEvmClientService?.writeClient?.addChain({
       chain: targetChain,
     });
   };
@@ -54,33 +63,38 @@ export default function SwitchChainModal() {
               : "translate-x-full md:translate-x-0 md:scale-95",
           )}
         >
-          <div className="flex-1 flex-col items-center justify-center w-full content-center py-5">
-            <h3 className="text-xl text-white mb-4 text-center">
-              Switch Network
-            </h3>
-            <p className="text-white/80 mb-8 text-center">
-              Your wallet needs to be connected to{" "}
-              <span className="underline">{targetChain.name}</span> to continue.
-            </p>
+          {evmClientLoading && <Loader />}
 
-            <div className="grid grid-cols-2 gap-4">
-              <MobileConfirmButton
-                type="button"
-                disabled={false}
-                label={`Switch Chain`}
-                onClick={handleSwitchChain}
-                className="text-sm"
-              />
+          {!evmClientLoading && (
+            <div className="flex-1 flex-col items-center justify-center w-full content-center py-5">
+              <h3 className="text-xl text-white mb-4 text-center">
+                Switch Network
+              </h3>
+              <p className="text-white/80 mb-8 text-center">
+                Your wallet needs to be connected to{" "}
+                <span className="underline">{targetChain.name}</span> to
+                continue.
+              </p>
 
-              <MobileConfirmButton
-                type="button"
-                disabled={false}
-                label={`Add Chain`}
-                onClick={handleAddChain}
-                className="text-sm"
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <MobileConfirmButton
+                  type="button"
+                  disabled={false}
+                  label={`Switch Chain`}
+                  onClick={handleSwitchChain}
+                  className="text-sm"
+                />
+
+                <MobileConfirmButton
+                  type="button"
+                  disabled={false}
+                  label={`Add Chain`}
+                  onClick={handleAddChain}
+                  className="text-sm"
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

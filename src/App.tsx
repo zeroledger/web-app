@@ -2,22 +2,12 @@ import { RouterProvider } from "react-router-dom";
 import { lazy } from "react";
 import router from "./router";
 import { LoadingScreen } from "./components/LoadingScreen";
+import { EvmClientsProvider } from "@src/context/evmClients/evmClients.provider";
+import { ViewAccountProvider } from "@src/context/viewAccount/viewAccount.provider";
 
 const PrivyContextProvider = lazy(() =>
   import("@src/context/privy.context").then((module) => ({
     default: module.PrivyContextProvider,
-  })),
-);
-
-const EvmClientsProvider = lazy(() =>
-  import("@src/context/evmClients/evmClients.provider").then((module) => ({
-    default: module.EvmClientsProvider,
-  })),
-);
-
-const ViewAccountProvider = lazy(() =>
-  import("@src/context/viewAccount/viewAccount.provider").then((module) => ({
-    default: module.ViewAccountProvider,
   })),
 );
 
@@ -41,23 +31,19 @@ function App() {
   return (
     <LoadingScreen>
       <PrivyContextProvider>
-        <LoadingScreen>
-          <EvmClientsProvider>
+        <EvmClientsProvider>
+          <ViewAccountProvider>
             <LoadingScreen>
-              <ViewAccountProvider>
+              <LedgerProvider>
                 <LoadingScreen>
-                  <LedgerProvider>
-                    <LoadingScreen>
-                      <RouterProvider router={router} />
-                      <Notification />
-                      <SwitchChainModal />
-                    </LoadingScreen>
-                  </LedgerProvider>
+                  <RouterProvider router={router} />
+                  <Notification />
+                  <SwitchChainModal />
                 </LoadingScreen>
-              </ViewAccountProvider>
+              </LedgerProvider>
             </LoadingScreen>
-          </EvmClientsProvider>
-        </LoadingScreen>
+          </ViewAccountProvider>
+        </EvmClientsProvider>
       </PrivyContextProvider>
     </LoadingScreen>
   );

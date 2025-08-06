@@ -4,13 +4,16 @@ import { getMissedEvents } from "@src/utils/vault/watcher";
 import { VaultEvent } from "@src/utils/vault/types";
 import { Logger } from "@src/utils/logger";
 
-export const SyncEntityKey = {
-  name: `sync_state`,
-};
+export const SyncEntityKey = (address: Address) => ({
+  name: `sync_state-${address}`,
+});
 
 export default class SyncService {
-  constructor(public readonly dataSource: DataSource) {
-    this._store = this.dataSource.getEntityLevel(SyncEntityKey);
+  constructor(
+    public readonly dataSource: DataSource,
+    readonly address: Address,
+  ) {
+    this._store = this.dataSource.getEntityLevel(SyncEntityKey(address));
   }
 
   private _store: ReturnType<DataSource["getEntityLevel"]>;

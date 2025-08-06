@@ -7,6 +7,7 @@ const Auth = lazy(() => import("./routes/Auth"));
 const PrivateRoutes = lazy(() => import("./routes/PrivateRoutes"));
 const PanelRoute = lazy(() => import("./routes/PanelRoute"));
 const Authorization = lazy(() => import("./routes/Authorization"));
+const AuthorizedRoutes = lazy(() => import("./routes/AuthorizedRoutes"));
 
 const Router = createBrowserRouter([
   {
@@ -27,28 +28,39 @@ const Router = createBrowserRouter([
     errorElement: <Error />,
     children: [
       {
-        path: "/panel",
-        element: (
-          <LoadingScreen>
-            <PanelRoute />
-          </LoadingScreen>
-        ),
-      },
-      {
-        path: "/panel/:tab",
-        element: (
-          <LoadingScreen>
-            <PanelRoute />
-          </LoadingScreen>
-        ),
-      },
-      {
         path: "/view-account-authorization",
         element: (
           <LoadingScreen>
             <Authorization />
           </LoadingScreen>
         ),
+        errorElement: <Error />,
+      },
+      {
+        element: (
+          <LoadingScreen>
+            <AuthorizedRoutes />
+          </LoadingScreen>
+        ),
+        errorElement: <Error />,
+        children: [
+          {
+            path: "/panel",
+            element: (
+              <LoadingScreen>
+                <PanelRoute />
+              </LoadingScreen>
+            ),
+          },
+          {
+            path: "/panel/:tab",
+            element: (
+              <LoadingScreen>
+                <PanelRoute />
+              </LoadingScreen>
+            ),
+          },
+        ],
       },
     ],
   },

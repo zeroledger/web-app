@@ -66,15 +66,15 @@ export class ViewAccountService {
    * View account *
    ****************/
 
-  private encryptedViewPrivateKey(address: Address) {
+  private encryptedViewPrivateKey() {
     return localStorage.getItem(
-      `${this.PKS_STORE_KEY}.view.${address}`,
+      `${this.PKS_STORE_KEY}.view.${this._mainAccountAddress}`,
     ) as Hex | null;
   }
 
-  private encryptedDelegationSignature(address: Address) {
+  private encryptedDelegationSignature() {
     return localStorage.getItem(
-      `${this.PKS_STORE_KEY}.delegation.${address}`,
+      `${this.PKS_STORE_KEY}.delegation.${this._mainAccountAddress}`,
     ) as Hex | null;
   }
 
@@ -92,18 +92,13 @@ export class ViewAccountService {
 
   hasEncryptedViewAccount() {
     return (
-      this.encryptedViewPrivateKey(this._mainAccountAddress) &&
-      this.encryptedDelegationSignature(this._mainAccountAddress)
+      this.encryptedViewPrivateKey() && this.encryptedDelegationSignature()
     );
   }
 
   async unlockViewAccount() {
-    const encryptedViewPk = this.encryptedViewPrivateKey(
-      this._mainAccountAddress,
-    );
-    const encryptedDelegationSignature = this.encryptedDelegationSignature(
-      this._mainAccountAddress,
-    );
+    const encryptedViewPk = this.encryptedViewPrivateKey();
+    const encryptedDelegationSignature = this.encryptedDelegationSignature();
     const { pk } = this.deriveEphemeralEncryptionKeys(this.password);
     this._viewPk = (await decrypt(pk, encryptedViewPk!)) as Hash;
     this._viewAccount = privateKeyToAccount(this._viewPk);
@@ -115,7 +110,11 @@ export class ViewAccountService {
 
   prepareViewAccount() {
     this._viewPk = keccak256(
-      keccak256(toHex(`${this.appPrefixKey}_${this.password}`)),
+      keccak256(
+        toHex(
+          `${this.appPrefixKey}_${this.password}_${this._mainAccountAddress}`,
+        ),
+      ),
     );
     this._viewAccount = privateKeyToAccount(this._viewPk);
   }
@@ -143,13 +142,15 @@ export class ViewAccountService {
     );
   }
 
-  async reset(mainAccountAddress: Address) {
+  reset() {
     delete this._viewAccount;
     delete this._viewPk;
     delete this._delegationSignature;
-    localStorage.removeItem(`${this.PKS_STORE_KEY}.view.${mainAccountAddress}`);
     localStorage.removeItem(
-      `${this.PKS_STORE_KEY}.delegation.${mainAccountAddress}`,
+      `${this.PKS_STORE_KEY}.view.${this._mainAccountAddress}`,
+    );
+    localStorage.removeItem(
+      `${this.PKS_STORE_KEY}.delegation.${this._mainAccountAddress}`,
     );
   }
 }
