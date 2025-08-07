@@ -14,7 +14,6 @@ export function usePrivateBalance(
   const [privateBalance, setPrivateBalance] = useState<bigint>(0n);
   useEffect(() => {
     const setter = (value: bigint) => {
-      console.log(`[zeroledger-app]: setBalance(${value.toString()})`);
       setPrivateBalance(value);
     };
     ledgerService?.on(LedgerServiceEvents.PRIVATE_BALANCE_CHANGE, setter);

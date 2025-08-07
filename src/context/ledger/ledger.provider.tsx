@@ -20,10 +20,13 @@ import { useLedgerSync } from "@src/hooks/useLedgerSync";
 import { type LedgerService } from "@src/services/ledger";
 import { EvmClientService } from "@src/services/core/evmClient.service";
 import { usePrevious } from "@src/hooks/usePrevious";
+import { Logger } from "@src/utils/logger";
 
 const ViewAccountServiceLoader = import(
   "@src/services/viewAccount.service"
 ).then((module) => module.ViewAccountService);
+
+const logger = new Logger("LedgerProvider");
 
 export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
   children,
@@ -58,17 +61,8 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
   );
 
   useEffect(() => {
-    // console.log(`[zeroledger-app] wallet: ${wallet?.address}, ${ready}`);
-    // console.log(`[zeroledger-app] password: ${password}`);
-    // console.log(
-    //   `[zeroledger-app] isSwitchChainModalOpen: ${isSwitchChainModalOpen}`,
-    // );
-    // console.log(`[zeroledger-app] targetChain: ${targetChain?.name}`);
-    // console.log(`[zeroledger-app] prevWallet: ${JSON.stringify(prevWallet)}`);
-    // console.log(`[zeroledger-app] wallet: ${JSON.stringify(wallet)}`);
-
     if (wallet !== prevWallet && prevWallet !== undefined) {
-      console.log(`[zeroledger-app] wallet changed, resetting`);
+      logger.log("wallet changed, resetting");
       ledgerService?.softReset();
       setLedgerService(undefined);
       closeEvmClientService();
@@ -83,7 +77,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
     }
 
     if (wallet && !evmClientServicePromise) {
-      console.log(`[zeroledger-app] setting evmClientService`);
+      logger.log("setting evmClientService");
       initializeEvmClientService(
         new EvmClientService(
           WS_RPC[targetChain.id],
@@ -106,7 +100,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
     ) {
       const initializeLedger = async () => {
         try {
-          console.log(`[zeroledger-app] initializing components`);
+          logger.log("initializing components");
           setIsConnecting(true);
           const readyEvmClientService = await evmClientServicePromise;
           const ViewAccountService = await ViewAccountServiceLoader;

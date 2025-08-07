@@ -4,7 +4,6 @@ import { useContext } from "react";
 
 const AuthorizedRoutes = () => {
   const { authorized } = useContext(ViewAccountContext);
-  console.log("authorized", authorized);
   return authorized ? (
     <Outlet />
   ) : (

@@ -82,12 +82,14 @@ export class TesService {
 
   private async manageAuth() {
     const [error] = await this.memoryQueue.schedule(
-      "TesService.manageAuth",
+      TesService.name,
       async () => {
         if (this.timeout < Date.now() || !this.csrf) {
           await this.challenge();
         }
       },
+      "manageAuth",
+      2000,
     );
     if (error) {
       throw error;

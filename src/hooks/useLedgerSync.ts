@@ -1,5 +1,8 @@
 import { type LedgerService } from "@src/services/ledger";
 import { useCallback, useEffect, useState } from "react";
+import { Logger } from "@src/utils/logger";
+
+const logger = new Logger("useLedgerSync");
 
 export function useLedgerSync(
   authorized: boolean,
@@ -41,11 +44,8 @@ export function useLedgerSync(
         const blocksToSync =
           currentBlock <= anchorBlock ? 0n : currentBlock - anchorBlock;
         setBlocksToSync(blocksToSync);
-        console.log(
-          `[zeroledger-app] currentBlock: ${currentBlock}, anchorBlock: ${anchorBlock}, blocksToSync: ${blocksToSync}`,
-        );
       } catch (error) {
-        console.error("Failed to fetch sync status:", error);
+        logger.error(`Failed to fetch sync status: ${error}`);
       }
     };
 

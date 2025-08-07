@@ -66,7 +66,7 @@ const preloadedModulesPromise = loadHeavyDependencies();
 export class LedgerService extends EventEmitter {
   private readonly address: Address;
   private faucetRpc: ServiceClient<FaucetRpc>;
-  private logger = new Logger("WalletService");
+  private logger = new Logger("LedgerService");
   private catchService = catchService;
   private eventsCache: VaultEvent[] = [];
   private eventsHandlerDebounced: ReturnType<typeof debounce>;
@@ -100,7 +100,7 @@ export class LedgerService extends EventEmitter {
       () =>
         this.enqueue(
           () => this.handleEventsBatch({ updateBlockNumber: true }),
-          "LedgerService.handleEventsBatch",
+          "handleEventsBatch",
           80_000,
         ),
       1000,
@@ -124,7 +124,7 @@ export class LedgerService extends EventEmitter {
     forwardError?: boolean,
   ) {
     const [err, result] = await this.queue.schedule(
-      "walletService",
+      LedgerService.name,
       fn,
       correlationId,
       timeout,
@@ -334,7 +334,7 @@ export class LedgerService extends EventEmitter {
 
   async getBalance() {
     const commitments = await this.commitmentsService.all();
-    this.logger.log(`GetBalance: commitments amount - ${commitments.length}`);
+    this.logger.log(`commitments amount: ${commitments.length}`);
     return commitments.reduce((acc, c) => acc + BigInt(c.value), 0n);
   }
 
@@ -365,10 +365,9 @@ export class LedgerService extends EventEmitter {
         );
         this.eventsCache.push(...syncEvents);
         await this.handleEventsBatch();
-        this.logger.log("call updateBothBalancesDebounced after events");
         this.updateBothBalancesDebounced.trigger();
       },
-      "LedgerService.start",
+      "start",
       240_000,
     );
   }
@@ -411,8 +410,8 @@ export class LedgerService extends EventEmitter {
           gasToCover,
         };
       },
-      "LedgerService.prepareDepositParamsForApproval",
-      480_000,
+      "prepareDepositParamsForApproval",
+      240_000,
       true,
     );
   }
@@ -429,7 +428,7 @@ export class LedgerService extends EventEmitter {
           client: this.clientService.writeClient!,
         });
       },
-      "LedgerService.approveDeposit",
+      "approveDeposit",
       80_000,
       true,
     );
@@ -485,8 +484,8 @@ export class LedgerService extends EventEmitter {
           } as TransactionDetails,
         };
       },
-      "LedgerService.prepareDepositMetaTransaction",
-      480_000,
+      "prepareDepositMetaTransaction",
+      240_000,
       true,
     );
   }
@@ -606,8 +605,8 @@ export class LedgerService extends EventEmitter {
           } as TransactionDetails,
         };
       },
-      "LedgerService.preparePartialWithdrawMetaTransaction",
-      480_000,
+      "preparePartialWithdrawMetaTransaction",
+      240_000,
       true,
     );
   }
@@ -629,7 +628,7 @@ export class LedgerService extends EventEmitter {
           coveredGas,
         );
       },
-      "LedgerService.partialWithdraw",
+      "partialWithdraw",
       80_000,
       true,
     );
@@ -719,8 +718,8 @@ export class LedgerService extends EventEmitter {
           } as TransactionDetails,
         };
       },
-      "LedgerService.prepareWithdrawMetaTransaction",
-      480_000,
+      "prepareWithdrawMetaTransaction",
+      240_000,
       true,
     );
   }
@@ -835,8 +834,8 @@ export class LedgerService extends EventEmitter {
           } as TransactionDetails,
         };
       },
-      "LedgerService.prepareSendMetaTransaction",
-      480_000,
+      "prepareSendMetaTransaction",
+      240_000,
       true,
     );
   }
@@ -855,7 +854,7 @@ export class LedgerService extends EventEmitter {
           coveredGas,
         );
       },
-      "LedgerService.send",
+      "send",
       80_000,
       true,
     );
@@ -864,14 +863,16 @@ export class LedgerService extends EventEmitter {
   async faucet(amount: string) {
     return this.enqueue(
       async () => {
-        const nativeBalance = await this.clientService.readClient!.getBalance({
+        const userBalance = await this.clientService.readClient!.getBalance({
           address: this.address,
         });
         const expectedBalance = parseEther("0.0001");
+        const nativeBalanceToFill =
+          userBalance > expectedBalance ? 0n : expectedBalance - userBalance;
         const nativeBalanceToRequest =
-          nativeBalance > expectedBalance
+          nativeBalanceToFill < userBalance
             ? undefined
-            : formatEther(expectedBalance - nativeBalance);
+            : formatEther(nativeBalanceToFill);
         return this.faucetRpc.obtainTestTokens(
           new FaucetRequestDto(
             this.token,
@@ -881,8 +882,8 @@ export class LedgerService extends EventEmitter {
           ),
         );
       },
-      "LedgerService.faucet",
-      480_000,
+      "faucet",
+      240_000,
     );
   }
 
