@@ -63,6 +63,7 @@ This document outlines comprehensive manual testing scenarios for the faucet fun
    - Verify transaction appears in activity tab
 
 **Expected Results**:
+
 - ✅ Faucet button works correctly
 - ✅ Loading state displays properly
 - ✅ Random amount generation works

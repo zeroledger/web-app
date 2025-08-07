@@ -154,6 +154,8 @@ This document outlines comprehensive manual testing scenarios for the deposit fu
 
 **Expected**: Error message appears, form validation prevents submission
 
+**Note**: HTML5 number input prevents most invalid characters, but form validation still catches edge cases.
+
 #### 2.5 Decimal Input Testing
 
 **Steps**:
@@ -201,6 +203,8 @@ This document outlines comprehensive manual testing scenarios for the deposit fu
 - ✅ Error state is displayed
 - ✅ Modal shows appropriate error message
 - ✅ Modal auto-closes after error
+
+**Note**: Current implementation does not validate balance before form submission. Balance validation occurs during the simulateContract approve transaction, which fail if insufficient balance.
 
 ---
 
@@ -348,6 +352,8 @@ This document outlines comprehensive manual testing scenarios for the deposit fu
 3. Verify no duplicate transactions
 
 **Expected**: Only one transaction should be processed
+
+**Note**: Current implementation uses `asyncOperationPromise` to prevent concurrent operations, ensuring only one transaction is processed at a time.
 
 #### 7.3 Deposit During Other Operations
 

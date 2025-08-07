@@ -1,15 +1,18 @@
 # Withdraw Logic Manual Testing Scenarios
 
 ## Overview
+
 This document outlines comprehensive manual testing scenarios for the withdraw functionality in the ZeroLedger application. The withdraw logic involves a two-step process: form submission and transaction signing.
 
 ## Prerequisites
+
 - User has a connected wallet (Privy)
 - User has sufficient private balance for withdrawal
 - Application is synced with the blockchain
 - TES service is operational
 
 ## Test Environment Setup
+
 1. **Network**: Optimism Sepolia testnet
 2. **Token**: USD token (specified in constants)
 3. **Vault**: Deployed vault contract
@@ -25,7 +28,6 @@ This document outlines comprehensive manual testing scenarios for the withdraw f
 ### 1. Basic Withdraw Flow - Happy Path
 
 **Objective**: Verify successful withdraw transaction from start to finish
-
 
 **Steps**:
 
@@ -80,6 +82,7 @@ This document outlines comprehensive manual testing scenarios for the withdraw f
    - Check transaction appears in activity tab
 
 **Expected Results**:
+
 - ✅ Modal opens and closes correctly
 - ✅ Form validation works
 - ✅ Transaction preparation succeeds
@@ -171,7 +174,6 @@ This document outlines comprehensive manual testing scenarios for the withdraw f
 
 **Objective**: Verify behavior when user tries to withdraw more than available balance
 
-
 **Steps**:
 
 1. **Check Current Balance**
@@ -185,6 +187,7 @@ This document outlines comprehensive manual testing scenarios for the withdraw f
    - Click "Review Withdraw"
 
 **Expected Results**:
+
 - ✅ Form allows input but may show warning
 - ✅ Transaction preparation fails
 - ✅ Error state is displayed
@@ -274,7 +277,6 @@ This document outlines comprehensive manual testing scenarios for the withdraw f
 
 **Objective**: Verify transaction details are accurate and complete
 
-
 **Steps**:
 
 1. **Prepare Transaction**
@@ -295,6 +297,7 @@ This document outlines comprehensive manual testing scenarios for the withdraw f
    - Check all transaction parameters are visible
 
 **Expected Results**:
+
 - ✅ All transaction details are accurate
 - ✅ Fee calculation is correct
 - ✅ Gas estimation is reasonable
@@ -539,15 +542,18 @@ This document outlines comprehensive manual testing scenarios for the withdraw f
 ## Test Data
 
 ### Valid Test Addresses
+
 - `0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6`
 - `0x1234567890123456789012345678901234567890`
 
 ### Valid Test Amounts
+
 - Small: `0.01`, `1.00`, `10.50`
 - Medium: `100.00`, `500.00`
 - Large: `1000.00`, `5000.00`
 
 ### Invalid Test Data
+
 - Invalid addresses: `0x123`, `invalid`, ``
 - Invalid amounts: `-1`, `0`, `abc`, `1.2.3`
 
@@ -556,6 +562,7 @@ This document outlines comprehensive manual testing scenarios for the withdraw f
 ## Success Criteria
 
 A test is considered **PASSED** if:
+
 1. ✅ All expected behaviors occur
 2. ✅ No unexpected errors or crashes
 3. ✅ UI responds appropriately
@@ -564,6 +571,7 @@ A test is considered **PASSED** if:
 6. ✅ Error handling is graceful
 
 A test is considered **FAILED** if:
+
 1. ❌ Expected behavior doesn't occur
 2. ❌ Application crashes or freezes
 3. ❌ UI becomes unresponsive
@@ -576,6 +584,7 @@ A test is considered **FAILED** if:
 ## Reporting
 
 For each test scenario:
+
 1. **Test ID**: Unique identifier (e.g., WITHDRAW-001)
 2. **Test Name**: Descriptive name
 3. **Status**: PASSED/FAILED
@@ -589,6 +598,7 @@ For each test scenario:
 ## Regression Testing
 
 After any changes to withdraw logic:
+
 1. Run all test scenarios
 2. Focus on affected functionality
 3. Verify no regressions in other areas
@@ -599,4 +609,4 @@ After any changes to withdraw logic:
 ---
 
 *Last Updated: [Current Date]*
-*Version: 1.0* 
+*Version: 1.0*
