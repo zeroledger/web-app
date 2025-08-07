@@ -1,5 +1,6 @@
 import SyncService from "@src/services/ledger/sync.service";
 import { createMockDataSource } from "@test/utils/mockDataSource";
+import { zeroAddress } from "viem";
 
 describe("SyncService", () => {
   let syncService: SyncService;
@@ -7,7 +8,7 @@ describe("SyncService", () => {
 
   beforeEach(() => {
     mockDataSource = createMockDataSource();
-    syncService = new SyncService(mockDataSource);
+    syncService = new SyncService(mockDataSource, zeroAddress);
   });
 
   afterEach(() => {

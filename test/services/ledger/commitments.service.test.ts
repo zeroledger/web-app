@@ -1,6 +1,7 @@
 import CommitmentsService from "@src/services/ledger/commitments.service";
 import { LedgerRecordDto } from "@src/services/ledger/ledger.dto";
 import { createMockDataSource } from "@test/utils/mockDataSource";
+import { zeroAddress } from "viem";
 
 describe("CommitmentsService", () => {
   let service: CommitmentsService;
@@ -12,7 +13,7 @@ describe("CommitmentsService", () => {
   ): LedgerRecordDto => new LedgerRecordDto(hash, value, sValue);
 
   beforeEach(() => {
-    service = new CommitmentsService(createMockDataSource());
+    service = new CommitmentsService(createMockDataSource(), zeroAddress);
   });
 
   afterEach(async () => {

@@ -4,6 +4,7 @@ import {
   LedgerRecordDto,
 } from "@src/services/ledger/ledger.dto";
 import { createMockDataSource } from "@test/utils/mockDataSource";
+import { zeroAddress } from "viem";
 
 describe("CommitmentsHistoryService", () => {
   let service: CommitmentsHistoryService;
@@ -32,7 +33,10 @@ describe("CommitmentsHistoryService", () => {
   };
 
   beforeEach(() => {
-    service = new CommitmentsHistoryService(createMockDataSource());
+    service = new CommitmentsHistoryService(
+      createMockDataSource(),
+      zeroAddress,
+    );
   });
 
   afterEach(async () => {
