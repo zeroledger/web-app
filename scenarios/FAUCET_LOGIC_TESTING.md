@@ -1,15 +1,18 @@
 # Faucet Logic Manual Testing Scenarios
 
 ## Overview
+
 This document outlines comprehensive manual testing scenarios for the faucet functionality in the ZeroLedger application. The faucet logic involves requesting test tokens from the faucet service and distributing them to the user's wallet.
 
 ## Prerequisites
+
 - User has a connected wallet (Privy)
 - Application is synced with the blockchain
 - Faucet service is operational
 - User has not exceeded faucet limits
 
 ## Test Environment Setup
+
 1. **Network**: Optimism Sepolia testnet
 2. **Token**: USD token (specified in constants)
 3. **Faucet Service**: Running and accessible
@@ -27,7 +30,6 @@ This document outlines comprehensive manual testing scenarios for the faucet fun
 ### 1. Basic Faucet Flow - Happy Path
 
 **Objective**: Verify successful faucet request from start to finish
-
 
 **Steps**:
 
@@ -497,24 +499,10 @@ This document outlines comprehensive manual testing scenarios for the faucet fun
 
 ---
 
-## Test Data
-
-### Expected Amount Range
-- Minimum: 30 USD
-- Maximum: 99 USD
-- Format: "Sending X Test USD onchain..."
-
-### Test Scenarios
-- Single faucet request
-- Multiple faucet requests
-- Faucet during other operations
-- Faucet with network issues
-
----
-
 ## Success Criteria
 
 A test is considered **PASSED** if:
+
 1. ✅ All expected behaviors occur
 2. ✅ No unexpected errors or crashes
 3. ✅ UI responds appropriately
@@ -523,6 +511,7 @@ A test is considered **PASSED** if:
 6. ✅ Error handling is graceful
 
 A test is considered **FAILED** if:
+
 1. ❌ Expected behavior doesn't occur
 2. ❌ Application crashes or freezes
 3. ❌ UI becomes unresponsive
@@ -535,6 +524,7 @@ A test is considered **FAILED** if:
 ## Reporting
 
 For each test scenario:
+
 1. **Test ID**: Unique identifier (e.g., FAUCET-001)
 2. **Test Name**: Descriptive name
 3. **Status**: PASSED/FAILED
@@ -548,6 +538,7 @@ For each test scenario:
 ## Regression Testing
 
 After any changes to faucet logic:
+
 1. Run all test scenarios
 2. Focus on affected functionality
 3. Verify no regressions in other areas
@@ -558,4 +549,4 @@ After any changes to faucet logic:
 ---
 
 *Last Updated: [Current Date]*
-*Version: 1.0* 
+*Version: 1.0*
