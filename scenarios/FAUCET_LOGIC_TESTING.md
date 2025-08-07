@@ -522,20 +522,6 @@ A test is considered **FAILED** if:
 
 ---
 
-## Reporting
-
-For each test scenario:
-
-1. **Test ID**: Unique identifier (e.g., FAUCET-001)
-2. **Test Name**: Descriptive name
-3. **Status**: PASSED/FAILED
-4. **Notes**: Any observations or issues
-5. **Screenshots**: If applicable
-6. **Environment**: Device, browser, network conditions
-7. **Amount Received**: Faucet amount received in test
-
----
-
 ## Regression Testing
 
 After any changes to faucet logic:

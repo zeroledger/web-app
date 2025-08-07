@@ -495,13 +495,132 @@ This document outlines comprehensive manual testing scenarios for the login func
 
 ---
 
-### 12. Browser Compatibility Testing
+### 12. Network Change Testing
+
+**Objective**: Verify application behavior when user changes networks
+
+**Test Cases**:
+
+#### 12.1 Switch to Supported Network
+
+**Steps**:
+
+1. Connect wallet on unsupported network (e.g., Ethereum mainnet)
+2. Verify switch chain modal appears
+3. Click "Switch Chain" button
+4. Approve network switch in wallet
+
+**Expected**:
+
+- Switch chain modal appears for unsupported networks
+- Network switch works correctly
+- Modal closes Application redirects to login page after switch
+- No data loss or state corruption
+
+#### 12.2 Switch to Unsupported Network
+
+**Steps**:
+
+1. Connect wallet on supported network (Optimism Sepolia)
+2. Switch to unsupported network in wallet (e.g., Polygon)
+3. Verify switch chain modal appears
+4. Click "Switch Chain" button
+5. Approve network switch in wallet
+
+**Expected**:
+
+- Switch chain modal appears for unsupported networks
+- Network switch works correctly
+- Application redirects to login page
+
+#### 12.3 Add New Supported Network
+
+**Steps**:
+
+1. Connect wallet on unsupported network
+2. Verify switch chain modal appears
+3. Click "Add Chain" button
+4. Approve adding network in wallet
+
+**Expected**:
+
+- Add chain functionality works
+- Network is added to wallet
+- Modal closes and application redirects to login page
+
+### 13. Account Change Testing
+
+**Objective**: Verify application behavior when user changes connected accounts
+
+**Test Cases**:
+
+#### 13.1 Switch to Different Account on Same Network
+
+**Steps**:
+
+1. Complete login with one account
+2. Switch to different account in wallet (same network)
+
+**Expected**:
+
+- Application detects account change
+- All services are reset (ledgerService, evmClientService)
+- View account is reset if address changed
+- Password is reset if address changed
+- User must complete login flow again
+
+#### 13.2 Switch to Different Account on Different Network
+
+**Steps**:
+
+1. Complete login with one account
+2. Switch to different account in wallet (different network)
+
+**Expected**:
+
+- Application detects account and network change
+- All services are reset
+- Switch chain modal appears for network change
+- User must complete login flow again
+
+#### 13.3 Account Change During Active Session
+
+**Steps**:
+
+1. Complete login and reach main application
+2. Switch accounts in wallet
+
+**Expected**:
+
+- Application immediately detects account change
+- User is redirected to login page
+- No data leakage between accounts
+
+#### 13.4 Multiple Account Switching
+
+**Steps**:
+
+1. Complete login with account A
+2. Switch to account B
+3. Complete login with account B
+4. Switch back to account A
+5. Verify proper state management
+
+**Expected**:
+
+- Each account maintains separate state
+- No data mixing between accounts
+- Proper cleanup on account switches
+
+---
+
+### 14. Browser Compatibility Testing
 
 **Objective**: Verify login functionality works across different browsers
 
 **Test Cases**:
 
-#### 12.1 Chrome Testing
+#### 14.1 Chrome Testing
 
 **Steps**:
 
@@ -510,7 +629,7 @@ This document outlines comprehensive manual testing scenarios for the login func
 
 **Expected**: Full functionality in Chrome
 
-#### 12.2 Firefox Testing
+#### 14.2 Firefox Testing
 
 **Steps**:
 
@@ -519,7 +638,7 @@ This document outlines comprehensive manual testing scenarios for the login func
 
 **Expected**: Full functionality in Firefox
 
-#### 12.3 Safari Testing
+#### 14.3 Safari Testing
 
 **Steps**:
 
@@ -528,7 +647,7 @@ This document outlines comprehensive manual testing scenarios for the login func
 
 **Expected**: Full functionality in Safari
 
-#### 12.4 Edge Testing
+#### 14.4 Edge Testing
 
 **Steps**:
 
@@ -605,3 +724,5 @@ During testing, pay special attention to:
 3. **Session management**: Check for proper session handling
 4. **Data encryption**: Verify sensitive data is encrypted
 5. **Error messages**: Ensure error messages don't expose sensitive information
+6. **Account isolation**: Verify no data leakage between accounts
+7. **Network security**: Ensure secure network switching

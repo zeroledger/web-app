@@ -189,6 +189,8 @@ This document outlines comprehensive manual testing scenarios for the spend func
 - ✅ Modal shows appropriate error message
 - ✅ Modal auto-closes after error
 
+**Note**: Current implementation uses `getMaxFormattedValue` to automatically cap the input amount to the available balance, preventing users from entering amounts higher than their balance.
+
 ---
 
 ### 4. Network Error Handling
@@ -439,19 +441,6 @@ A test is considered **FAILED** if:
 3. ❌ UI becomes unresponsive
 4. ❌ Data is corrupted or lost
 5. ❌ User experience is poor
-
----
-
-## Reporting
-
-For each test scenario:
-
-1. **Test ID**: Unique identifier (e.g., SPEND-001)
-2. **Test Name**: Descriptive name
-3. **Status**: PASSED/FAILED
-4. **Notes**: Any observations or issues
-5. **Screenshots**: If applicable
-6. **Environment**: Device, browser, network conditions
 
 ---
 
