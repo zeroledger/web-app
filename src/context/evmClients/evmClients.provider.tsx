@@ -43,12 +43,6 @@ export const EvmClientsProvider: React.FC<{ children?: ReactNode }> = ({
     }
   }, [wallet, closeModal]);
 
-  useEffect(() => {
-    if (evmClientService) {
-      setEvmClientServicePromise(evmClientService.open());
-    }
-  }, [evmClientService]);
-
   const initializeEvmClientService = useCallback(
     async (evmClientService: EvmClientService) => {
       const promise = evmClientService.open();

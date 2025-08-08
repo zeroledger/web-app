@@ -25,12 +25,19 @@ export const TES_URL: Address = import.meta.env.VITE_TES_URL;
 
 export const PRIVY_APP_ID: Address = import.meta.env.VITE_PRIVY_APP_ID;
 
-export const RPC: { [prop: number]: string } = {
-  [optimismSepolia.id]: `https://optimism-sepolia.infura.io/v3/${import.meta.env.VITE_INFURA_RPC_KEY}`,
+export const RPC: { [prop: number]: string[] } = {
+  [optimismSepolia.id]: [
+    "https://optimism-sepolia-rpc.publicnode.com",
+    `https://optimism-sepolia.infura.io/v3/${import.meta.env.VITE_INFURA_RPC_KEY}`,
+    `https://opt-sepolia.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_RPC_KEY}`,
+  ],
 };
 
-export const WS_RPC: { [prop: number]: string } = {
-  [optimismSepolia.id]: `wss://opt-sepolia.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_RPC_KEY}`,
+export const WS_RPC: { [prop: number]: string[] } = {
+  [optimismSepolia.id]: [
+    "wss://optimism-sepolia-rpc.publicnode.com",
+    `wss://opt-sepolia.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_RPC_KEY}`,
+  ],
 };
 
 export const pollingInterval: { [prop: number]: number } = {

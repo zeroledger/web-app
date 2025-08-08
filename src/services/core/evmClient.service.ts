@@ -14,8 +14,8 @@ import {
   custom,
   Address,
 } from "viem";
-import { SocketRpcClient } from "viem/utils";
 import { ConnectedWallet } from "@privy-io/react-auth";
+import { Logger } from "@src/utils/logger";
 
 export type CustomClient = PublicClient<Transport, Chain, Account, RpcSchema> &
   WalletClient<Transport, Chain, Account, RpcSchema>;
@@ -23,6 +23,7 @@ export type CustomClient = PublicClient<Transport, Chain, Account, RpcSchema> &
 export class EvmClientService {
   private _readClient?: PublicClient;
   private _writeClient?: CustomClient;
+  private readonly logger = new Logger(EvmClientService.name);
 
   get readClient() {
     return this._readClient;
@@ -33,8 +34,8 @@ export class EvmClientService {
   }
 
   constructor(
-    private readonly wsUrl: string,
-    private readonly httpUrl: string,
+    private readonly wsUrls: string[],
+    private readonly httpUrls: string[],
     private readonly pollingInterval: number,
     private readonly chain: Chain,
     private readonly wallet: ConnectedWallet,
@@ -47,9 +48,10 @@ export class EvmClientService {
       chain: this.chain,
       transport: custom(provider),
     }).extend(publicActions);
+    // const x = webSocket();
     const transport = fallback([
-      webSocket(this.wsUrl),
-      http(this.httpUrl),
+      ...this.wsUrls.map((wss) => webSocket(wss)),
+      ...this.httpUrls.map((url) => http(url)),
       http(),
     ]);
     this._readClient = createClient({
@@ -60,14 +62,17 @@ export class EvmClientService {
     return this;
   }
 
-  close() {
-    for (let i = 0; i < this._readClient?.transport?.transports?.length; i++) {
-      const { value } = this._readClient!.transport.transports[i];
-      if (value.getRpcClient) {
-        value
-          .getRpcClient()
-          .then((rpc: SocketRpcClient<WebSocket>) => rpc.close());
-      }
-    }
+  async close() {
+    /**
+     * @dev do not need to close since clients maintain connection automatically
+     */
+    // for (let i = 0; i < this._readClient?.transport?.transports?.length; i++) {
+    //   const { value } = this._readClient!.transport.transports[i];
+    //   if (value.getRpcClient) {
+    //     const rpcClient = await value.getRpcClient();
+    //     this.logger.log("real close");
+    //     rpcClient.close();
+    //   }
+    // }
   }
 }
