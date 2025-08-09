@@ -66,13 +66,5 @@ export class EvmClientService {
     /**
      * @dev do not need to close since clients maintain connection automatically
      */
-    // for (let i = 0; i < this._readClient?.transport?.transports?.length; i++) {
-    //   const { value } = this._readClient!.transport.transports[i];
-    //   if (value.getRpcClient) {
-    //     const rpcClient = await value.getRpcClient();
-    //     this.logger.log("real close");
-    //     rpcClient.close();
-    //   }
-    // }
   }
 }

@@ -59,9 +59,11 @@ export class TesService {
       },
       withCredentials: true,
     });
-    this.logger.log(`Challenge resolved`);
     this.csrf = csrf;
     this.timeout = exp * 1000;
+    this.logger.log(
+      `Challenge resolved, timeout: ${new Date(this.timeout).toISOString()}`,
+    );
   }
 
   private signChallenge(random: Hex) {

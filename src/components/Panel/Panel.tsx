@@ -91,59 +91,53 @@ function PanelContent() {
   };
 
   return (
-    <div
-      className="
-          flex flex-col w-full md:h-[75svh] h-dvh
-          md:max-w-lg
-          overflow-hidden
-        "
+    <TabGroup
+      selectedIndex={tabs.findIndex((tab) => tab.name === selectedTab)}
+      onChange={(index) => handleTabChange(tabs[index].name)}
+      className="flex flex-col w-full md:h-[75svh] h-dvh
+      md:max-w-lg
+      overflow-hidden"
     >
-      <TabGroup
-        selectedIndex={tabs.findIndex((tab) => tab.name === selectedTab)}
-        onChange={(index) => handleTabChange(tabs[index].name)}
-        className="flex flex-col w-full h-full"
-      >
-        <div className="flex flex-col flex-1 h-full" {...swipeHandlers}>
-          <TabPanels className="flex-1 relative overflow-hidden">
-            <AnimatePresence custom={direction} initial={false}>
-              <motion.div
-                key={selectedTab}
-                custom={direction}
-                variants={variants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.35, ease: "easeInOut" }}
-                className="h-full w-full"
-                style={{ minWidth: 0, maxWidth: "100%" }}
-              >
-                {tabs.find((tab) => tab.name === selectedTab)?.component}
-              </motion.div>
-            </AnimatePresence>
-          </TabPanels>
-          <TabList className="flex gap-0 sticky bottom-0 mb-2 z-10 bg-transparent backdrop-blur">
-            {tabs.map((tab) => (
-              <Tab
-                key={tab.name}
-                className={({ selected }) =>
-                  `
-                    flex-1 rounded-none
-                    px-3 py-5
-                    text-base md:text-lg xl:text-xl font-semibold
-                    focus:not-data-focus:outline-none
-                    data-focus:outline data-focus:outline-white
-                    transition
-                    ${selected ? "text-white/90" : "text-white/60"}
-                    `
-                }
-              >
-                {tab.label}
-              </Tab>
-            ))}
-          </TabList>
-        </div>
-      </TabGroup>
-    </div>
+      <div className="flex flex-col flex-1 h-full" {...swipeHandlers}>
+        <TabPanels className="flex-1 relative overflow-hidden">
+          <AnimatePresence custom={direction} initial={false}>
+            <motion.div
+              key={selectedTab}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.35, ease: "easeInOut" }}
+              className="h-full w-full"
+              style={{ minWidth: 0, maxWidth: "100%" }}
+            >
+              {tabs.find((tab) => tab.name === selectedTab)?.component}
+            </motion.div>
+          </AnimatePresence>
+        </TabPanels>
+        <TabList className="flex gap-0 sticky bottom-0 mb-2 z-10 bg-transparent backdrop-blur">
+          {tabs.map((tab) => (
+            <Tab
+              key={tab.name}
+              className={({ selected }) =>
+                `
+                flex-1 rounded-none
+                px-3 py-5
+                text-base md:text-lg xl:text-xl font-semibold
+                focus:not-data-focus:outline-none
+                data-focus:outline data-focus:outline-white
+                transition
+                ${selected ? "text-white/90" : "text-white/60"}
+                `
+              }
+            >
+              {tab.label}
+            </Tab>
+          ))}
+        </TabList>
+      </div>
+    </TabGroup>
   );
 }
 

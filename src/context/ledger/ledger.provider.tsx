@@ -68,7 +68,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       password: string,
     ) => {
       setIsConnecting(true);
-      logger.log("resetting...");
+      logger.log("close previous services");
       resetSyncState();
       await ledgerService?.softReset();
       await evmClientService?.close();
@@ -79,7 +79,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
         resetViewAccount();
         return;
       }
-      logger.log("new service initialization...");
+      logger.log("initialize new services");
       const newEvmClientService = new EvmClientService(
         WS_RPC[targetChain.id],
         RPC[targetChain.id],
@@ -95,11 +95,8 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
         newEvmClientService,
       );
       const resetProbablyNeeded = await unlock(viewAccount);
-      logger.log(`resetProbablyNeeded(unlock): ${resetProbablyNeeded}`);
-      logger.log(
-        `resetProbablyNeeded(wallet): ${wallet?.address !== prevWallet?.address}`,
-      );
       if (wallet?.address !== prevWallet?.address && resetProbablyNeeded) {
+        logger.log("full reinitialization needed");
         setLedgerService(undefined);
         setEvmClientService(undefined);
         setIsConnecting(false);
@@ -135,12 +132,6 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
   );
 
   useEffect(() => {
-    console.log(`pass ${password}`);
-    console.log(`wallet address ${wallet?.address}`);
-    console.log(`wallet chainId ${wallet?.chainId}`);
-    console.log(`prevWallet address ${prevWallet?.address}`);
-    console.log(`prevWallet chainId ${prevWallet?.chainId}`);
-    console.log(`prevPassword ${prevPassword}`);
     if (
       !isSwitchChainModalOpen &&
       password &&
@@ -185,8 +176,3 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
     <LedgerContext.Provider value={value}>{children}</LedgerContext.Provider>
   );
 };
-
-/**
- * When disconnect => reset all
- * but do not reset if user connecting wallet
- */

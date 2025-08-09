@@ -25,7 +25,6 @@ import { HistoryRecordDto, LedgerRecordDto } from "./ledger.dto";
 import { EvmClientService } from "@src/services/core/evmClient.service";
 import { ViewAccountService } from "@src/services/viewAccount.service";
 import { compareEvents, EventLike } from "@src/utils/events";
-import { logStringify } from "@src/utils/common";
 import { AxiosInstance } from "axios";
 import { computePoseidon } from "@src/utils/poseidon";
 import { LedgerServiceEvents } from "./events";
@@ -199,8 +198,6 @@ export class LedgerService extends EventEmitter {
         const { encryptedCommitment, tesUrl } = decodeMetadata(
           event.args.metadata,
         );
-
-        this.logger.log(`e ${logStringify(event)}`);
 
         let commitment: CommitmentStruct;
 

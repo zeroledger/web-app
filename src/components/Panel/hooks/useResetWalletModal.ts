@@ -2,6 +2,9 @@ import { useContext, useState, useCallback } from "react";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useSwipe } from "./useSwipe";
 import { ViewAccountContext } from "@src/context/viewAccount/viewAccount.context";
+import { Logger } from "@src/utils/logger";
+
+const logger = new Logger("useResetWalletModal");
 
 export const useResetWalletModal = () => {
   const { ledgerService } = useContext(LedgerContext);
@@ -11,12 +14,12 @@ export const useResetWalletModal = () => {
 
   const handleResetWallet = useCallback(async () => {
     try {
-      console.log("[zeroledger-app] resetting wallet");
+      logger.log("resetting wallet");
       viewAccount?.reset();
       await ledgerService?.reset();
       window.location.reload();
     } catch (error) {
-      console.error("[zeroledger-app] Failed to clear data:", error);
+      logger.error(`Failed to reset wallet: ${error}`);
     }
   }, [ledgerService, viewAccount]);
 
