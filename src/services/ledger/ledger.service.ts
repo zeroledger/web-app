@@ -888,14 +888,16 @@ export class LedgerService extends EventEmitter {
   }
 
   softReset() {
-    this.updateBothBalancesDebounced.clear();
-    this.eventsHandlerDebounced.clear();
-    this.eventsCache = [];
-    this.tesService.reset();
+    return this.enqueue(async () => {
+      this.updateBothBalancesDebounced.clear();
+      this.eventsHandlerDebounced.clear();
+      this.eventsCache = [];
+      this.tesService.reset();
+    });
   }
 
   async reset() {
-    this.softReset();
+    await this.softReset();
     this.commitmentsService.reset();
     this.commitmentsHistoryService.reset();
     this.syncService.reset();

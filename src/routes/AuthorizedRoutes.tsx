@@ -3,11 +3,7 @@ import { Outlet, Navigate } from "react-router-dom";
 import { useContext } from "react";
 
 const AuthorizedRoutes = () => {
-  const { authorized } = useContext(ViewAccountContext);
-  return authorized ? (
-    <Outlet />
-  ) : (
-    <Navigate to="/view-account-authorization" />
-  );
+  const { authorized, password } = useContext(ViewAccountContext);
+  return authorized && password ? <Outlet /> : <Navigate to="/authorization" />;
 };
 export default AuthorizedRoutes;

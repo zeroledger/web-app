@@ -1,9 +1,10 @@
 import ViewAccountAuthorization from "@src/components/ViewAccountAuthorization/ViewAccountAuthorization";
+import PageContainer from "@src/components/PageContainer";
 
 export default function Authorization() {
   return (
-    <div className="dark:text-white px-6 flex flex-col h-dvh justify-center overflow-hidden">
+    <PageContainer>
       <ViewAccountAuthorization />
-    </div>
+    </PageContainer>
   );
 }

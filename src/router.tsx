@@ -3,7 +3,7 @@ import Error from "@src/components/Error";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { lazy } from "react";
 
-const Auth = lazy(() => import("./routes/Auth"));
+const Root = lazy(() => import("./routes/Root"));
 const PrivateRoutes = lazy(() => import("./routes/PrivateRoutes"));
 const PanelRoute = lazy(() => import("./routes/PanelRoute"));
 const Authorization = lazy(() => import("./routes/Authorization"));
@@ -14,7 +14,7 @@ const Router = createBrowserRouter([
     path: "/",
     element: (
       <LoadingScreen>
-        <Auth />
+        <Root />
       </LoadingScreen>
     ),
     errorElement: <Error />,
@@ -28,7 +28,7 @@ const Router = createBrowserRouter([
     errorElement: <Error />,
     children: [
       {
-        path: "/view-account-authorization",
+        path: "/authorization",
         element: (
           <LoadingScreen>
             <Authorization />

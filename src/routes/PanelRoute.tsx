@@ -1,6 +1,7 @@
 import { lazy, useEffect } from "react";
 import { prover } from "@src/utils/prover";
 import { LoadingScreen } from "@src/components/LoadingScreen";
+import PageContainer from "@src/components/PageContainer";
 
 // Lazy load the Panel component
 const Panel = lazy(() => import("@src/components/Panel"));
@@ -12,10 +13,10 @@ export default function PanelRoute() {
   }, []);
 
   return (
-    <div className="dark:text-white h-dvh flex justify-center items-center overflow-hidden">
+    <PageContainer>
       <LoadingScreen message="Preparing wallet modules...">
         <Panel />
       </LoadingScreen>
-    </div>
+    </PageContainer>
   );
 }

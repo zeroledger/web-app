@@ -4,7 +4,7 @@ const writerOptions = {
   delay: 85,
 };
 
-const MainBanner = () => {
+const WelcomeBanner = () => {
   return (
     <h1 className="text-center text-3xl font-bol">
       <Typewriter
@@ -17,4 +17,4 @@ const MainBanner = () => {
   );
 };
 
-export default MainBanner;
+export default WelcomeBanner;

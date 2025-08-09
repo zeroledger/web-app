@@ -1,4 +1,4 @@
-import { useContext, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { ViewAccountContext } from "@src/context/viewAccount/viewAccount.context";
 import { useNavigate } from "react-router-dom";
 import { useWallets } from "@privy-io/react-auth";
@@ -10,7 +10,7 @@ export default function ViewAccountAuthorization() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isError, setIsError] = useState(false);
   const navigate = useNavigate();
-  const { viewAccount, authorize } = useContext(ViewAccountContext);
+  const { viewAccount, authorize, authorized } = useContext(ViewAccountContext);
   const { wallets } = useWallets();
 
   const messageData = useMemo(
@@ -39,13 +39,18 @@ export default function ViewAccountAuthorization() {
       setIsSuccess(true);
       setIsError(false);
       setIsSigning(false);
-      navigate("/panel/wallet");
     } catch (error) {
       console.error(error);
       setIsError(true);
       setIsSigning(false);
     }
   };
+
+  useEffect(() => {
+    if (authorized) {
+      navigate("/panel/wallet");
+    }
+  }, [authorized, navigate]);
 
   return (
     <div className="mx-auto w-full md:max-w-md px-3">

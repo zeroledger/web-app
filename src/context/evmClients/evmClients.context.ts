@@ -4,21 +4,15 @@ import { type Chain } from "viem";
 import { SUPPORTED_CHAINS } from "@src/common.constants";
 
 export const EvmClientsContext = createContext<{
-  evmClientServicePromise?: Promise<EvmClientService>;
   evmClientService?: EvmClientService;
-  initializeEvmClientService: (
-    evmClientService: EvmClientService,
-  ) => Promise<void>;
-  closeEvmClientService: () => Promise<void>;
+  setEvmClientService: (evmClientService: EvmClientService | undefined) => void;
   isSwitchChainModalOpen: boolean;
   openSwitchChainModal: () => void;
   closeSwitchChainModal: () => void;
   targetChain: Chain;
 }>({
-  evmClientServicePromise: undefined,
+  setEvmClientService: () => {},
   evmClientService: undefined,
-  initializeEvmClientService: async () => {},
-  closeEvmClientService: async () => {},
   targetChain: SUPPORTED_CHAINS[0],
   isSwitchChainModalOpen: false,
   openSwitchChainModal: () => {},

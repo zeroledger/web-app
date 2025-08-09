@@ -8,8 +8,8 @@ export const ViewAccountContext = createContext<{
   setPassword: (password: string) => void;
   authorized: boolean;
   authorize: (viewAccount: ViewAccountService) => Promise<void>;
-  unlock: (viewAccount: ViewAccountService) => Promise<void>;
-  resetViewAccount: (config: { resetPassword?: boolean }) => void;
+  unlock: (viewAccount: ViewAccountService) => Promise<boolean>;
+  resetViewAccount: () => void;
 }>({
   setViewAccount: () => {},
   viewAccount: undefined,
@@ -17,6 +17,6 @@ export const ViewAccountContext = createContext<{
   setPassword: () => {},
   authorized: false,
   authorize: async () => {},
-  unlock: async () => {},
+  unlock: async () => false,
   resetViewAccount: () => {},
 });

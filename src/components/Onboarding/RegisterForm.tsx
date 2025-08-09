@@ -5,7 +5,6 @@ import clsx from "clsx";
 import { useNavigate } from "react-router-dom";
 import { primaryButtonStyle } from "@src/components/Button";
 import { ViewAccountContext } from "@src/context/viewAccount/viewAccount.context";
-import { useConnectWallet, useWallets } from "@privy-io/react-auth";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 
 export default function RegisterForm() {
@@ -22,31 +21,26 @@ export default function RegisterForm() {
 
   const navigate = useNavigate();
 
-  const { setPassword } = useContext(ViewAccountContext);
-  const { connectWallet } = useConnectWallet();
+  const { setPassword, viewAccount } = useContext(ViewAccountContext);
   const { ledgerService } = useContext(LedgerContext);
-  const { wallets } = useWallets();
   const [error, setError] = useState<string>();
   const onSubmit = useCallback(
     async (data: { password: string }) => {
       try {
         setPassword(data.password);
-        if (!wallets.length) {
-          connectWallet();
-        }
       } catch (error) {
         const message = (error as Error).message ?? "Invalid password";
         setError(message);
       }
     },
-    [setPassword, connectWallet, wallets],
+    [setPassword],
   );
 
   useEffect(() => {
-    if (ledgerService) {
+    if (ledgerService && viewAccount) {
       navigate("/panel/wallet");
     }
-  }, [ledgerService, navigate]);
+  }, [ledgerService, viewAccount, navigate]);
 
   const onEnter = (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {

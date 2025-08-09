@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import { type EvmClientService } from "@src/services/core/evmClient.service";
 import { useWallets } from "@privy-io/react-auth";
 import { EvmClientsContext } from "./evmClients.context";
@@ -11,9 +11,6 @@ export const EvmClientsProvider: React.FC<{ children?: ReactNode }> = ({
 }) => {
   const [evmClientService, setEvmClientService] = useState<
     EvmClientService | undefined
-  >(undefined);
-  const [evmClientServicePromise, setEvmClientServicePromise] = useState<
-    Promise<EvmClientService> | undefined
   >(undefined);
   const { wallets } = useWallets();
   const { isOpen, openModal, closeModal } = useModal();
@@ -31,11 +28,11 @@ export const EvmClientsProvider: React.FC<{ children?: ReactNode }> = ({
   useEffect(() => {
     const chain =
       SUPPORTED_CHAINS.find((c) => c.id === chainId) ?? SUPPORTED_CHAINS[0];
-    if (chainId !== chain.id) {
+    if (chainId !== chain.id && evmClientService) {
       setTargetChain(chain);
       openModal();
     }
-  }, [chainId, openModal]);
+  }, [chainId, openModal, evmClientService]);
 
   useEffect(() => {
     if (!wallet) {
@@ -43,43 +40,22 @@ export const EvmClientsProvider: React.FC<{ children?: ReactNode }> = ({
     }
   }, [wallet, closeModal]);
 
-  const initializeEvmClientService = useCallback(
-    async (evmClientService: EvmClientService) => {
-      const promise = evmClientService.open();
-      setEvmClientServicePromise(promise);
-      setEvmClientService(evmClientService);
-    },
-    [],
-  );
-
-  const closeEvmClientService = useCallback(async () => {
-    if (evmClientServicePromise) {
-      (await evmClientServicePromise).close();
-    }
-    setEvmClientServicePromise(undefined);
-    setEvmClientService(undefined);
-  }, [evmClientServicePromise]);
-
   const value = useMemo(
     () => ({
-      evmClientServicePromise,
+      setEvmClientService,
       evmClientService,
-      initializeEvmClientService,
       isSwitchChainModalOpen: isOpen,
       openSwitchChainModal: openModal,
       closeSwitchChainModal: closeModal,
       targetChain,
-      closeEvmClientService,
     }),
     [
       evmClientService,
+      setEvmClientService,
       isOpen,
       openModal,
       closeModal,
       targetChain,
-      evmClientServicePromise,
-      initializeEvmClientService,
-      closeEvmClientService,
     ],
   );
 

@@ -1,8 +1,15 @@
-import { useState, useContext, useEffect, useMemo, ReactNode } from "react";
+import {
+  useState,
+  useContext,
+  useEffect,
+  useMemo,
+  ReactNode,
+  useCallback,
+} from "react";
 import { initialize } from "@src/services/ledger";
 import { ViewAccountContext } from "@src/context/viewAccount/viewAccount.context";
 import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
-import { useWallets } from "@privy-io/react-auth";
+import { ConnectedWallet, useWallets } from "@privy-io/react-auth";
 import { usePrivateBalance } from "@src/hooks/usePrivateBalance";
 import { LedgerContext } from "./ledger.context";
 import {
@@ -34,121 +41,122 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<Error>();
   const [ledgerService, setLedgerService] = useState<LedgerService>();
+  const { password, authorized, unlock, setViewAccount, resetViewAccount } =
+    useContext(ViewAccountContext);
   const {
-    viewAccount,
-    password,
-    authorized,
-    unlock,
-    setViewAccount,
-    resetViewAccount,
-  } = useContext(ViewAccountContext);
-  const {
-    evmClientServicePromise,
-    initializeEvmClientService,
-    closeEvmClientService,
-    isSwitchChainModalOpen,
     targetChain,
+    evmClientService,
+    setEvmClientService,
+    isSwitchChainModalOpen,
   } = useContext(EvmClientsContext);
-  const { wallets, ready } = useWallets();
+  const { wallets } = useWallets();
 
   const wallet = wallets[0];
 
   const prevWallet = usePrevious(wallet);
+  const prevPassword = usePrevious(password);
 
   const { syncState, resetSyncState, blocksToSync } = useLedgerSync(
     authorized,
     ledgerService,
   );
 
-  useEffect(() => {
-    if (wallet !== prevWallet && prevWallet !== undefined) {
-      logger.log("wallet changed, resetting");
-      ledgerService?.softReset();
-      setLedgerService(undefined);
-      closeEvmClientService();
-      resetViewAccount({
-        resetPassword:
-          !wallet ||
-          wallet.address !== prevWallet?.address ||
-          wallet.chainId !== prevWallet.chainId,
-      });
+  const lifecycle = useCallback(
+    async (
+      wallet: ConnectedWallet | undefined,
+      prevWallet: ConnectedWallet | undefined,
+      password: string,
+    ) => {
+      setIsConnecting(true);
+      logger.log("resetting...");
       resetSyncState();
-      setError(undefined);
-    }
-
-    if (wallet && !evmClientServicePromise) {
-      logger.log("setting evmClientService");
-      initializeEvmClientService(
-        new EvmClientService(
-          WS_RPC[targetChain.id],
-          RPC[targetChain.id],
-          pollingInterval[targetChain.id],
-          targetChain,
-          wallet,
-        ),
+      await ledgerService?.softReset();
+      await evmClientService?.close();
+      if (!wallet) {
+        setLedgerService(undefined);
+        setEvmClientService(undefined);
+        setIsConnecting(false);
+        resetViewAccount();
+        return;
+      }
+      logger.log("new service initialization...");
+      const newEvmClientService = new EvmClientService(
+        WS_RPC[targetChain.id],
+        RPC[targetChain.id],
+        pollingInterval[targetChain.id],
+        targetChain,
+        wallet,
       );
-    }
+      await newEvmClientService.open();
+      const ViewAccountService = await ViewAccountServiceLoader;
+      const viewAccount = new ViewAccountService(
+        APP_PREFIX_KEY,
+        password,
+        newEvmClientService,
+      );
+      const resetProbablyNeeded = await unlock(viewAccount);
+      logger.log(`resetProbablyNeeded(unlock): ${resetProbablyNeeded}`);
+      logger.log(
+        `resetProbablyNeeded(wallet): ${wallet?.address !== prevWallet?.address}`,
+      );
+      if (wallet?.address !== prevWallet?.address && resetProbablyNeeded) {
+        setLedgerService(undefined);
+        setEvmClientService(undefined);
+        setIsConnecting(false);
+        resetViewAccount();
+        return;
+      }
+      const newLedgerService = await initialize(
+        wallet,
+        viewAccount!,
+        newEvmClientService!,
+        APP_PREFIX_KEY,
+        TES_URL,
+        VAULT_ADDRESS,
+        FORWARDER_ADDRESS,
+        TOKEN_ADDRESS,
+        FAUCET_URL,
+      );
+      setViewAccount(viewAccount);
+      setLedgerService(newLedgerService);
+      setEvmClientService(newEvmClientService);
+      setIsConnecting(false);
+    },
+    [
+      resetSyncState,
+      ledgerService,
+      evmClientService,
+      unlock,
+      setEvmClientService,
+      targetChain,
+      setViewAccount,
+      resetViewAccount,
+    ],
+  );
 
+  useEffect(() => {
+    console.log(`pass ${password}`);
+    console.log(`wallet address ${wallet?.address}`);
+    console.log(`wallet chainId ${wallet?.chainId}`);
+    console.log(`prevWallet address ${prevWallet?.address}`);
+    console.log(`prevWallet chainId ${prevWallet?.chainId}`);
+    console.log(`prevPassword ${prevPassword}`);
     if (
-      ready &&
-      wallet &&
-      evmClientServicePromise &&
-      !viewAccount &&
-      !ledgerService &&
       !isSwitchChainModalOpen &&
-      password
+      password &&
+      (wallet?.address !== prevWallet?.address ||
+        wallet?.chainId !== prevWallet?.chainId ||
+        password !== prevPassword)
     ) {
-      const initializeLedger = async () => {
-        try {
-          logger.log("initializing components");
-          setIsConnecting(true);
-          const readyEvmClientService = await evmClientServicePromise;
-          const ViewAccountService = await ViewAccountServiceLoader;
-          const viewAccount = new ViewAccountService(
-            APP_PREFIX_KEY,
-            password,
-            readyEvmClientService,
-          );
-          await unlock(viewAccount);
-          const ledgerService = await initialize(
-            wallet,
-            viewAccount!,
-            readyEvmClientService!,
-            APP_PREFIX_KEY,
-            TES_URL,
-            VAULT_ADDRESS,
-            FORWARDER_ADDRESS,
-            TOKEN_ADDRESS,
-            FAUCET_URL,
-          );
-          setViewAccount(viewAccount);
-          setLedgerService(ledgerService);
-          setIsConnecting(false);
-        } catch (error) {
-          console.error(error);
-          setError(error as Error);
-          setIsConnecting(false);
-        }
-      };
-      initializeLedger();
+      lifecycle(wallet, prevWallet, password).catch((e) => setError(e));
     }
   }, [
-    ready,
-    wallet,
-    password,
     isSwitchChainModalOpen,
-    unlock,
-    targetChain,
-    closeEvmClientService,
-    initializeEvmClientService,
-    setViewAccount,
-    resetViewAccount,
-    resetSyncState,
-    evmClientServicePromise,
-    viewAccount,
-    ledgerService,
-    setLedgerService,
+    password,
+    wallet,
     prevWallet,
+    prevPassword,
+    lifecycle,
   ]);
 
   const privateBalance = usePrivateBalance(TOKEN_ADDRESS, ledgerService);
@@ -177,3 +185,8 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
     <LedgerContext.Provider value={value}>{children}</LedgerContext.Provider>
   );
 };
+
+/**
+ * When disconnect => reset all
+ * but do not reset if user connecting wallet
+ */
