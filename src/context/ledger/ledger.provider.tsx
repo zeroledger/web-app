@@ -161,6 +161,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
         (blocksToSync !== undefined && blocksToSync !== 0n),
       error,
       blocksToSync,
+      wallet,
     }),
     [
       ledgerService,
@@ -169,6 +170,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       error,
       blocksToSync,
       syncState,
+      wallet,
     ],
   );
 

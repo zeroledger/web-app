@@ -3,10 +3,6 @@ import { LoadingScreen } from "@src/components/LoadingScreen";
 import { useWallets } from "@privy-io/react-auth";
 import { DumpLoadingScreen } from "@src/components/LoadingScreen";
 
-const WelcomeBanner = lazy(
-  () => import("@src/components/Onboarding/WelcomeBanner"),
-);
-
 const RegisterForm = lazy(
   () => import("@src/components/Onboarding/RegisterForm"),
 );
@@ -33,7 +29,6 @@ export default function Onboarding() {
         <DumpLoadingScreen />
       ) : (
         <LoadingScreen>
-          <WelcomeBanner />
           <Component />
         </LoadingScreen>
       )}

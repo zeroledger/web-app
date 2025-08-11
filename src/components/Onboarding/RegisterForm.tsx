@@ -6,6 +6,10 @@ import { useNavigate } from "react-router-dom";
 import { primaryButtonStyle } from "@src/components/Button";
 import { ViewAccountContext } from "@src/context/viewAccount/viewAccount.context";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
+import { useEnsProfile } from "../EnsProfile/useEnsProfile";
+import { Avatar } from "../EnsProfile/Avatar";
+import { Name } from "../EnsProfile/Name";
+import { Address } from "viem";
 
 export default function RegisterForm() {
   const {
@@ -22,8 +26,9 @@ export default function RegisterForm() {
   const navigate = useNavigate();
 
   const { setPassword, viewAccount } = useContext(ViewAccountContext);
-  const { ledgerService } = useContext(LedgerContext);
+  const { ledgerService, wallet } = useContext(LedgerContext);
   const [error, setError] = useState<string>();
+  const { data, isLoading } = useEnsProfile(wallet!.address as Address);
   const onSubmit = useCallback(
     async (data: { password: string }) => {
       try {
@@ -56,53 +61,71 @@ export default function RegisterForm() {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      onKeyDown={onEnter}
-      className="mx-auto mt-5 w-96 px-5 md:px-0"
-    >
-      <Field>
-        <Label className="text-base/6 font-medium dark:text-white">
-          Password
-        </Label>
-        <Description className="text-base/6 dark:text-white/50">
-          Data encrypted locally with your password
-        </Description>
-        <Input
-          className={clsx(
-            "mt-1 block w-full rounded-lg border-none bg-white/5 py-2.5 px-3 text-base text-white leading-7",
-            "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25",
-            errors.password && "border-red-400",
-          )}
-          {...register("password", {
-            required: "Password is required",
-            minLength: 3,
-          })}
-          disabled={isSubmitting}
-          onChange={onPasswordChange}
-          onKeyDown={onEnter}
-        />
-      </Field>
-      <div className="h-6 text-base/6 mt-1 text-red-400">
-        {errors.password && (
-          <p className="error-message">
-            {typeof errors.password.message === "string" &&
-            errors.password.message
-              ? errors.password.message
-              : "Invalid password"}
-          </p>
+    <div className="mx-auto w-max-96">
+      <div className="flex items-center gap-4">
+        {!isLoading && (
+          <>
+            <Avatar avatar={data?.avatar} className="h-15 w-15 rounded-full" />
+            <Name
+              className="text-base/6"
+              name={data?.name}
+              address={wallet!.address as Address}
+            />
+          </>
         )}
-        {error && <p className="error-message">{error}</p>}
+        {isLoading && (
+          <>
+            <div className="bg-white/50 h-15 w-15 rounded-full animate-pulse" />
+            <div className="h-8 w-38 bg-white/50 animate-pulse rounded" />
+          </>
+        )}
       </div>
-      <div className="flex justify-end mt-3">
-        <Button
-          type="submit"
-          className={primaryButtonStyle}
-          disabled={isSubmitting}
-        >
-          Open
-        </Button>
-      </div>
-    </form>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        onKeyDown={onEnter}
+        className="mt-5 "
+      >
+        <Field>
+          <Label className="text-base/6 font-medium text-white">Password</Label>
+          <Description className="text-sm/6 text-white/50">
+            Data encrypted locally with your password
+          </Description>
+          <Input
+            className={clsx(
+              "mt-1 block w-full rounded-lg border-none bg-white/5 py-2.5 px-3 text-base text-white leading-7",
+              "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25",
+              errors.password && "border-red-400",
+            )}
+            {...register("password", {
+              required: "Password is required",
+              minLength: 3,
+            })}
+            disabled={isSubmitting}
+            onChange={onPasswordChange}
+            onKeyDown={onEnter}
+          />
+        </Field>
+        <div className="h-6 text-base/6 mt-1 text-red-400">
+          {errors.password && (
+            <p className="error-message">
+              {typeof errors.password.message === "string" &&
+              errors.password.message
+                ? errors.password.message
+                : "Invalid password"}
+            </p>
+          )}
+          {error && <p className="error-message">{error}</p>}
+        </div>
+        <div className="flex justify-end mt-3">
+          <Button
+            type="submit"
+            className={primaryButtonStyle}
+            disabled={isSubmitting}
+          >
+            Open
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }

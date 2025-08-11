@@ -1,12 +1,17 @@
 import { type Address } from "viem";
-import { optimismSepolia } from "viem/chains";
+import { base, optimismSepolia } from "viem/chains";
 
-export const SUPPORTED_CHAINS = [optimismSepolia];
+export const ENV = document.location.hostname.match(/localhost|tmp|test/i)
+  ? "test"
+  : "prod";
+
+export const SUPPORTED_CHAINS = ENV === "test" ? [optimismSepolia] : [base];
 
 export const OnesHash =
   "0x1111111111111111111111111111111111111111111111111111111111111111";
 
-export const APP_PREFIX_KEY = "zeroledger-app";
+export const APP_PREFIX_KEY =
+  ENV === "test" ? "zeroledger-app-test" : "zeroledger-app";
 
 export const TOKEN_ADDRESS: Address =
   "0x6Af5C33c20ca6169B3D98A2bcc94bDD0F4f68ffd";

@@ -6,6 +6,8 @@ import { useSwipe } from "./useSwipe";
 import { delay } from "@src/utils/common";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import { type TransactionDetails } from "@src/services/ledger/ledger.service";
+import { ensClient } from "@src/components/EnsProfile/ensClient";
+import { normalize } from "viem/ens";
 
 interface SpendFormData {
   recipient: string;
@@ -19,7 +21,9 @@ export const useTwoStepSpendModal = (decimals: number) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalLoading, setIsModalLoading] = useState(false);
   const [isModalSuccess, setIsModalSuccess] = useState(false);
-  const [isModalError, setIsModalError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(
+    undefined,
+  );
   const [currentStep, setCurrentStep] = useState<"form" | "preview">("form");
   const [metaTransactionData, setMetaTransactionData] = useState<{
     metaTransaction: UnsignedMetaTransaction;
@@ -43,7 +47,7 @@ export const useTwoStepSpendModal = (decimals: number) => {
       await asyncOperationPromise.then(() => {
         setIsModalSuccess(false);
         setIsModalLoading(false);
-        setIsModalError(false);
+        setErrorMessage(undefined);
         setCurrentStep("form");
         setMetaTransactionData(undefined);
         disableSwipe();
@@ -71,12 +75,26 @@ export const useTwoStepSpendModal = (decimals: number) => {
         try {
           setIsModalLoading(true);
 
+          let recipient: Address;
+
+          if (data.recipient.startsWith("0x")) {
+            recipient = data.recipient as Address;
+          } else {
+            const ensAddress = await ensClient.getEnsAddress({
+              name: normalize(data.recipient),
+            });
+            if (!ensAddress) {
+              throw new Error("Invalid ENS name");
+            }
+            recipient = ensAddress as Address;
+          }
+
           // This is a placeholder - in reality, you would call the ledger service
           // to prepare the metatransaction data
           const metaTransactionData =
             await ledgerService!.prepareSendMetaTransaction(
               parseUnits(data.amount, decimals),
-              data.recipient as Address,
+              recipient,
             );
 
           setMetaTransactionData(metaTransactionData);
@@ -84,7 +102,9 @@ export const useTwoStepSpendModal = (decimals: number) => {
           setIsModalLoading(false);
         } catch (error) {
           console.error("Failed to prepare metaTransaction:", error);
-          setIsModalError(true);
+          setErrorMessage(
+            (error as Error)?.message ?? "Failed to prepare metaTransaction",
+          );
           setIsModalLoading(false);
           await delay(3000);
           handleBack();
@@ -107,7 +127,7 @@ export const useTwoStepSpendModal = (decimals: number) => {
           );
           setIsModalSuccess(true);
         } catch (error) {
-          setIsModalError(true);
+          setErrorMessage("Failed to send metaTransaction");
           console.error(error);
         } finally {
           setIsModalLoading(false);
@@ -123,7 +143,7 @@ export const useTwoStepSpendModal = (decimals: number) => {
       isModalOpen,
       isModalLoading,
       isModalSuccess,
-      isModalError,
+      errorMessage,
       currentStep,
       form,
       onModalOpen,
@@ -136,7 +156,7 @@ export const useTwoStepSpendModal = (decimals: number) => {
       isModalOpen,
       isModalLoading,
       isModalSuccess,
-      isModalError,
+      errorMessage,
       currentStep,
       form,
       onModalOpen,

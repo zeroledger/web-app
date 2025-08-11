@@ -1,4 +1,4 @@
-import { createContext, useState, ReactNode, useMemo } from "react";
+import { createContext, ReactNode, useMemo } from "react";
 
 interface SwipeContextType {
   isSwipeEnabled: boolean;
@@ -8,17 +8,24 @@ interface SwipeContextType {
 
 const SwipeContext = createContext<SwipeContextType | undefined>(undefined);
 
+/**
+ * SwipeProvider is a context provider that allows the user to disable or enable the swipe gesture.
+ * Currently swipe logic disabled completely
+ * @param param0
+ * @returns
+ */
 function SwipeProvider({ children }: { children: ReactNode }) {
-  const [isSwipeEnabled, setIsSwipeEnabled] = useState(true);
+  // const [isSwipeEnabled, setIsSwipeEnabled] = useState(true);
+  const isSwipeEnabled = false;
 
   const value = useMemo(
     () => ({
       isSwipeEnabled,
       disableSwipe: () => {
-        setIsSwipeEnabled(false);
+        // setIsSwipeEnabled(false);
       },
       enableSwipe: () => {
-        setIsSwipeEnabled(true);
+        // setIsSwipeEnabled(true);
       },
     }),
     [isSwipeEnabled],

@@ -26,7 +26,7 @@ interface TwoStepSpendModalProps {
   isOpen: boolean;
   isLoading: boolean;
   isSuccess: boolean;
-  isError: boolean;
+  errorMessage?: string;
   currentStep: "form" | "preview";
   onFormSubmit: (data: SpendFormData) => void;
   onSign: () => Promise<void>;
@@ -45,7 +45,7 @@ function TwoStepSpendModal({
   isOpen,
   isLoading,
   isSuccess,
-  isError,
+  errorMessage,
   currentStep,
   onFormSubmit,
   onSign,
@@ -112,9 +112,9 @@ function TwoStepSpendModal({
           )}
         >
           <div className="px-6 py-5 h-full flex-col content-center">
-            {isError && (
+            {errorMessage && (
               <div className="flex-1 content-center flex-col justify-center animate-fade-in">
-                <ErrorMessage />
+                <ErrorMessage message={errorMessage} />
               </div>
             )}
 
@@ -130,26 +130,29 @@ function TwoStepSpendModal({
               </div>
             )}
 
-            {!isLoading && !isSuccess && !isError && currentStep === "form" && (
-              <>
-                <BackButton onClick={onBack} />
-                <form
-                  onSubmit={handleSubmit(onFormSubmit)}
-                  onKeyDown={onEnter}
-                  className="flex pt-20"
-                >
-                  <SpendForm
-                    formMethods={formMethods}
-                    onEnter={onEnter}
-                    type={type}
-                  />
-                </form>
-              </>
-            )}
+            {!isLoading &&
+              !isSuccess &&
+              !errorMessage &&
+              currentStep === "form" && (
+                <>
+                  <BackButton onClick={onBack} />
+                  <form
+                    onSubmit={handleSubmit(onFormSubmit)}
+                    onKeyDown={onEnter}
+                    className="flex pt-20"
+                  >
+                    <SpendForm
+                      formMethods={formMethods}
+                      onEnter={onEnter}
+                      type={type}
+                    />
+                  </form>
+                </>
+              )}
 
             {!isLoading &&
               !isSuccess &&
-              !isError &&
+              !errorMessage &&
               currentStep === "preview" && (
                 <>
                   <BackButton onClick={onBack} />
@@ -157,7 +160,7 @@ function TwoStepSpendModal({
                     <SigningPreview
                       isSigning={isLoading}
                       isSuccess={isSuccess}
-                      isError={isError}
+                      isError={!!errorMessage}
                       title={`Sign & Send ${type} Meta Transaction`}
                       description={`Review the transaction details before signing. This action cannot be undone`}
                       messageData={getSigningData}

@@ -10,7 +10,7 @@ export default function Error() {
   console.error(error);
 
   return (
-    <div id="error-page" className="dark:text-white text-black h-dvh">
+    <div id="error-page" className="text-white text-black h-dvh">
       <div className="mx-auto text-center flex flex-col justify-center h-full font-sans">
         <h1 className="text-2xl">Oops!</h1>
         <p className="text-xl my-2">Sorry, an unexpected error has occurred.</p>

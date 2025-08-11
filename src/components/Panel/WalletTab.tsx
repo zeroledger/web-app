@@ -1,7 +1,6 @@
 import { primaryButtonStyle } from "../Button";
 import { TwoStepSpendModal } from "@src/components/Modals/TwoStepSpendModal";
-import { ShareIcon } from "./ShareIcon";
-import { shortString, formatBalance } from "@src/utils/common";
+import { formatBalance } from "@src/utils/common";
 import { useTwoStepSpendModal } from "./hooks/useSpendModal";
 import { useCopyAddress } from "./hooks/useCopyAddress";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
@@ -9,6 +8,9 @@ import { useContext } from "react";
 import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
 import { useMetadata } from "@src/hooks/useMetadata";
 import { TOKEN_ADDRESS } from "@src/common.constants";
+import { useEnsProfile } from "../EnsProfile/useEnsProfile";
+import { Avatar } from "../EnsProfile/Avatar";
+import { Name } from "../EnsProfile/Name";
 
 export default function WalletTab() {
   const { privateBalance, isConnecting, error, blocksToSync } =
@@ -18,14 +20,17 @@ export default function WalletTab() {
     TOKEN_ADDRESS,
     evmClientService,
   );
-  const isLoading = isMetadataLoading || isConnecting;
   const address = evmClientService!.writeClient!.account.address!;
+  const { data: ensProfile, isLoading: isEnsLoading } = useEnsProfile(address);
+
+  const isLoading = isMetadataLoading || isConnecting || isEnsLoading;
+
   const { showCopiedTooltip, handleCopyAddress } = useCopyAddress(address);
   const {
     isModalOpen,
     isModalLoading,
     isModalSuccess,
-    isModalError,
+    errorMessage,
     form,
     onModalOpen,
     handleFormSubmit,
@@ -37,12 +42,49 @@ export default function WalletTab() {
 
   return (
     <div className="flex flex-col items-center justify-center h-full px-4 pt-4">
-      <div className="text-2xl font-bold text-white mb-4">Private Balance:</div>
+      <a
+        href={`https://sepolia-optimism.etherscan.io/address/${address}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="hover:cursor-pointer"
+      >
+        {!isLoading && (
+          <Avatar
+            avatar={ensProfile?.avatar}
+            className="h-15 w-15 rounded-full"
+          />
+        )}
+        {isLoading && (
+          <div className="bg-gray-700 h-15 w-15 rounded-full animate-pulse" />
+        )}
+      </a>
+      <div
+        className="flex items-center gap-2 relative my-3 hover:cursor-pointer"
+        onClick={handleCopyAddress}
+      >
+        {!isLoading && (
+          <Name
+            className="text-center text-2xl"
+            name={ensProfile?.name}
+            address={address}
+          />
+        )}
+        {isLoading && (
+          <div className="flex flex-col gap-1">
+            <div className="h-8 w-38 bg-gray-700 animate-pulse rounded" />
+            <div className="h-4 w-38 bg-gray-700 animate-pulse rounded" />
+          </div>
+        )}
+        {showCopiedTooltip && (
+          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-base px-2 py-1 rounded-md whitespace-nowrap">
+            Address copied!
+          </div>
+        )}
+      </div>
       {error && <div className="text-white">{error.message}</div>}
-      {isConnecting && (
+      {isLoading && (
         <>
-          <div className="w-48 h-12 bg-gray-700 rounded-lg animate-pulse" />
-          <div className="mt-1">
+          <div className="h-12 animate-pulse flex items-center justify-center">
             Syncing{" "}
             {blocksToSync && blocksToSync > 0n
               ? `${blocksToSync.toString()} blocks`
@@ -53,24 +95,6 @@ export default function WalletTab() {
       {!isLoading && !error && (
         <div className="text-4xl h-12 font-extrabold text-white">{`$${formatBalance(privateBalance, decimals)}`}</div>
       )}
-      <div className="flex items-center gap-2 mt-2 mb-4 relative">
-        <a
-          href={`https://sepolia-optimism.etherscan.io/address/${address}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-lg text-gray-300 hover:text-gray-200 transition-colors"
-        >
-          {shortString(address)}
-        </a>
-        <div className="relative">
-          <ShareIcon onClick={handleCopyAddress} />
-          {showCopiedTooltip && (
-            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-base px-2 py-1 rounded-md whitespace-nowrap">
-              Address copied!
-            </div>
-          )}
-        </div>
-      </div>
       <div className="flex gap-6 mt-8">
         <button
           onClick={onModalOpen}
@@ -85,7 +109,7 @@ export default function WalletTab() {
         isOpen={isModalOpen}
         isLoading={isModalLoading}
         isSuccess={isModalSuccess}
-        isError={isModalError}
+        errorMessage={errorMessage}
         onFormSubmit={handleFormSubmit}
         onSign={handleSign}
         onBack={handleBack}

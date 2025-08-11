@@ -8,6 +8,9 @@ import { getMaxFormattedValue } from "@src/utils/common";
 import { TOKEN_ADDRESS } from "@src/common.constants";
 import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
 import { useMetadata } from "@src/hooks/useMetadata";
+import { isAddress } from "viem";
+import { ensClient } from "@src/components/EnsProfile/ensClient";
+import { normalize } from "viem/ens";
 
 const amountRegex = /^\d*\.?\d*$/;
 
@@ -47,12 +50,22 @@ export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
           )}
           {...register("recipient", {
             required: "Recipient address is required",
-            pattern: {
-              value: /^0x[a-fA-F0-9]{40}$/,
-              message: "Invalid Ethereum address",
+            validate: async (value) => {
+              console.log("value", value);
+              if (value.startsWith("0x")) {
+                console.log("isAddress");
+                return isAddress(value) || "Invalid address";
+              }
+              console.log("ens");
+              const ensAddress = await ensClient.getEnsAddress({
+                name: normalize(value),
+              });
+              return (
+                (!!ensAddress && isAddress(ensAddress)) || "Invalid ENS name"
+              );
             },
           })}
-          placeholder="0x00..."
+          placeholder="ens.eth or 0x00..."
           onChange={(e) => {
             setValue("recipient", e.target.value);
             clearErrors("recipient");

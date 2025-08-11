@@ -1,7 +1,11 @@
-export function ErrorMessage() {
+export function ErrorMessage({
+  message = "Something went wrong. Please try again.",
+}: {
+  message?: string;
+}) {
   return (
     <div className="text-center">
-      <p>Something went wrong. Please try again.</p>
+      <p>{message}</p>
     </div>
   );
 }
