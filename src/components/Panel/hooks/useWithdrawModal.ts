@@ -1,12 +1,13 @@
 import { useState, useContext, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
-import { Address, parseUnits } from "viem";
+import { parseUnits } from "viem";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useSwipe } from "./useSwipe";
 import { delay } from "@src/utils/common";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import { type TransactionDetails } from "@src/services/ledger";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
+import { ens } from "@src/services/Ens";
 
 interface WithdrawFormData {
   recipient: string;
@@ -73,22 +74,22 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
         try {
           setIsModalLoading(true);
 
+          const recipient = await ens.universalResolve(data.recipient);
+
           const amount = parseUnits(data.amount, decimals);
           let metaTransactionData;
 
           if (amount === privateBalance) {
             // Full withdraw
             const fullWithdrawData =
-              await ledger!.prepareWithdrawMetaTransaction(
-                data.recipient as Address,
-              );
+              await ledger!.prepareWithdrawMetaTransaction(recipient);
             metaTransactionData = fullWithdrawData;
           } else {
             // Partial withdraw
             metaTransactionData =
               await ledger!.preparePartialWithdrawMetaTransaction(
                 amount,
-                data.recipient as Address,
+                recipient,
               );
           }
           setMetaTransactionData(metaTransactionData);

@@ -1,6 +1,7 @@
-import { createPublicClient, http, PublicClient } from "viem";
+import { Address, createPublicClient, http, PublicClient } from "viem";
 import { ENV } from "@src/common.constants";
 import { mainnet, sepolia } from "viem/chains";
+import { normalize } from "viem/ens";
 
 class Ens {
   private _client?: PublicClient;
@@ -18,6 +19,20 @@ class Ens {
       });
     }
     return this._client;
+  }
+
+  async universalResolve(recipient: string) {
+    if (recipient.startsWith("0x")) {
+      return recipient as Address;
+    } else {
+      const ensAddress = await this.client.getEnsAddress({
+        name: normalize(recipient),
+      });
+      if (!ensAddress) {
+        throw new Error("Invalid ENS name");
+      }
+      return ensAddress as Address;
+    }
   }
 }
 

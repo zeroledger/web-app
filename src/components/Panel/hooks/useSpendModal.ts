@@ -1,13 +1,12 @@
 import { useState, useContext, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
-import { Address, parseUnits } from "viem";
+import { parseUnits } from "viem";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useSwipe } from "./useSwipe";
 import { delay } from "@src/utils/common";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import { type TransactionDetails } from "@src/services/ledger";
 import { ens } from "@src/services/Ens";
-import { normalize } from "viem/ens";
 
 interface SpendFormData {
   recipient: string;
@@ -73,19 +72,7 @@ export const useTwoStepSpendModal = (decimals: number) => {
         try {
           setIsModalLoading(true);
 
-          let recipient: Address;
-
-          if (data.recipient.startsWith("0x")) {
-            recipient = data.recipient as Address;
-          } else {
-            const ensAddress = await ens.client.getEnsAddress({
-              name: normalize(data.recipient),
-            });
-            if (!ensAddress) {
-              throw new Error("Invalid ENS name");
-            }
-            recipient = ensAddress as Address;
-          }
+          const recipient = await ens.universalResolve(data.recipient);
 
           // This is a placeholder - in reality, you would call the ledger service
           // to prepare the metatransaction data

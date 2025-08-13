@@ -15,9 +15,6 @@ export default function WalletTab() {
     useContext(PanelContext);
   const { wallet, ensProfile, isEnsLoading } = useContext(LedgerContext);
 
-  console.log("isLoading", isLoading);
-  console.log("privateBalance", privateBalance.toString());
-
   const address = wallet?.address as Address | undefined;
 
   const { showCopiedTooltip, handleCopyAddress } = useCopyAddress(address);
