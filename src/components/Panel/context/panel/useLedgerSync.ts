@@ -17,8 +17,8 @@ export function useLedgerSync(ledger?: Ledger) {
 
   const syncLedger = useCallback(
     async (ledger: Ledger) => {
-      setSyncState("inProgress");
       resetSyncState();
+      setSyncState("inProgress");
       await ledger.start();
       setSyncState("done");
     },

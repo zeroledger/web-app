@@ -131,7 +131,6 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
     }
 
     if (!newAccount && chainSupported) {
-      console.log("accountSwitch");
       accountSwitch();
     }
   }, [
@@ -148,13 +147,13 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
       symbol,
       publicBalance,
       decimals,
-      isMetadataLoading,
       metadataError,
       privateBalance,
-      isConnecting:
+      isLoading:
         isConnecting ||
         syncState === "inProgress" ||
-        (blocksToSync !== undefined && blocksToSync !== 0n),
+        (blocksToSync !== undefined && blocksToSync !== 0n) ||
+        isMetadataLoading,
       error,
       blocksToSync,
     }),

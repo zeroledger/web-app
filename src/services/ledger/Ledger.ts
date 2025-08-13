@@ -365,7 +365,7 @@ export class Ledger extends EventEmitter {
         );
         this.eventsCache.push(...syncEvents);
         await this.handleEventsBatch();
-        this.updateBothBalancesDebounced.trigger();
+        await this.updateBothBalances();
       },
       "start",
       240_000,

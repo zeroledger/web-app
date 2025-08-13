@@ -226,10 +226,7 @@ export default function ActivityTab({ active }: { active: boolean }) {
     useState<GroupedTransactions>({});
   const [error, setError] = useState<string | null>(null);
   const { ledger } = useContext(LedgerContext);
-  const { isConnecting, decimals, isMetadataLoading } =
-    useContext(PanelContext);
-
-  const isLoading = isMetadataLoading || isConnecting;
+  const { decimals, isLoading } = useContext(PanelContext);
 
   useEffect(() => {
     const loadTransactions = async () => {

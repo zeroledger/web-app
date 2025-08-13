@@ -15,9 +15,7 @@ import { useMultiStepDepositModal } from "./hooks/useDepositModal";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
 
 export default function MenuTab() {
-  const { isConnecting } = useContext(PanelContext);
-  const { decimals, isMetadataLoading } = useContext(PanelContext);
-  const isLoading = isMetadataLoading || isConnecting;
+  const { decimals, isLoading } = useContext(PanelContext);
   const {
     isModalOpen: isDepositModalOpen,
     isModalLoading: isDepositModalLoading,

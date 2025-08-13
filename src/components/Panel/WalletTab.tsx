@@ -11,19 +11,14 @@ import { Address } from "viem";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
 
 export default function WalletTab() {
-  const {
-    privateBalance,
-    isConnecting,
-    error,
-    blocksToSync,
-    decimals,
-    isMetadataLoading,
-  } = useContext(PanelContext);
+  const { privateBalance, error, blocksToSync, decimals, isLoading } =
+    useContext(PanelContext);
   const { wallet, ensProfile, isEnsLoading } = useContext(LedgerContext);
 
-  const address = wallet?.address as Address | undefined;
+  console.log("isLoading", isLoading);
+  console.log("privateBalance", privateBalance.toString());
 
-  const isLoading = isMetadataLoading || isConnecting;
+  const address = wallet?.address as Address | undefined;
 
   const { showCopiedTooltip, handleCopyAddress } = useCopyAddress(address);
   const {
@@ -84,10 +79,9 @@ export default function WalletTab() {
       {error && <div className="text-white">{error.message}</div>}
       {isLoading && (
         <>
-          <div className="h-12 animate-pulse flex items-center justify-center">
-            Syncing{" "}
+          <div className="h-12 animate-pulse flex items-center justify-center text-lg">
             {blocksToSync && blocksToSync > 0n
-              ? `${blocksToSync.toString()} blocks`
+              ? `Syncing ${blocksToSync.toString()} blocks...`
               : ""}
           </div>
         </>
