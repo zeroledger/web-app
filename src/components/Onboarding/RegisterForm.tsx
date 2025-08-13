@@ -1,10 +1,9 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Description, Field, Label, Input, Button } from "@headlessui/react";
 import clsx from "clsx";
 import { useNavigate } from "react-router-dom";
 import { primaryButtonStyle } from "@src/components/Button";
-import { ViewAccountContext } from "@src/context/viewAccount/viewAccount.context";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useEnsProfile } from "../EnsProfile/useEnsProfile";
 import { Avatar } from "../EnsProfile/Avatar";
@@ -18,34 +17,24 @@ export default function RegisterForm() {
     formState: { errors, isSubmitting },
     setValue,
     clearErrors,
-  } = useForm<{ password: string }>({
-    mode: "onSubmit",
-    reValidateMode: "onSubmit",
-  });
+  } = useForm<{ password: string }>();
 
   const navigate = useNavigate();
 
-  const { setPassword, viewAccount } = useContext(ViewAccountContext);
-  const { ledgerService, wallet } = useContext(LedgerContext);
-  const [error, setError] = useState<string>();
+  const { ledger, wallet, error, clearError, open } = useContext(LedgerContext);
   const { data, isLoading } = useEnsProfile(wallet!.address as Address);
   const onSubmit = useCallback(
-    async (data: { password: string }) => {
-      try {
-        setPassword(data.password);
-      } catch (error) {
-        const message = (error as Error).message ?? "Invalid password";
-        setError(message);
-      }
+    (data: { password: string }) => {
+      open(data.password);
     },
-    [setPassword],
+    [open],
   );
 
   useEffect(() => {
-    if (ledgerService && viewAccount) {
+    if (ledger) {
       navigate("/panel/wallet");
     }
-  }, [ledgerService, viewAccount, navigate]);
+  }, [ledger, navigate]);
 
   const onEnter = (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -57,11 +46,11 @@ export default function RegisterForm() {
   const onPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue("password", e.target.value);
     clearErrors("password");
-    setError(undefined);
+    clearError();
   };
 
   return (
-    <div className="mx-auto w-max-96">
+    <div className="mx-auto">
       <div className="flex items-center gap-4">
         {!isLoading && (
           <>
@@ -83,7 +72,7 @@ export default function RegisterForm() {
       <form
         onSubmit={handleSubmit(onSubmit)}
         onKeyDown={onEnter}
-        className="mt-5 "
+        className="mt-5"
       >
         <Field>
           <Label className="text-base/6 font-medium text-white">Password</Label>
@@ -92,13 +81,16 @@ export default function RegisterForm() {
           </Description>
           <Input
             className={clsx(
-              "mt-1 block w-full rounded-lg border-none bg-white/5 py-2.5 px-3 text-base text-white leading-7",
+              "mt-1 min-w-84 block rounded-lg border-none bg-white/5 py-2.5 px-3 text-base text-white leading-7",
               "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25",
               errors.password && "border-red-400",
             )}
             {...register("password", {
               required: "Password is required",
-              minLength: 3,
+              minLength: {
+                value: 3,
+                message: "Password must be at least 3 characters long",
+              },
             })}
             disabled={isSubmitting}
             onChange={onPasswordChange}
@@ -111,10 +103,10 @@ export default function RegisterForm() {
               {typeof errors.password.message === "string" &&
               errors.password.message
                 ? errors.password.message
-                : "Invalid password"}
+                : "Unknown password validation error"}
             </p>
           )}
-          {error && <p className="error-message">{error}</p>}
+          {error && <p className="error-message">{error.message}</p>}
         </div>
         <div className="flex justify-end mt-3">
           <Button

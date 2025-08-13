@@ -5,7 +5,7 @@ import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useSwipe } from "./useSwipe";
 import { delay } from "@src/utils/common";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
-import { type TransactionDetails } from "@src/services/ledger/ledger.service";
+import { type TransactionDetails } from "@src/services/ledger";
 import { ensClient } from "@src/components/EnsProfile/ensClient";
 import { normalize } from "viem/ens";
 
@@ -17,7 +17,7 @@ interface SpendFormData {
 const asyncOperationPromise = Promise.resolve();
 
 export const useTwoStepSpendModal = (decimals: number) => {
-  const { ledgerService } = useContext(LedgerContext);
+  const { ledger } = useContext(LedgerContext);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalLoading, setIsModalLoading] = useState(false);
   const [isModalSuccess, setIsModalSuccess] = useState(false);
@@ -34,8 +34,6 @@ export const useTwoStepSpendModal = (decimals: number) => {
   const { disableSwipe, enableSwipe } = useSwipe();
 
   const form = useForm<SpendFormData>({
-    mode: "onSubmit",
-    reValidateMode: "onSubmit",
     defaultValues: {
       recipient: "",
       amount: "",
@@ -91,11 +89,10 @@ export const useTwoStepSpendModal = (decimals: number) => {
 
           // This is a placeholder - in reality, you would call the ledger service
           // to prepare the metatransaction data
-          const metaTransactionData =
-            await ledgerService!.prepareSendMetaTransaction(
-              parseUnits(data.amount, decimals),
-              recipient,
-            );
+          const metaTransactionData = await ledger!.prepareSendMetaTransaction(
+            parseUnits(data.amount, decimals),
+            recipient,
+          );
 
           setMetaTransactionData(metaTransactionData);
           setCurrentStep("preview");
@@ -110,7 +107,7 @@ export const useTwoStepSpendModal = (decimals: number) => {
           handleBack();
         }
       }),
-    [ledgerService, decimals, handleBack],
+    [ledger, decimals, handleBack],
   );
 
   const handleSign = useCallback(
@@ -121,7 +118,7 @@ export const useTwoStepSpendModal = (decimals: number) => {
         try {
           setIsModalLoading(true);
 
-          await ledgerService!.send(
+          await ledger!.send(
             metaTransactionData.metaTransaction,
             metaTransactionData.coveredGas,
           );
@@ -135,7 +132,7 @@ export const useTwoStepSpendModal = (decimals: number) => {
           handleBack();
         }
       }),
-    [ledgerService, metaTransactionData, handleBack],
+    [ledger, metaTransactionData, handleBack],
   );
 
   return useMemo(

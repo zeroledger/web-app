@@ -1,5 +1,5 @@
 import { type SelectedCommitmentRecord } from "@src/utils/vault/types";
-import { type DataSource } from "@src/services/core/db/leveldb.service";
+import { type DataSource } from "@src/services/core/db/leveldb.source";
 import { LedgerRecordDto } from "./ledger.dto";
 import { Address } from "viem";
 
@@ -7,7 +7,7 @@ const recordEntityKey = (address: Address) => ({
   name: `commitments-${address}`,
 });
 
-export default class CommitmentsService {
+export default class Commitments {
   constructor(
     readonly dataSource: DataSource,
     readonly address: Address,

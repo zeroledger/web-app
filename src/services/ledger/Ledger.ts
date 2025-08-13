@@ -17,17 +17,17 @@ import { decodeMetadata, decryptCommitment } from "@src/utils/vault/metadata";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import { watchVault } from "@src/utils/vault/watcher";
 import { catchService } from "@src/services/core/catch.service";
-import { type TesService } from "@src/services/tes.service";
-import type CommitmentsService from "./commitments.service";
-import CommitmentsHistoryService from "./history.service";
-import SyncService from "./sync.service";
+import { type Tes } from "@src/services/Tes";
+import type Commitments from "./Commitments";
+import CommitmentsHistory from "./CommitmentsHistory";
+import SyncService from "./SyncService";
 import { HistoryRecordDto, LedgerRecordDto } from "./ledger.dto";
-import { EvmClientService } from "@src/services/core/evmClient.service";
-import { ViewAccountService } from "@src/services/viewAccount.service";
+import { EvmClients } from "@src/services/Clients";
+import { ViewAccount } from "@src/services/Account";
 import { compareEvents, EventLike } from "@src/utils/events";
 import { AxiosInstance } from "axios";
 import { computePoseidon } from "@src/utils/poseidon";
-import { LedgerServiceEvents } from "./events";
+import { LedgerEvents } from "./events";
 
 export type TransactionDetails = {
   type: "deposit" | "partialWithdraw" | "withdraw" | "send";
@@ -44,50 +44,46 @@ export type TransactionDetails = {
 
 // Dynamic imports for heavy dependencies
 const loadHeavyDependencies = async () => {
-  const [asyncVaultUtils, asyncMetaTxUtils, { TesService }] = await Promise.all(
-    [
-      import("@src/utils/vault"),
-      import("@src/utils/metatx"),
-      import("@src/services/tes.service"),
-    ],
-  );
+  const [asyncVaultUtils, asyncMetaTxUtils, { Tes }] = await Promise.all([
+    import("@src/utils/vault"),
+    import("@src/utils/metatx"),
+    import("@src/services/Tes"),
+  ]);
 
   return {
     asyncVaultUtils,
     asyncMetaTxUtils,
-    TesService,
+    Tes,
   };
 };
 
 // Cache for preloaded modules
 const preloadedModulesPromise = loadHeavyDependencies();
 
-export class LedgerService extends EventEmitter {
-  private readonly address: Address;
+export class Ledger extends EventEmitter {
   private faucetRpc: ServiceClient<FaucetRpc>;
-  private logger = new Logger("LedgerService");
+  private logger = new Logger(Ledger.name);
   private catchService = catchService;
   private eventsCache: VaultEvent[] = [];
   private eventsHandlerDebounced: ReturnType<typeof debounce>;
   private updateBothBalancesDebounced: ReturnType<typeof debounce>;
 
   constructor(
-    private readonly viewAccountService: ViewAccountService,
-    private readonly clientService: EvmClientService,
+    private readonly viewAccount: ViewAccount,
+    private readonly evmClients: EvmClients,
     private readonly vault: Address,
     private readonly forwarder: Address,
     private readonly token: Address,
     private readonly faucetUrl: string,
     private readonly faucetRpcClient: JsonRpcClient<FaucetRpc>,
     private readonly queue: MemoryQueue,
-    private readonly commitmentsService: CommitmentsService,
-    private readonly commitmentsHistoryService: CommitmentsHistoryService,
+    private readonly commitments: Commitments,
+    private readonly commitmentsHistory: CommitmentsHistory,
     private readonly syncService: SyncService,
-    private readonly tesService: TesService,
+    private readonly tesService: Tes,
     private readonly axios: AxiosInstance,
   ) {
     super();
-    this.address = this.clientService.writeClient!.account.address;
     this.faucetRpc = this.faucetRpcClient.getService(this.faucetUrl, {
       namespace: "faucet",
     });
@@ -107,8 +103,12 @@ export class LedgerService extends EventEmitter {
     this.logger.log(`LedgerService created with token ${this.token}`);
   }
 
+  async mainAccount() {
+    return (await this.evmClients.externalClient()).account;
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private safeEmit(event: keyof typeof LedgerServiceEvents, ...args: any[]) {
+  private safeEmit(event: keyof typeof LedgerEvents, ...args: any[]) {
     try {
       this.emit(event, ...args);
     } catch (error) {
@@ -123,7 +123,7 @@ export class LedgerService extends EventEmitter {
     forwardError?: boolean,
   ) {
     const [err, result] = await this.queue.schedule(
-      LedgerService.name,
+      Ledger.name,
       fn,
       correlationId,
       timeout,
@@ -140,27 +140,27 @@ export class LedgerService extends EventEmitter {
 
   private async updateBothBalances() {
     this.logger.log("updating both balances");
-    this.safeEmit(
-      LedgerServiceEvents.PRIVATE_BALANCE_CHANGE,
-      await this.getBalance(),
-    );
-    this.safeEmit(LedgerServiceEvents.ONCHAIN_BALANCE_CHANGE);
+    this.safeEmit(LedgerEvents.PRIVATE_BALANCE_CHANGE, await this.getBalance());
+    this.safeEmit(LedgerEvents.ONCHAIN_BALANCE_CHANGE);
   }
 
   private async getEncryptionParams(user: Address) {
+    const mainAccount = await this.mainAccount();
     const { asyncVaultUtils } = await preloadedModulesPromise;
     const { publicKey: encryptionPublicKey, active: senderActive } =
       await asyncVaultUtils.isUserRegistered(
         user,
         this.vault,
-        this.clientService.readClient!,
+        this.evmClients.readClient,
       );
     if (!senderActive) {
       this.logger.warn(
         `${user} PEPK is not registered, getting trusted encryption token`,
       );
       return {
-        encryptionPublicKey: await this.tesService.getTrustedEncryptionToken(),
+        encryptionPublicKey: await this.tesService.getTrustedEncryptionToken(
+          mainAccount.address,
+        ),
         tesUrl: this.tesService.tesUrl,
       };
     } else {
@@ -172,13 +172,14 @@ export class LedgerService extends EventEmitter {
     updateBlockNumber = false,
   }: { updateBlockNumber?: boolean } = {}) {
     const events = this.eventsCache.splice(0);
+    const mainAccount = await this.mainAccount();
     this.logger.log(`handle ${events.length} events batch`);
     const selectedInOrderEvents = events
       .filter(
         (e) =>
           (e.eventName === "CommitmentCreated" ||
             e.eventName === "CommitmentRemoved") &&
-          e.args.owner === this.address &&
+          e.args.owner === mainAccount.address &&
           e.args.token === this.token &&
           typeof e.blockNumber === "bigint" &&
           typeof e.transactionIndex === "number",
@@ -206,13 +207,13 @@ export class LedgerService extends EventEmitter {
             event.blockNumber!.toString(),
             this.token,
             event.args.poseidonHash!.toString(),
+            mainAccount.address,
           );
         } else if (tesUrl.length && tesUrl !== this.tesService.tesUrl) {
           const dynamicModules = await preloadedModulesPromise;
-          const shortLivedTes = new dynamicModules.TesService(
+          const shortLivedTes = new dynamicModules.Tes(
             tesUrl,
-            this.viewAccountService,
-            this.clientService,
+            this.viewAccount,
             this.queue,
             this.axios,
           );
@@ -220,6 +221,7 @@ export class LedgerService extends EventEmitter {
             event.blockNumber!.toString(),
             this.token,
             event.args.poseidonHash!.toString(),
+            mainAccount.address,
           );
         } else {
           this.logger.log(
@@ -227,7 +229,7 @@ export class LedgerService extends EventEmitter {
           );
           commitment = decryptCommitment(
             encryptedCommitment,
-            this.viewAccountService.viewPrivateKey()!,
+            this.viewAccount.viewPrivateKey()!,
           );
         }
 
@@ -236,8 +238,8 @@ export class LedgerService extends EventEmitter {
           commitment.amount,
           commitment.sValue,
         );
-        await this.commitmentsService.save(ledgerRecord);
-        await this.commitmentsHistoryService.add(
+        await this.commitments.save(ledgerRecord);
+        await this.commitmentsHistory.add(
           new HistoryRecordDto(
             "added",
             event.transactionHash,
@@ -255,11 +257,11 @@ export class LedgerService extends EventEmitter {
       }
       if (event.eventName === "CommitmentRemoved") {
         // remove commitment from LedgerRecordDto
-        const ledgerRecord = await this.commitmentsService.delete(
+        const ledgerRecord = await this.commitments.delete(
           event.args.poseidonHash!.toString(),
         );
         if (ledgerRecord) {
-          await this.commitmentsHistoryService.add(
+          await this.commitmentsHistory.add(
             new HistoryRecordDto(
               "spend",
               event.transactionHash,
@@ -281,7 +283,7 @@ export class LedgerService extends EventEmitter {
 
   async getTransactions() {
     try {
-      const transactions = await this.commitmentsHistoryService.all();
+      const transactions = await this.commitmentsHistory.all();
 
       // Group transactions by transaction hash and categorize as incomings/outgoings
       const groupedTransactions = transactions.reduce(
@@ -318,7 +320,7 @@ export class LedgerService extends EventEmitter {
   }
 
   async syncStatus() {
-    const currentBlock = await this.clientService.readClient!.getBlockNumber();
+    const currentBlock = await this.evmClients.readClient.getBlockNumber();
     const lastSyncedBlock = BigInt(await this.syncService.getLastSyncedBlock());
     const processedBlock = this.syncService.getProcessedBlock();
     const anchorBlock =
@@ -330,7 +332,7 @@ export class LedgerService extends EventEmitter {
   }
 
   async getBalance() {
-    const commitments = await this.commitmentsService.all();
+    const commitments = await this.commitments.all();
     this.logger.log(`commitments amount: ${commitments.length}`);
     return commitments.reduce((acc, c) => acc + BigInt(c.value), 0n);
   }
@@ -340,13 +342,14 @@ export class LedgerService extends EventEmitter {
     // so that old commitments processed before 'real-time' incoming
     await this.enqueue(
       async () => {
-        watchVault(this.clientService.readClient!, this.vault, (events) => {
+        watchVault(this.evmClients.readClient, this.vault, (events) => {
           this.eventsCache.push(...events);
           this.eventsHandlerDebounced();
         });
-        const currentBlock =
-          await this.clientService.readClient!.getBlockNumber();
+        const currentBlock = await this.evmClients.readClient.getBlockNumber();
+        const mainAccount = await this.mainAccount();
         const tesSyncEvents = await this.tesService.syncWithTes(
+          mainAccount.address,
           this.token,
           await this.syncService.getLastSyncedBlock(),
           currentBlock.toString(),
@@ -354,9 +357,9 @@ export class LedgerService extends EventEmitter {
         this.eventsCache.push(...(tesSyncEvents.events as VaultEvent[]));
         await this.syncService.setLastSyncedBlock(tesSyncEvents.syncedBlock);
         const syncEvents = await this.syncService.runOnchainSync(
-          this.clientService.readClient!,
+          this.evmClients.readClient,
           this.vault,
-          this.address,
+          mainAccount.address,
           this.token,
           currentBlock,
         );
@@ -373,12 +376,14 @@ export class LedgerService extends EventEmitter {
     return this.enqueue(
       async () => {
         const { asyncVaultUtils } = await preloadedModulesPromise;
+        const mainAccount = await this.mainAccount();
         const { tesUrl, encryptionPublicKey } = await this.getEncryptionParams(
-          this.address,
+          mainAccount.address,
         );
 
         const { gasPrice, paymasterAddress } = await this.tesService.quote(
           this.token,
+          mainAccount.address,
         );
 
         const gasToCover = asyncVaultUtils.depositGasSponsoredLimit();
@@ -387,7 +392,7 @@ export class LedgerService extends EventEmitter {
         const { proofData, depositStruct /* depositCommitmentData */ } =
           await asyncVaultUtils.prepareDeposit(
             this.token,
-            this.address,
+            mainAccount.address,
             value - fee,
             encryptionPublicKey,
             fee,
@@ -397,7 +402,7 @@ export class LedgerService extends EventEmitter {
 
         const depositParams = {
           depositStruct,
-          client: this.clientService.writeClient!,
+          client: await this.evmClients.externalClient(),
           contract: this.vault,
           proof: proofData.calldata_proof,
         };
@@ -422,7 +427,7 @@ export class LedgerService extends EventEmitter {
           amount:
             depositParams.depositStruct.total_deposit_amount +
             depositParams.depositStruct.fee,
-          client: this.clientService.writeClient!,
+          client: await this.evmClients.externalClient(),
         });
       },
       "approveDeposit",
@@ -439,6 +444,7 @@ export class LedgerService extends EventEmitter {
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
           await preloadedModulesPromise;
+        const mainAccount = await this.mainAccount();
         const gas = await asyncVaultUtils.getDepositTxGas(depositParams);
 
         this.logger.log(
@@ -447,14 +453,14 @@ export class LedgerService extends EventEmitter {
 
         return {
           metaTransaction: {
-            from: this.address,
+            from: mainAccount.address,
             to: this.vault,
             value: 0,
             gas,
             nonce: await asyncMetaTxUtils.getForwarderNonce(
-              this.address,
+              mainAccount.address,
               this.forwarder,
-              this.clientService.readClient!,
+              this.evmClients.readClient,
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
             data: asyncVaultUtils.getDepositTxData(
@@ -467,8 +473,8 @@ export class LedgerService extends EventEmitter {
             type: "deposit",
             vaultContract: this.vault,
             token: this.token,
-            from: this.address,
-            to: this.address,
+            from: mainAccount.address,
+            to: mainAccount.address,
             value: depositParams.depositStruct.total_deposit_amount,
             fee: depositParams.depositStruct.fee,
             paymaster: depositParams.depositStruct.feeRecipient,
@@ -490,15 +496,17 @@ export class LedgerService extends EventEmitter {
   deposit(metaTransaction: UnsignedMetaTransaction, coveredGas: string) {
     return this.enqueue(
       async () => {
+        const mainAccount = await this.mainAccount();
         const { asyncMetaTxUtils } = await preloadedModulesPromise;
         const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
           metaTransaction,
           this.forwarder,
-          this.clientService.writeClient!,
+          await this.evmClients.externalClient(),
         );
         return await this.tesService.executeMetaTransaction(
           signedMetaTransaction,
           coveredGas,
+          mainAccount.address,
         );
       },
       "LedgerService.deposit",
@@ -511,15 +519,17 @@ export class LedgerService extends EventEmitter {
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
           await preloadedModulesPromise;
+        const mainAccount = await this.mainAccount();
         const { gasPrice, paymasterAddress } = await this.tesService.quote(
           this.token,
+          mainAccount.address,
         );
 
         const gasToCover = asyncVaultUtils.spendGasSponsoredLimit(1, 3, 2);
         const fee = gasPrice * gasToCover;
 
         const { selectedCommitmentRecords, totalAmount: totalMovingAmount } =
-          await this.commitmentsService.findCommitments(value);
+          await this.commitments.findCommitments(value);
 
         if (selectedCommitmentRecords.length === 0) {
           throw new Error("No commitments found to cover the requested amount");
@@ -538,7 +548,7 @@ export class LedgerService extends EventEmitter {
         ];
 
         const { encryptionPublicKey, tesUrl } = await this.getEncryptionParams(
-          this.address,
+          mainAccount.address,
         );
 
         const { proofData, transactionStruct } =
@@ -548,10 +558,10 @@ export class LedgerService extends EventEmitter {
             totalMovingAmount,
             privateSpendAmount: 0n,
             publicSpendAmount: value,
-            spender: this.address,
+            spender: mainAccount.address,
             spenderEncryptionPublicKey: encryptionPublicKey,
             spenderTesUrl: tesUrl,
-            receiver: this.address,
+            receiver: mainAccount.address,
             receiverEncryptionPublicKey: encryptionPublicKey,
             receiverTesUrl: tesUrl,
             publicOutputs,
@@ -559,7 +569,7 @@ export class LedgerService extends EventEmitter {
 
         const partialWithdrawParams = {
           transactionStruct,
-          client: this.clientService.writeClient!,
+          client: await this.evmClients.externalClient(),
           contract: this.vault,
           proof: proofData.calldata_proof,
         };
@@ -572,14 +582,14 @@ export class LedgerService extends EventEmitter {
 
         return {
           metaTransaction: {
-            from: this.address,
+            from: mainAccount.address,
             to: this.vault,
             value: 0,
             gas,
             nonce: await asyncMetaTxUtils.getForwarderNonce(
-              this.address,
+              mainAccount.address,
               this.forwarder,
-              this.clientService.readClient!,
+              this.evmClients.readClient,
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600,
             data: asyncVaultUtils.getSpendTxData(
@@ -592,7 +602,7 @@ export class LedgerService extends EventEmitter {
             type: "partialWithdraw",
             vaultContract: this.vault,
             token: this.token,
-            from: this.address,
+            from: mainAccount.address,
             to: recipient,
             value: value - fee,
             fee: fee,
@@ -615,14 +625,16 @@ export class LedgerService extends EventEmitter {
     return this.enqueue(
       async () => {
         const { asyncMetaTxUtils } = await preloadedModulesPromise;
+        const mainAccount = await this.mainAccount();
         const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
           metaTransaction,
           this.forwarder,
-          this.clientService.writeClient!,
+          await this.evmClients.externalClient(),
         );
         return await this.tesService.executeMetaTransaction(
           signedMetaTransaction,
           coveredGas,
+          mainAccount.address,
         );
       },
       "partialWithdraw",
@@ -636,7 +648,8 @@ export class LedgerService extends EventEmitter {
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
           await preloadedModulesPromise;
-        const commitments = await this.commitmentsService.all();
+        const mainAccount = await this.mainAccount();
+        const commitments = await this.commitments.all();
 
         const withdrawItems: CommitmentStruct[] = [];
         const withdrawItemIds: string[] = [];
@@ -661,10 +674,11 @@ export class LedgerService extends EventEmitter {
 
         const { gasPrice, paymasterAddress } = await this.tesService.quote(
           this.token,
+          mainAccount.address,
         );
 
         const withdrawParams = {
-          client: this.clientService.writeClient!,
+          client: await this.evmClients.externalClient(),
           contract: this.vault,
           token: this.token,
           withdrawItems,
@@ -681,14 +695,14 @@ export class LedgerService extends EventEmitter {
 
         return {
           metaTransaction: {
-            from: this.address,
+            from: mainAccount.address,
             to: this.vault,
             value: 0,
             gas,
             nonce: await asyncMetaTxUtils.getForwarderNonce(
-              this.address,
+              mainAccount.address,
               this.forwarder,
-              this.clientService.readClient!,
+              this.evmClients.readClient,
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
             data: asyncVaultUtils.getWithdrawTxData(withdrawParams),
@@ -697,7 +711,7 @@ export class LedgerService extends EventEmitter {
           transactionDetails: {
             type: "withdraw",
             vaultContract: withdrawParams.contract,
-            from: this.address,
+            from: mainAccount.address,
             to: withdrawParams.recipient,
             value: withdrawParams.withdrawItems.reduce(
               (acc, item) => acc + item.amount,
@@ -725,14 +739,16 @@ export class LedgerService extends EventEmitter {
     return this.enqueue(
       async () => {
         const { asyncMetaTxUtils } = await preloadedModulesPromise;
+        const mainAccount = await this.mainAccount();
         const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
           metaTransaction,
           this.forwarder,
-          this.clientService.writeClient!,
+          await this.evmClients.externalClient(),
         );
         return await this.tesService.executeMetaTransaction(
           signedMetaTransaction,
           coveredGas,
+          mainAccount.address,
         );
       },
       "LedgerService.withdraw",
@@ -746,14 +762,16 @@ export class LedgerService extends EventEmitter {
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
           await preloadedModulesPromise;
+        const mainAccount = await this.mainAccount();
         const { gasPrice, paymasterAddress } = await this.tesService.quote(
           this.token,
+          mainAccount.address,
         );
 
         const gasToCover = asyncVaultUtils.spendGasSponsoredLimit(1, 3, 1);
         const fee = gasPrice * gasToCover;
         const { selectedCommitmentRecords, totalAmount } =
-          await this.commitmentsService.findCommitments(value - fee);
+          await this.commitments.findCommitments(value - fee);
 
         if (selectedCommitmentRecords.length === 0) {
           throw new Error("No commitments found to cover the requested amount");
@@ -769,7 +787,7 @@ export class LedgerService extends EventEmitter {
         const {
           encryptionPublicKey: spenderEncryptionPublicKey,
           tesUrl: spenderTesUrl,
-        } = await this.getEncryptionParams(this.address);
+        } = await this.getEncryptionParams(mainAccount.address);
 
         const {
           encryptionPublicKey: receiverEncryptionPublicKey,
@@ -783,7 +801,7 @@ export class LedgerService extends EventEmitter {
             totalMovingAmount: totalAmount,
             privateSpendAmount: value - fee,
             publicSpendAmount: fee,
-            spender: this.address,
+            spender: mainAccount.address,
             spenderEncryptionPublicKey,
             spenderTesUrl,
             receiver: recipient,
@@ -794,21 +812,21 @@ export class LedgerService extends EventEmitter {
 
         const sendParams = {
           transactionStruct,
-          client: this.clientService.writeClient!,
+          client: await this.evmClients.externalClient(),
           contract: this.vault,
           proof: proofData.calldata_proof,
         };
 
         return {
           metaTransaction: {
-            from: this.address,
+            from: mainAccount.address,
             to: this.vault,
             value: 0,
             gas: await asyncVaultUtils.getSpendTxGas(sendParams),
             nonce: await asyncMetaTxUtils.getForwarderNonce(
-              this.address,
+              mainAccount.address,
               this.forwarder,
-              this.clientService.readClient!,
+              this.evmClients.readClient,
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
             data: asyncVaultUtils.getSpendTxData(
@@ -821,7 +839,7 @@ export class LedgerService extends EventEmitter {
             type: "send",
             vaultContract: this.vault,
             token: this.token,
-            from: this.address,
+            from: mainAccount.address,
             to: recipient,
             value: value - fee,
             fee: fee,
@@ -841,14 +859,16 @@ export class LedgerService extends EventEmitter {
     return this.enqueue(
       async () => {
         const { asyncMetaTxUtils } = await preloadedModulesPromise;
+        const mainAccount = await this.mainAccount();
         const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
           metaTransaction,
           this.forwarder,
-          this.clientService.writeClient!,
+          await this.evmClients.externalClient(),
         );
         return this.tesService.executeMetaTransaction(
           signedMetaTransaction,
           coveredGas,
+          mainAccount.address,
         );
       },
       "send",
@@ -860,8 +880,9 @@ export class LedgerService extends EventEmitter {
   async faucet(amount: string) {
     return this.enqueue(
       async () => {
-        const userBalance = await this.clientService.readClient!.getBalance({
-          address: this.address,
+        const mainAccount = await this.mainAccount();
+        const userBalance = await this.evmClients.readClient.getBalance({
+          address: mainAccount.address,
         });
         const expectedBalance = parseEther("0.0001");
         const nativeBalanceToFill =
@@ -873,7 +894,7 @@ export class LedgerService extends EventEmitter {
         return this.faucetRpc.obtainTestTokens(
           new FaucetRequestDto(
             this.token,
-            this.address,
+            mainAccount.address,
             amount,
             nativeBalanceToRequest,
           ),
@@ -895,8 +916,8 @@ export class LedgerService extends EventEmitter {
 
   async reset() {
     await this.softReset();
-    this.commitmentsService.reset();
-    this.commitmentsHistoryService.reset();
+    this.commitments.reset();
+    this.commitmentsHistory.reset();
     this.syncService.reset();
   }
 }

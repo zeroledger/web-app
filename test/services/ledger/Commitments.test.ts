@@ -1,10 +1,10 @@
-import CommitmentsService from "@src/services/ledger/commitments.service";
+import Commitments from "@src/services/ledger/Commitments";
 import { LedgerRecordDto } from "@src/services/ledger/ledger.dto";
 import { createMockDataSource } from "@test/utils/mockDataSource";
 import { zeroAddress } from "viem";
 
-describe("CommitmentsService", () => {
-  let service: CommitmentsService;
+describe("Commitments", () => {
+  let service: Commitments;
 
   const createRecord = (
     hash: string,
@@ -13,7 +13,7 @@ describe("CommitmentsService", () => {
   ): LedgerRecordDto => new LedgerRecordDto(hash, value, sValue);
 
   beforeEach(() => {
-    service = new CommitmentsService(createMockDataSource(), zeroAddress);
+    service = new Commitments(createMockDataSource(), zeroAddress);
   });
 
   afterEach(async () => {

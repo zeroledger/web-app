@@ -7,13 +7,13 @@ export const useFaucet = () => {
   const [isFauceting, setIsFauceting] = useState(false);
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const { disableSwipe, enableSwipe } = useSwipe();
-  const { ledgerService } = useContext(LedgerContext);
+  const { ledger } = useContext(LedgerContext);
   const handleFaucet = async () => {
     setIsFauceting(true);
     disableSwipe();
     const value = Math.ceil(Math.random() * 69 + 30).toString();
     setAmount(value);
-    await ledgerService?.faucet(value);
+    await ledger!.faucet(value);
     setIsFauceting(false);
     enableSwipe();
   };

@@ -10,13 +10,12 @@ import {
   Hex,
   parseAbiParameters,
 } from "viem";
-import { ViewAccountService } from "@src/services/viewAccount.service";
 import { MemoryQueue } from "@src/services/core/queue";
 import type { SignedMetaTransaction } from "@src/utils/metatx";
-import { EvmClientService } from "@src/services/core/evmClient.service";
 import { AxiosInstance } from "axios";
 import { catchService } from "@src/services/core/catch.service";
 import { backOff } from "exponential-backoff";
+import { ViewAccount } from "@src/services/Account";
 
 const AUTH_TOKEN_ABI = parseAbiParameters(
   "address authAddress,bytes authSignature,address ownerAddress,bytes delegationSignature",
@@ -26,32 +25,27 @@ const backoffOptions = {
   numOfAttempts: 4,
 };
 
-export class TesService {
+export class Tes {
   constructor(
     public readonly tesUrl: string,
-    public readonly viewAccountService: ViewAccountService,
-    public readonly evmClientService: EvmClientService,
+    public readonly viewAccount: ViewAccount,
     private readonly memoryQueue: MemoryQueue,
     private readonly axios: AxiosInstance,
-  ) {
-    this.mainAccountAddress =
-      this.evmClientService.writeClient!.account.address;
-  }
+  ) {}
 
   private timeout = 0;
-  private logger = new Logger(TesService.name);
-  private mainAccountAddress: Address;
+  private logger = new Logger(Tes.name);
   private csrf: string = "";
 
-  private async challenge() {
+  private async challenge(mainAccountAddress: Address) {
     const {
       data: { random },
     } = await this.axios.get<{
       random: Hex;
     }>(
-      `${this.tesUrl}/challenge/init/${this.viewAccountService.getViewAccount()!.address}`,
+      `${this.tesUrl}/challenge/init/${this.viewAccount.getViewAccount()!.address}`,
     );
-    const authToken = await this.getAuthToken(random);
+    const authToken = await this.getAuthToken(random, mainAccountAddress);
     this.logger.log(`Create auth token $(len: ${authToken.length})`);
     const {
       data: { exp, csrf },
@@ -72,27 +66,27 @@ export class TesService {
   }
 
   private signChallenge(random: Hex) {
-    return this.viewAccountService.getViewAccount()!.signMessage({
+    return this.viewAccount.getViewAccount()!.signMessage({
       message: random,
     });
   }
 
-  private async getAuthToken(random: Hex) {
+  private async getAuthToken(random: Hex, mainAccountAddress: Address) {
     const token = encodeAbiParameters(AUTH_TOKEN_ABI, [
-      this.viewAccountService.getViewAccount()!.address,
+      this.viewAccount.getViewAccount()!.address,
       await this.signChallenge(random),
-      this.mainAccountAddress,
-      this.viewAccountService.getDelegationSignature()!,
+      mainAccountAddress,
+      this.viewAccount.getDelegationSignature()!,
     ]);
     return token;
   }
 
-  private async manageAuth() {
+  private async manageAuth(mainAccountAddress: Address) {
     const [error] = await this.memoryQueue.schedule(
-      TesService.name,
+      Tes.name,
       async () => {
         if (this.timeout < Date.now() || !this.csrf) {
-          await this.challenge();
+          await this.challenge(mainAccountAddress);
         }
       },
       "manageAuth",
@@ -103,9 +97,9 @@ export class TesService {
     }
   }
 
-  getTrustedEncryptionToken() {
+  getTrustedEncryptionToken(mainAccountAddress: Address) {
     return backOff(async () => {
-      await this.manageAuth();
+      await this.manageAuth(mainAccountAddress);
       const { data } = await this.axios.get<{
         tepk: Hex;
       }>(`${this.tesUrl}/encryption/tepk`);
@@ -113,9 +107,14 @@ export class TesService {
     }, backoffOptions);
   }
 
-  decrypt(block: string, token: Address, poseidonHash: string) {
+  decrypt(
+    block: string,
+    token: Address,
+    poseidonHash: string,
+    mainAccountAddress: Address,
+  ) {
     return backOff(async () => {
-      await this.manageAuth();
+      await this.manageAuth(mainAccountAddress);
 
       const requestData = {
         block,
@@ -137,10 +136,15 @@ export class TesService {
     }, backoffOptions);
   }
 
-  async syncWithTes(token: Address, fromBlock: string, toBlock: string) {
+  async syncWithTes(
+    mainAccountAddress: Address,
+    token: Address,
+    fromBlock: string,
+    toBlock: string,
+  ) {
     try {
       const result = await backOff(async () => {
-        await this.manageAuth();
+        await this.manageAuth(mainAccountAddress);
 
         this.logger.log(`syncing with TES from ${fromBlock} to ${toBlock}`);
         const { data } = await this.axios.get<{
@@ -158,7 +162,7 @@ export class TesService {
           }[];
           syncedBlock: string;
         }>(
-          `${this.tesUrl}/indexer?owner=${this.mainAccountAddress}&token=${token}&fromBlock=${fromBlock}&toBlock=${toBlock}`,
+          `${this.tesUrl}/indexer?owner=${mainAccountAddress}&token=${token}&fromBlock=${fromBlock}&toBlock=${toBlock}`,
           {
             headers: {
               "x-custom-tes-csrf": this.csrf,
@@ -192,9 +196,9 @@ export class TesService {
     }
   }
 
-  async quote(token: Address) {
+  async quote(token: Address, mainAccountAddress: Address) {
     return backOff(async () => {
-      await this.manageAuth();
+      await this.manageAuth(mainAccountAddress);
       const { data } = await this.axios.get<{
         gasPrice: string;
         paymasterAddress: Address;
@@ -215,9 +219,10 @@ export class TesService {
   async executeMetaTransaction(
     metatx: SignedMetaTransaction,
     coveredGas: string,
+    mainAccountAddress: Address,
   ) {
     return backOff(async () => {
-      await this.manageAuth();
+      await this.manageAuth(mainAccountAddress);
       await this.axios.post(
         `${this.tesUrl}/paymaster/execute`,
         {

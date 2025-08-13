@@ -11,7 +11,6 @@ import { useFaucet } from "./hooks/useFaucet";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useContext } from "react";
 import { TwoStepSpendModal } from "@src/components/Modals/TwoStepSpendModal";
-import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
 import { useMetadata } from "@src/hooks/useMetadata";
 import { TOKEN_ADDRESS } from "@src/common.constants";
 import { useTwoStepWithdrawModal } from "./hooks/useWithdrawModal";
@@ -19,10 +18,13 @@ import { useMultiStepDepositModal } from "./hooks/useDepositModal";
 
 export default function MenuTab() {
   const { isConnecting } = useContext(LedgerContext);
-  const { evmClientService } = useContext(EvmClientsContext);
+  const { evmClients, isWalletChanged, chainSupported } =
+    useContext(LedgerContext);
   const { decimals, isMetadataLoading } = useMetadata(
     TOKEN_ADDRESS,
-    evmClientService,
+    isWalletChanged,
+    chainSupported,
+    evmClients,
   );
   const isLoading = isMetadataLoading || isConnecting;
   const {
@@ -45,7 +47,7 @@ export default function MenuTab() {
     isModalOpen,
     isModalLoading,
     isModalSuccess,
-    isModalError,
+    errorMessage,
     currentStep: withdrawCurrentStep,
     form,
     onModalOpen: onWithdrawModalOpen,
@@ -158,7 +160,7 @@ export default function MenuTab() {
         onSign={handleWithdrawSign}
         onBack={handleWithdrawBack}
         formMethods={form}
-        isError={isModalError}
+        errorMessage={errorMessage}
         type="Withdraw"
         metaTransactionData={withdrawMetaTransactionData}
       />

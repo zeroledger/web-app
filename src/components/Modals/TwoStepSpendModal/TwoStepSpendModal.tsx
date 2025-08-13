@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { memo, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Loader } from "@src/components/Loader";
 import { BackButton } from "@src/components/Buttons/BackButton";
 import { SuccessMessage } from "@src/components/Modals/SuccessMessage";
@@ -9,7 +9,7 @@ import { useDynamicHeight } from "@src/hooks/useDynamicHeight";
 import { SpendForm } from "./SpendForm";
 import { SigningPreview } from "@src/components/SigningPreview";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
-import { type TransactionDetails } from "@src/services/ledger/ledger.service";
+import { type TransactionDetails } from "@src/services/ledger";
 import {
   prepareSigningData,
   prepareMinimalTransactionDetails,
@@ -187,4 +187,4 @@ function TwoStepSpendModal({
   );
 }
 
-export default memo(TwoStepSpendModal);
+export default TwoStepSpendModal;

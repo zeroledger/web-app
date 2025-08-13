@@ -8,7 +8,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { decrypt, encrypt } from "@zeroledger/vycrypt";
-import { EvmClientService } from "@src/services/core/evmClient.service";
+import { type EvmClients } from "@src/services/Clients";
 
 export type EncryptedAccountsStore = Record<
   string,
@@ -34,22 +34,15 @@ const types = {
   ],
 } as const;
 
-export class ViewAccountService {
+export class ViewAccount {
   private PKS_STORE_KEY: string;
 
   private _viewPk?: Hash;
   private _viewAccount?: PrivateKeyAccount;
   private _delegationSignature?: Hex;
-  private _mainAccountAddress: Address;
 
-  constructor(
-    private readonly appPrefixKey: string,
-    private readonly password: string,
-    private readonly evmClientService: EvmClientService,
-  ) {
+  constructor(private readonly appPrefixKey: string) {
     this.PKS_STORE_KEY = `${this.appPrefixKey}.encodedAccountData`;
-    this._mainAccountAddress =
-      this.evmClientService.writeClient!.account.address;
   }
 
   /*********
@@ -66,15 +59,15 @@ export class ViewAccountService {
    * View account *
    ****************/
 
-  private encryptedViewPrivateKey() {
+  private encryptedViewPrivateKey(mainAccountAddress: Address) {
     return localStorage.getItem(
-      `${this.PKS_STORE_KEY}.view.${this._mainAccountAddress}`,
+      `${this.PKS_STORE_KEY}.view.${mainAccountAddress}`,
     ) as Hex | null;
   }
 
-  private encryptedDelegationSignature() {
+  private encryptedDelegationSignature(mainAccountAddress: Address) {
     return localStorage.getItem(
-      `${this.PKS_STORE_KEY}.delegation.${this._mainAccountAddress}`,
+      `${this.PKS_STORE_KEY}.delegation.${mainAccountAddress}`,
     ) as Hex | null;
   }
 
@@ -90,16 +83,18 @@ export class ViewAccountService {
     return this._delegationSignature;
   }
 
-  hasEncryptedViewAccount() {
+  hasEncryptedViewAccount(mainAccountAddress: Address) {
     return (
-      this.encryptedViewPrivateKey() && this.encryptedDelegationSignature()
+      this.encryptedViewPrivateKey(mainAccountAddress) &&
+      this.encryptedDelegationSignature(mainAccountAddress)
     );
   }
 
-  async unlockViewAccount() {
-    const encryptedViewPk = this.encryptedViewPrivateKey();
-    const encryptedDelegationSignature = this.encryptedDelegationSignature();
-    const { pk } = this.deriveEphemeralEncryptionKeys(this.password);
+  async unlockViewAccount(mainAccountAddress: Address, password: string) {
+    const encryptedViewPk = this.encryptedViewPrivateKey(mainAccountAddress);
+    const encryptedDelegationSignature =
+      this.encryptedDelegationSignature(mainAccountAddress);
+    const { pk } = this.deriveEphemeralEncryptionKeys(password);
     this._viewPk = (await decrypt(pk, encryptedViewPk!)) as Hash;
     this._viewAccount = privateKeyToAccount(this._viewPk);
     this._delegationSignature = (await decrypt(
@@ -108,49 +103,45 @@ export class ViewAccountService {
     )) as Hex;
   }
 
-  prepareViewAccount() {
+  prepareViewAccount(mainAccountAddress: Address, password: string) {
     this._viewPk = keccak256(
       keccak256(
-        toHex(
-          `${this.appPrefixKey}_${this.password}_${this._mainAccountAddress}`,
-        ),
+        toHex(`${this.appPrefixKey}_${password}_${mainAccountAddress}`),
       ),
     );
     this._viewAccount = privateKeyToAccount(this._viewPk);
   }
 
-  async authorize() {
-    const { pubK } = this.deriveEphemeralEncryptionKeys(this.password);
-    this._delegationSignature =
-      await this.evmClientService.writeClient!.signTypedData({
-        domain,
-        types,
-        primaryType: "Authorize",
-        message: {
-          protocol: "zeroledger",
-          main_account: this._mainAccountAddress,
-          view_account: this._viewAccount!.address,
-        },
-      });
+  async authorize(evmClients: EvmClients, password: string) {
+    const { pubK } = this.deriveEphemeralEncryptionKeys(password);
+    const externalClient = await evmClients.externalClient();
+    this._delegationSignature = await externalClient.signTypedData({
+      domain,
+      types,
+      primaryType: "Authorize",
+      message: {
+        protocol: "zeroledger",
+        main_account: externalClient.account.address,
+        view_account: this._viewAccount!.address,
+      },
+    });
     localStorage.setItem(
-      `${this.PKS_STORE_KEY}.view.${this._mainAccountAddress}`,
+      `${this.PKS_STORE_KEY}.view.${externalClient.account.address}`,
       await encrypt(this._viewPk!, pubK),
     );
     localStorage.setItem(
-      `${this.PKS_STORE_KEY}.delegation.${this._mainAccountAddress}`,
+      `${this.PKS_STORE_KEY}.delegation.${externalClient.account.address}`,
       await encrypt(this._delegationSignature, pubK),
     );
   }
 
-  reset() {
+  reset(mainAccountAddress: Address) {
     delete this._viewAccount;
     delete this._viewPk;
     delete this._delegationSignature;
+    localStorage.removeItem(`${this.PKS_STORE_KEY}.view.${mainAccountAddress}`);
     localStorage.removeItem(
-      `${this.PKS_STORE_KEY}.view.${this._mainAccountAddress}`,
-    );
-    localStorage.removeItem(
-      `${this.PKS_STORE_KEY}.delegation.${this._mainAccountAddress}`,
+      `${this.PKS_STORE_KEY}.delegation.${mainAccountAddress}`,
     );
   }
 }

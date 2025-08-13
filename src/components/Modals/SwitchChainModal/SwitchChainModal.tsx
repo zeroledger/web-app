@@ -1,27 +1,35 @@
 import clsx from "clsx";
 import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
-import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
 import { useContext } from "react";
 import { catchService } from "@src/services/core/catch.service";
+import { LedgerContext } from "@src/context/ledger/ledger.context";
 
 export default function SwitchChainModal() {
-  const { isSwitchChainModalOpen, targetChain, evmClientService } =
-    useContext(EvmClientsContext);
+  const { isSwitchChainModalOpen, targetChain, evmClients, open, password } =
+    useContext(LedgerContext);
 
   const handleSwitchChain = async () => {
     try {
-      await evmClientService?.writeClient?.switchChain({
+      const externalClient = await evmClients?.externalClient();
+      await externalClient?.switchChain({
         id: targetChain.id,
       });
+      open(password!);
     } catch (error) {
       catchService.catch(error as Error);
     }
   };
 
   const handleAddChain = async () => {
-    await evmClientService?.writeClient?.addChain({
-      chain: targetChain,
-    });
+    try {
+      const externalClient = await evmClients?.externalClient();
+      await externalClient?.addChain({
+        chain: targetChain,
+      });
+      open(password!);
+    } catch (error) {
+      catchService.catch(error as Error);
+    }
   };
 
   if (!targetChain) {

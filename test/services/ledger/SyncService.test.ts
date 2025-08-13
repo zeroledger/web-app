@@ -1,4 +1,4 @@
-import SyncService from "@src/services/ledger/sync.service";
+import SyncService from "@src/services/ledger/SyncService";
 import { createMockDataSource } from "@test/utils/mockDataSource";
 import { zeroAddress } from "viem";
 

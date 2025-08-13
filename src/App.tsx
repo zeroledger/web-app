@@ -2,8 +2,6 @@ import { RouterProvider } from "react-router-dom";
 import { lazy } from "react";
 import router from "./router";
 import { LoadingScreen } from "./components/LoadingScreen";
-import { EvmClientsProvider } from "@src/context/evmClients/evmClients.provider";
-import { ViewAccountProvider } from "@src/context/viewAccount/viewAccount.provider";
 
 const PrivyContextProvider = lazy(() =>
   import("@src/context/privy.context").then((module) => ({
@@ -31,19 +29,15 @@ function App() {
   return (
     <LoadingScreen>
       <PrivyContextProvider>
-        <EvmClientsProvider>
-          <ViewAccountProvider>
+        <LoadingScreen>
+          <LedgerProvider>
             <LoadingScreen>
-              <LedgerProvider>
-                <LoadingScreen>
-                  <RouterProvider router={router} />
-                  <Notification />
-                  <SwitchChainModal />
-                </LoadingScreen>
-              </LedgerProvider>
+              <RouterProvider router={router} />
+              <Notification />
+              <SwitchChainModal />
             </LoadingScreen>
-          </ViewAccountProvider>
-        </EvmClientsProvider>
+          </LedgerProvider>
+        </LoadingScreen>
       </PrivyContextProvider>
     </LoadingScreen>
   );

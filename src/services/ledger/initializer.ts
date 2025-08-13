@@ -2,8 +2,8 @@ import { Address } from "viem";
 import axios from "axios";
 
 import { type FaucetRpc } from "@src/services/core/faucet.dto";
-import { type EvmClientService } from "@src/services/core/evmClient.service";
-import { type ViewAccountService } from "@src/services/viewAccount.service";
+import { type EvmClients } from "@src/services/Clients";
+import { type ViewAccount } from "@src/services/Account";
 import { type ConnectedWallet } from "@privy-io/react-auth";
 
 const axiosInstance = axios.create();
@@ -14,31 +14,31 @@ const loadHeavyDependencies = async () => {
     { MemoryQueue },
     { JsonRpcClient },
     { DataSource },
-    { default: CommitmentsService },
-    { default: CommitmentsHistoryService },
+    { default: Commitments },
+    { default: CommitmentsHistory },
     { default: SyncService },
-    { TesService },
-    { LedgerService },
+    { Tes },
+    { Ledger },
   ] = await Promise.all([
     import("@src/services/core/queue"),
     import("@src/services/core/rpc"),
-    import("@src/services/core/db/leveldb.service"),
-    import("./commitments.service"),
-    import("./history.service"),
-    import("./sync.service"),
-    import("@src/services/tes.service"),
-    import("@src/services/ledger/ledger.service"),
+    import("@src/services/core/db/leveldb.source"),
+    import("./Commitments"),
+    import("./CommitmentsHistory"),
+    import("./SyncService"),
+    import("@src/services/Tes"),
+    import("./Ledger"),
   ]);
 
   return {
     MemoryQueue,
     JsonRpcClient,
     DataSource,
-    CommitmentsService,
-    CommitmentsHistoryService,
+    Commitments,
+    CommitmentsHistory,
     SyncService,
-    TesService,
-    LedgerService,
+    Tes,
+    Ledger,
   };
 };
 
@@ -47,8 +47,8 @@ const preloadedModulesPromise = loadHeavyDependencies();
 
 export const initialize = async (
   wallet: ConnectedWallet,
-  viewAccountService: ViewAccountService,
-  evmClientService: EvmClientService,
+  viewAccount: ViewAccount,
+  evmClients: EvmClients,
   appPrefixKey: string,
   tesUrl: string,
   vaultAddress: Address,
@@ -61,11 +61,11 @@ export const initialize = async (
     MemoryQueue,
     JsonRpcClient,
     DataSource,
-    CommitmentsService,
-    CommitmentsHistoryService,
+    Commitments,
+    CommitmentsHistory,
     SyncService,
-    TesService,
-    LedgerService,
+    Tes,
+    Ledger,
   } = await preloadedModulesPromise;
 
   // Create lightweight dependencies immediately
@@ -76,34 +76,25 @@ export const initialize = async (
 
   // Initialize heavy services
   const zeroLedgerDataSource = new DataSource(appPrefixKey);
-  const commitmentsService = new CommitmentsService(
-    zeroLedgerDataSource,
-    address,
-  );
-  const commitmentsHistoryService = new CommitmentsHistoryService(
+  const commitments = new Commitments(zeroLedgerDataSource, address);
+  const commitmentsHistory = new CommitmentsHistory(
     zeroLedgerDataSource,
     address,
   );
   const syncService = new SyncService(zeroLedgerDataSource, address);
-  const tesService = new TesService(
-    tesUrl,
-    viewAccountService,
-    evmClientService,
-    queue,
-    axiosInstance,
-  );
+  const tesService = new Tes(tesUrl, viewAccount, queue, axiosInstance);
 
-  return new LedgerService(
-    viewAccountService,
-    evmClientService,
+  return new Ledger(
+    viewAccount,
+    evmClients,
     vaultAddress,
     forwarderAddress,
     tokenAddress,
     faucetUrl,
     faucetRpcClient,
     queue,
-    commitmentsService,
-    commitmentsHistoryService,
+    commitments,
+    commitmentsHistory,
     syncService,
     tesService,
     axiosInstance,

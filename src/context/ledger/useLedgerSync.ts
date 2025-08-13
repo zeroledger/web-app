@@ -1,13 +1,10 @@
-import { type LedgerService } from "@src/services/ledger";
+import { type Ledger } from "@src/services/ledger";
 import { useCallback, useEffect, useState } from "react";
 import { Logger } from "@src/utils/logger";
 
 const logger = new Logger("useLedgerSync");
 
-export function useLedgerSync(
-  authorized: boolean,
-  ledgerService?: LedgerService,
-) {
+export function useLedgerSync(authorized: boolean, ledger?: Ledger) {
   const [syncState, setSyncState] = useState<"idle" | "inProgress" | "done">(
     "idle",
   );
@@ -15,14 +12,14 @@ export function useLedgerSync(
 
   useEffect(() => {
     const syncLedger = async () => {
-      if (authorized && ledgerService) {
+      if (authorized && ledger) {
         setSyncState("inProgress");
-        await ledgerService.start();
+        await ledger.start();
         setSyncState("done");
       }
     };
     syncLedger();
-  }, [authorized, ledgerService]);
+  }, [authorized, ledger]);
 
   const resetSyncState = useCallback(() => {
     setSyncState("idle");
@@ -31,7 +28,7 @@ export function useLedgerSync(
 
   // Poll for sync status
   useEffect(() => {
-    if (!ledgerService || syncState === "idle") return;
+    if (!ledger || syncState === "idle") return;
 
     if (syncState === "done") {
       setBlocksToSync(0n);
@@ -40,7 +37,7 @@ export function useLedgerSync(
 
     const fetchSyncStatus = async () => {
       try {
-        const { anchorBlock, currentBlock } = await ledgerService.syncStatus();
+        const { anchorBlock, currentBlock } = await ledger.syncStatus();
         const blocksToSync =
           currentBlock <= anchorBlock ? 0n : currentBlock - anchorBlock;
         setBlocksToSync(blocksToSync);
@@ -52,7 +49,7 @@ export function useLedgerSync(
     fetchSyncStatus();
     const interval = setInterval(fetchSyncStatus, 500);
     return () => clearInterval(interval);
-  }, [ledgerService, syncState]);
+  }, [ledger, syncState]);
 
   return {
     syncState,

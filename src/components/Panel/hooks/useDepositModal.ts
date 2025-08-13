@@ -5,7 +5,7 @@ import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useSwipe } from "./useSwipe";
 import { delay } from "@src/utils/common";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
-import { type TransactionDetails } from "@src/services/ledger/ledger.service";
+import { type TransactionDetails } from "@src/services/ledger";
 import { type DepositParams } from "@src/utils/vault/types";
 
 interface DepositFormData {
@@ -15,7 +15,7 @@ interface DepositFormData {
 const asyncOperationPromise = Promise.resolve();
 
 export const useMultiStepDepositModal = (decimals: number) => {
-  const { ledgerService } = useContext(LedgerContext);
+  const { ledger } = useContext(LedgerContext);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalLoading, setIsModalLoading] = useState(false);
   const [isModalSuccess, setIsModalSuccess] = useState(false);
@@ -36,8 +36,6 @@ export const useMultiStepDepositModal = (decimals: number) => {
   const { disableSwipe, enableSwipe } = useSwipe();
 
   const form = useForm<DepositFormData>({
-    mode: "onSubmit",
-    reValidateMode: "onSubmit",
     defaultValues: {
       amount: "",
     },
@@ -79,7 +77,7 @@ export const useMultiStepDepositModal = (decimals: number) => {
           setIsModalLoading(true);
 
           const depositParamsData =
-            await ledgerService!.prepareDepositParamsForApproval(
+            await ledger!.prepareDepositParamsForApproval(
               parseUnits(data.amount, decimals),
             );
 
@@ -94,7 +92,7 @@ export const useMultiStepDepositModal = (decimals: number) => {
           handleBack();
         }
       }),
-    [ledgerService, decimals, handleBack],
+    [ledger, decimals, handleBack],
   );
 
   const handleParamsApprove = useCallback(
@@ -105,10 +103,10 @@ export const useMultiStepDepositModal = (decimals: number) => {
         try {
           setIsModalLoading(true);
 
-          await ledgerService!.approveDeposit(depositParamsData.depositParams);
+          await ledger!.approveDeposit(depositParamsData.depositParams);
 
           const metaTransactionData =
-            await ledgerService!.prepareDepositMetaTransaction(
+            await ledger!.prepareDepositMetaTransaction(
               depositParamsData.depositParams,
               depositParamsData.gasToCover,
             );
@@ -127,7 +125,7 @@ export const useMultiStepDepositModal = (decimals: number) => {
           handleBack();
         }
       }),
-    [ledgerService, depositParamsData, handleBack],
+    [ledger, depositParamsData, handleBack],
   );
 
   const handleSign = useCallback(
@@ -138,7 +136,7 @@ export const useMultiStepDepositModal = (decimals: number) => {
         try {
           setIsModalLoading(true);
 
-          await ledgerService!.deposit(
+          await ledger!.deposit(
             metaTransactionData.metaTransaction,
             metaTransactionData.coveredGas,
           );
@@ -152,7 +150,7 @@ export const useMultiStepDepositModal = (decimals: number) => {
           handleBack();
         }
       }),
-    [ledgerService, metaTransactionData, handleBack],
+    [ledger, metaTransactionData, handleBack],
   );
 
   return useMemo(

@@ -5,22 +5,27 @@ import { useTwoStepSpendModal } from "./hooks/useSpendModal";
 import { useCopyAddress } from "./hooks/useCopyAddress";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useContext } from "react";
-import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
 import { useMetadata } from "@src/hooks/useMetadata";
 import { TOKEN_ADDRESS } from "@src/common.constants";
 import { useEnsProfile } from "../EnsProfile/useEnsProfile";
 import { Avatar } from "../EnsProfile/Avatar";
 import { Name } from "../EnsProfile/Name";
+import { Address } from "viem";
 
 export default function WalletTab() {
   const { privateBalance, isConnecting, error, blocksToSync } =
     useContext(LedgerContext);
-  const { evmClientService } = useContext(EvmClientsContext);
+  const { evmClients, wallet, isWalletChanged, chainSupported } =
+    useContext(LedgerContext);
   const { decimals, isMetadataLoading } = useMetadata(
     TOKEN_ADDRESS,
-    evmClientService,
+    isWalletChanged,
+    chainSupported,
+    evmClients,
   );
-  const address = evmClientService!.writeClient!.account.address!;
+
+  console.log("decimals", decimals);
+  const address = wallet!.address as Address;
   const { data: ensProfile, isLoading: isEnsLoading } = useEnsProfile(address);
 
   const isLoading = isMetadataLoading || isConnecting || isEnsLoading;

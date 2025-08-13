@@ -11,7 +11,6 @@ import {
 } from "@headlessui/react";
 import { TOKEN_ADDRESS } from "@src/common.constants";
 import { useMetadata } from "@src/hooks/useMetadata";
-import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
 
 const formatAmount = (
   amount: bigint,
@@ -227,11 +226,13 @@ export default function ActivityTab({ active }: { active: boolean }) {
   const [groupedTransactions, setGroupedTransactions] =
     useState<GroupedTransactions>({});
   const [error, setError] = useState<string | null>(null);
-  const { ledgerService, isConnecting } = useContext(LedgerContext);
-  const { evmClientService } = useContext(EvmClientsContext);
+  const { ledger, isConnecting, evmClients, isWalletChanged, chainSupported } =
+    useContext(LedgerContext);
   const { decimals, isMetadataLoading } = useMetadata(
     TOKEN_ADDRESS,
-    evmClientService,
+    isWalletChanged,
+    chainSupported,
+    evmClients,
   );
 
   const isLoading = isMetadataLoading || isConnecting;
@@ -241,7 +242,7 @@ export default function ActivityTab({ active }: { active: boolean }) {
       setLoading(true);
       setError(null);
       try {
-        const txs = await ledgerService!.getTransactions();
+        const txs = await ledger!.getTransactions();
         if (txs) {
           setGroupedTransactions(txs);
         }
@@ -256,7 +257,7 @@ export default function ActivityTab({ active }: { active: boolean }) {
     if (active && !isLoading) {
       loadTransactions();
     }
-  }, [active, isLoading, ledgerService]);
+  }, [active, isLoading, ledger]);
 
   const transactionGroups = Object.entries(groupedTransactions);
 

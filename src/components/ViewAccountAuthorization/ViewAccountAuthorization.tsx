@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo, useState } from "react";
-import { ViewAccountContext } from "@src/context/viewAccount/viewAccount.context";
+import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useNavigate } from "react-router-dom";
 import { useWallets } from "@privy-io/react-auth";
 import { SigningPreview, SigningData } from "@src/components/SigningPreview";
@@ -10,7 +10,8 @@ export default function ViewAccountAuthorization() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isError, setIsError] = useState(false);
   const navigate = useNavigate();
-  const { viewAccount, authorize, authorized } = useContext(ViewAccountContext);
+  const { viewAccount, authorized, setAuthorized, password, evmClients } =
+    useContext(LedgerContext);
   const { wallets } = useWallets();
 
   const messageData = useMemo(
@@ -35,7 +36,8 @@ export default function ViewAccountAuthorization() {
   const handleSign = async () => {
     try {
       setIsSigning(true);
-      await authorize(viewAccount!);
+      await viewAccount?.authorize(evmClients!, password!);
+      setAuthorized(true);
       setIsSuccess(true);
       setIsError(false);
       setIsSigning(false);

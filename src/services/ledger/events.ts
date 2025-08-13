@@ -1,4 +1,4 @@
-export const LedgerServiceEvents = {
+export const LedgerEvents = {
   PRIVATE_BALANCE_CHANGE: "PRIVATE_BALANCE_CHANGE",
   ONCHAIN_BALANCE_CHANGE: "ONCHAIN_BALANCE_CHANGE",
 } as const;

@@ -5,7 +5,7 @@ import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useSwipe } from "./useSwipe";
 import { delay } from "@src/utils/common";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
-import { type TransactionDetails } from "@src/services/ledger/ledger.service";
+import { type TransactionDetails } from "@src/services/ledger";
 
 interface WithdrawFormData {
   recipient: string;
@@ -15,11 +15,13 @@ interface WithdrawFormData {
 const asyncOperationPromise = Promise.resolve();
 
 export const useTwoStepWithdrawModal = (decimals: number) => {
-  const { ledgerService, privateBalance } = useContext(LedgerContext);
+  const { ledger, privateBalance } = useContext(LedgerContext);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalLoading, setIsModalLoading] = useState(false);
   const [isModalSuccess, setIsModalSuccess] = useState(false);
-  const [isModalError, setIsModalError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(
+    undefined,
+  );
   const [currentStep, setCurrentStep] = useState<"form" | "preview">("form");
   const [metaTransactionData, setMetaTransactionData] = useState<{
     metaTransaction: UnsignedMetaTransaction;
@@ -30,8 +32,6 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
   const { disableSwipe, enableSwipe } = useSwipe();
 
   const form = useForm<WithdrawFormData>({
-    mode: "onSubmit",
-    reValidateMode: "onSubmit",
     defaultValues: {
       recipient: "",
       amount: "",
@@ -43,7 +43,7 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
       await asyncOperationPromise.then(() => {
         setIsModalSuccess(false);
         setIsModalLoading(false);
-        setIsModalError(false);
+        setErrorMessage(undefined);
         setCurrentStep("form");
         setMetaTransactionData(undefined);
         disableSwipe();
@@ -77,14 +77,14 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
           if (amount === privateBalance) {
             // Full withdraw
             const fullWithdrawData =
-              await ledgerService!.prepareWithdrawMetaTransaction(
+              await ledger!.prepareWithdrawMetaTransaction(
                 data.recipient as Address,
               );
             metaTransactionData = fullWithdrawData;
           } else {
             // Partial withdraw
             metaTransactionData =
-              await ledgerService!.preparePartialWithdrawMetaTransaction(
+              await ledger!.preparePartialWithdrawMetaTransaction(
                 amount,
                 data.recipient as Address,
               );
@@ -94,13 +94,13 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
           setIsModalLoading(false);
         } catch (error) {
           console.error("Failed to prepare withdraw transaction:", error);
-          setIsModalError(true);
+          setErrorMessage("Failed to prepare withdraw transaction");
           setIsModalLoading(false);
           await delay(3000);
           handleBack();
         }
       }),
-    [ledgerService, decimals, privateBalance, handleBack],
+    [ledger, decimals, privateBalance, handleBack],
   );
 
   const handleSign = useCallback(
@@ -115,13 +115,13 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
 
           if (amount === privateBalance) {
             // Full withdraw
-            await ledgerService!.withdraw(
+            await ledger!.withdraw(
               metaTransactionData.metaTransaction,
               metaTransactionData.coveredGas,
             );
           } else {
             // Partial withdraw
-            await ledgerService!.partialWithdraw(
+            await ledger!.partialWithdraw(
               metaTransactionData.metaTransaction,
               metaTransactionData.coveredGas,
             );
@@ -129,7 +129,7 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
 
           setIsModalSuccess(true);
         } catch (error) {
-          setIsModalError(true);
+          setErrorMessage("Failed to sign withdraw transaction");
           console.error(error);
         } finally {
           setIsModalLoading(false);
@@ -137,14 +137,7 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
           handleBack();
         }
       }),
-    [
-      ledgerService,
-      form,
-      decimals,
-      privateBalance,
-      metaTransactionData,
-      handleBack,
-    ],
+    [ledger, form, decimals, privateBalance, metaTransactionData, handleBack],
   );
 
   return useMemo(
@@ -152,7 +145,7 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
       isModalOpen,
       isModalLoading,
       isModalSuccess,
-      isModalError,
+      errorMessage,
       currentStep,
       form,
       onModalOpen,
@@ -165,7 +158,7 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
       isModalOpen,
       isModalLoading,
       isModalSuccess,
-      isModalError,
+      errorMessage,
       currentStep,
       form,
       onModalOpen,

@@ -6,7 +6,6 @@ import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
 import { getMaxFormattedValue } from "@src/utils/common";
 import { TOKEN_ADDRESS } from "@src/common.constants";
-import { EvmClientsContext } from "@src/context/evmClients/evmClients.context";
 import { useMetadata } from "@src/hooks/useMetadata";
 import { isAddress } from "viem";
 import { ensClient } from "@src/components/EnsProfile/ensClient";
@@ -32,9 +31,14 @@ export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
     clearErrors,
     setValue,
   } = formMethods;
-  const { privateBalance } = useContext(LedgerContext);
-  const { evmClientService } = useContext(EvmClientsContext);
-  const { decimals } = useMetadata(TOKEN_ADDRESS, evmClientService);
+  const { privateBalance, evmClients, isWalletChanged, chainSupported } =
+    useContext(LedgerContext);
+  const { decimals } = useMetadata(
+    TOKEN_ADDRESS,
+    isWalletChanged,
+    chainSupported,
+    evmClients,
+  );
 
   return (
     <div className="w-full">
@@ -51,12 +55,9 @@ export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
           {...register("recipient", {
             required: "Recipient address is required",
             validate: async (value) => {
-              console.log("value", value);
               if (value.startsWith("0x")) {
-                console.log("isAddress");
                 return isAddress(value) || "Invalid address";
               }
-              console.log("ens");
               const ensAddress = await ensClient.getEnsAddress({
                 name: normalize(value),
               });

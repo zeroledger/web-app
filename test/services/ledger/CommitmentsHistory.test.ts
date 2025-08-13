@@ -1,4 +1,4 @@
-import CommitmentsHistoryService from "@src/services/ledger/history.service";
+import CommitmentsHistory from "@src/services/ledger/CommitmentsHistory";
 import {
   HistoryRecordDto,
   LedgerRecordDto,
@@ -6,8 +6,8 @@ import {
 import { createMockDataSource } from "@test/utils/mockDataSource";
 import { zeroAddress } from "viem";
 
-describe("CommitmentsHistoryService", () => {
-  let service: CommitmentsHistoryService;
+describe("CommitmentsHistory", () => {
+  let service: CommitmentsHistory;
 
   const createMockHistoryRecord = (
     status: "added" | "spend" = "added",
@@ -33,10 +33,7 @@ describe("CommitmentsHistoryService", () => {
   };
 
   beforeEach(() => {
-    service = new CommitmentsHistoryService(
-      createMockDataSource(),
-      zeroAddress,
-    );
+    service = new CommitmentsHistory(createMockDataSource(), zeroAddress);
   });
 
   afterEach(async () => {

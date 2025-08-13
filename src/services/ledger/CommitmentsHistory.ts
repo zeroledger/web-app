@@ -1,4 +1,4 @@
-import { type DataSource } from "@src/services/core/db/leveldb.service";
+import { type DataSource } from "@src/services/core/db/leveldb.source";
 import { HistoryRecordDto } from "./ledger.dto";
 import { compareEvents } from "@src/utils/events";
 import { Address } from "viem";
@@ -41,7 +41,7 @@ export class Node {
   }
 }
 
-export default class CommitmentsHistoryService {
+export default class CommitmentsHistory {
   constructor(
     public readonly dataSource: DataSource,
     readonly address: Address,
