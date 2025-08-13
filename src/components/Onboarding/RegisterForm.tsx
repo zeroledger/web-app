@@ -1,14 +1,13 @@
-import { useCallback, useContext, useEffect } from "react";
+import { useCallback, useContext } from "react";
 import { useForm } from "react-hook-form";
 import { Description, Field, Label, Input, Button } from "@headlessui/react";
 import clsx from "clsx";
-import { useNavigate } from "react-router-dom";
 import { primaryButtonStyle } from "@src/components/Button";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
-import { useEnsProfile } from "../EnsProfile/useEnsProfile";
 import { Avatar } from "../EnsProfile/Avatar";
 import { Name } from "../EnsProfile/Name";
 import { Address } from "viem";
+import { useRegister } from "./useRegister";
 
 export default function RegisterForm() {
   const {
@@ -19,22 +18,16 @@ export default function RegisterForm() {
     clearErrors,
   } = useForm<{ password: string }>();
 
-  const navigate = useNavigate();
+  const { wallet, ensProfile, isEnsLoading } = useContext(LedgerContext);
 
-  const { ledger, wallet, error, clearError, open } = useContext(LedgerContext);
-  const { data, isLoading } = useEnsProfile(wallet!.address as Address);
+  const { open, isConnecting, error, setError } = useRegister();
+
   const onSubmit = useCallback(
     (data: { password: string }) => {
       open(data.password);
     },
     [open],
   );
-
-  useEffect(() => {
-    if (ledger) {
-      navigate("/panel/wallet");
-    }
-  }, [ledger, navigate]);
 
   const onEnter = (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -46,23 +39,28 @@ export default function RegisterForm() {
   const onPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue("password", e.target.value);
     clearErrors("password");
-    clearError();
+    setError(undefined);
   };
+
+  const disabled = isSubmitting || isConnecting || isEnsLoading;
 
   return (
     <div className="mx-auto">
       <div className="flex items-center gap-4">
-        {!isLoading && (
+        {!isEnsLoading && (
           <>
-            <Avatar avatar={data?.avatar} className="h-15 w-15 rounded-full" />
+            <Avatar
+              avatar={ensProfile?.avatar}
+              className="h-15 w-15 rounded-full"
+            />
             <Name
               className="text-base/6"
-              name={data?.name}
+              name={ensProfile?.name}
               address={wallet!.address as Address}
             />
           </>
         )}
-        {isLoading && (
+        {isEnsLoading && (
           <>
             <div className="bg-white/50 h-15 w-15 rounded-full animate-pulse" />
             <div className="h-8 w-38 bg-white/50 animate-pulse rounded" />
@@ -92,7 +90,7 @@ export default function RegisterForm() {
                 message: "Password must be at least 3 characters long",
               },
             })}
-            disabled={isSubmitting}
+            disabled={disabled}
             onChange={onPasswordChange}
             onKeyDown={onEnter}
           />
@@ -111,10 +109,20 @@ export default function RegisterForm() {
         <div className="flex justify-end mt-3">
           <Button
             type="submit"
-            className={primaryButtonStyle}
-            disabled={isSubmitting}
+            className={clsx(primaryButtonStyle, {
+              "opacity-50 cursor-not-allowed": isConnecting,
+            })}
+            disabled={disabled}
           >
-            Open
+            {isConnecting && (
+              <svg className="mr-3 size-5 animate-spin" viewBox="0 0 24 24">
+                <path
+                  d="M12 22C17.5228 22 22 17.5228 22 12H19C19 15.866 15.866 19 12 19C8.13401 19 5 15.866 5 12H2C2 17.5228 6.47715 22 12 22Z"
+                  fill="currentColor"
+                />
+              </svg>
+            )}
+            {isConnecting ? "Connecting..." : "Open"}
           </Button>
         </div>
       </form>

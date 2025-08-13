@@ -2,14 +2,12 @@ import { Field, Label, Input } from "@headlessui/react";
 import clsx from "clsx";
 import { UseFormReturn } from "react-hook-form";
 import { useContext } from "react";
-import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
 import { getMaxFormattedValue } from "@src/utils/common";
-import { TOKEN_ADDRESS } from "@src/common.constants";
-import { useMetadata } from "@src/hooks/useMetadata";
 import { isAddress } from "viem";
-import { ensClient } from "@src/components/EnsProfile/ensClient";
+import { ens } from "@src/services/Ens";
 import { normalize } from "viem/ens";
+import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
 
 const amountRegex = /^\d*\.?\d*$/;
 
@@ -31,14 +29,7 @@ export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
     clearErrors,
     setValue,
   } = formMethods;
-  const { privateBalance, evmClients, isWalletChanged, chainSupported } =
-    useContext(LedgerContext);
-  const { decimals } = useMetadata(
-    TOKEN_ADDRESS,
-    isWalletChanged,
-    chainSupported,
-    evmClients,
-  );
+  const { privateBalance, decimals } = useContext(PanelContext);
 
   return (
     <div className="w-full">
@@ -58,7 +49,7 @@ export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
               if (value.startsWith("0x")) {
                 return isAddress(value) || "Invalid address";
               }
-              const ensAddress = await ensClient.getEnsAddress({
+              const ensAddress = await ens.client.getEnsAddress({
                 name: normalize(value),
               });
               return (

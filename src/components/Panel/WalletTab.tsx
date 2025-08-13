@@ -5,30 +5,25 @@ import { useTwoStepSpendModal } from "./hooks/useSpendModal";
 import { useCopyAddress } from "./hooks/useCopyAddress";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useContext } from "react";
-import { useMetadata } from "@src/hooks/useMetadata";
-import { TOKEN_ADDRESS } from "@src/common.constants";
-import { useEnsProfile } from "../EnsProfile/useEnsProfile";
 import { Avatar } from "../EnsProfile/Avatar";
 import { Name } from "../EnsProfile/Name";
 import { Address } from "viem";
+import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
 
 export default function WalletTab() {
-  const { privateBalance, isConnecting, error, blocksToSync } =
-    useContext(LedgerContext);
-  const { evmClients, wallet, isWalletChanged, chainSupported } =
-    useContext(LedgerContext);
-  const { decimals, isMetadataLoading } = useMetadata(
-    TOKEN_ADDRESS,
-    isWalletChanged,
-    chainSupported,
-    evmClients,
-  );
+  const {
+    privateBalance,
+    isConnecting,
+    error,
+    blocksToSync,
+    decimals,
+    isMetadataLoading,
+  } = useContext(PanelContext);
+  const { wallet, ensProfile, isEnsLoading } = useContext(LedgerContext);
 
-  console.log("decimals", decimals);
-  const address = wallet!.address as Address;
-  const { data: ensProfile, isLoading: isEnsLoading } = useEnsProfile(address);
+  const address = wallet?.address as Address | undefined;
 
-  const isLoading = isMetadataLoading || isConnecting || isEnsLoading;
+  const isLoading = isMetadataLoading || isConnecting;
 
   const { showCopiedTooltip, handleCopyAddress } = useCopyAddress(address);
   const {
@@ -53,13 +48,13 @@ export default function WalletTab() {
         rel="noopener noreferrer"
         className="hover:cursor-pointer"
       >
-        {!isLoading && (
+        {!isEnsLoading && (
           <Avatar
             avatar={ensProfile?.avatar}
             className="h-15 w-15 rounded-full"
           />
         )}
-        {isLoading && (
+        {isEnsLoading && (
           <div className="bg-gray-700 h-15 w-15 rounded-full animate-pulse" />
         )}
       </a>
@@ -67,14 +62,14 @@ export default function WalletTab() {
         className="flex items-center gap-2 relative my-3 hover:cursor-pointer"
         onClick={handleCopyAddress}
       >
-        {!isLoading && (
+        {!isEnsLoading && address && (
           <Name
             className="text-center text-2xl"
             name={ensProfile?.name}
             address={address}
           />
         )}
-        {isLoading && (
+        {isEnsLoading && (
           <div className="flex flex-col gap-1">
             <div className="h-8 w-38 bg-gray-700 animate-pulse rounded" />
             <div className="h-4 w-38 bg-gray-700 animate-pulse rounded" />

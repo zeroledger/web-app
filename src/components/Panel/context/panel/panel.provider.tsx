@@ -1,0 +1,183 @@
+import {
+  useState,
+  useMemo,
+  ReactNode,
+  useEffect,
+  useContext,
+  useCallback,
+} from "react";
+import { LedgerContext } from "@src/context/ledger/ledger.context";
+import {
+  RPC,
+  TOKEN_ADDRESS,
+  pollingInterval,
+  WS_RPC,
+  FAUCET_URL,
+  APP_PREFIX_KEY,
+  TES_URL,
+  VAULT_ADDRESS,
+  FORWARDER_ADDRESS,
+} from "@src/common.constants";
+import { usePrivateBalance } from "./usePrivateBalance";
+import { useLedgerSync } from "./useLedgerSync";
+import { Address } from "viem";
+import { EvmClients } from "@src/services/Clients";
+import { initialize } from "@src/services/ledger";
+import { PanelContext } from "./panel.context";
+import { prover } from "@src/utils/prover";
+import { useMetadata } from "./useMetadata";
+
+export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
+  children,
+}) => {
+  const {
+    wallet,
+    isWalletChanged,
+    chainSupported,
+    ledger,
+    evmClients,
+    viewAccount,
+    setEvmClients,
+    setAuthorized,
+    setLedger,
+    targetChain,
+    password,
+    reset,
+  } = useContext(LedgerContext);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [error, setError] = useState<Error>();
+  const { syncState, blocksToSync, syncLedger } = useLedgerSync(ledger);
+
+  const {
+    symbol,
+    publicBalance,
+    decimals,
+    isMetadataLoading,
+    metadataError,
+    mutate,
+  } = useMetadata(TOKEN_ADDRESS, chainSupported, evmClients);
+
+  const privateBalance = usePrivateBalance(mutate, ledger);
+
+  const accountSwitch = useCallback(async () => {
+    try {
+      setIsConnecting(true);
+      const newEvmClientService = new EvmClients(
+        WS_RPC[targetChain.id],
+        RPC[targetChain.id],
+        pollingInterval[targetChain.id],
+        targetChain,
+        wallet!,
+      );
+      setEvmClients(newEvmClientService);
+      const [externalClient] = await Promise.all([
+        newEvmClientService.externalClient(),
+        ledger?.softReset(),
+      ]);
+      await viewAccount!
+        .unlockViewAccount(externalClient.account.address, password!)
+        .catch(reset);
+      setAuthorized(true);
+      const newLedger = await initialize(
+        wallet!,
+        viewAccount!,
+        newEvmClientService!,
+        APP_PREFIX_KEY,
+        TES_URL,
+        VAULT_ADDRESS,
+        FORWARDER_ADDRESS,
+        TOKEN_ADDRESS,
+        FAUCET_URL,
+      );
+      setLedger(newLedger);
+    } catch (error) {
+      setError(error as Error);
+    } finally {
+      setIsConnecting(false);
+    }
+  }, [
+    password,
+    wallet,
+    viewAccount,
+    setEvmClients,
+    setAuthorized,
+    setLedger,
+    targetChain,
+    ledger,
+    reset,
+  ]);
+
+  useEffect(() => {
+    if (ledger) {
+      syncLedger(ledger);
+    }
+  }, [ledger, syncLedger]);
+
+  useEffect(() => {
+    if (!isWalletChanged) {
+      return;
+    }
+    if (!wallet) {
+      reset();
+      return;
+    }
+    const newAccount = !viewAccount!.hasEncryptedViewAccount(
+      wallet.address as Address,
+    );
+
+    if (newAccount) {
+      reset();
+      return;
+    }
+
+    if (!newAccount && chainSupported) {
+      console.log("accountSwitch");
+      accountSwitch();
+    }
+  }, [
+    isWalletChanged,
+    accountSwitch,
+    viewAccount,
+    wallet,
+    reset,
+    chainSupported,
+  ]);
+
+  const value = useMemo(
+    () => ({
+      symbol,
+      publicBalance,
+      decimals,
+      isMetadataLoading,
+      metadataError,
+      privateBalance,
+      isConnecting:
+        isConnecting ||
+        syncState === "inProgress" ||
+        (blocksToSync !== undefined && blocksToSync !== 0n),
+      error,
+      blocksToSync,
+    }),
+    [
+      syncState,
+      blocksToSync,
+      isConnecting,
+      error,
+      privateBalance,
+      symbol,
+      publicBalance,
+      decimals,
+      isMetadataLoading,
+      metadataError,
+    ],
+  );
+
+  useEffect(() => {
+    // do not wait for sequential circuits load
+    void prover.preloadVitalCircuits();
+  }, []);
+
+  return (
+    <PanelContext.Provider value={value}>{children}</PanelContext.Provider>
+  );
+};

@@ -6,6 +6,7 @@ import { useSwipe } from "./useSwipe";
 import { delay } from "@src/utils/common";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import { type TransactionDetails } from "@src/services/ledger";
+import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
 
 interface WithdrawFormData {
   recipient: string;
@@ -15,7 +16,8 @@ interface WithdrawFormData {
 const asyncOperationPromise = Promise.resolve();
 
 export const useTwoStepWithdrawModal = (decimals: number) => {
-  const { ledger, privateBalance } = useContext(LedgerContext);
+  const { ledger } = useContext(LedgerContext);
+  const { privateBalance } = useContext(PanelContext);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalLoading, setIsModalLoading] = useState(false);
   const [isModalSuccess, setIsModalSuccess] = useState(false);

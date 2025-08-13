@@ -10,8 +10,15 @@ export default function ViewAccountAuthorization() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isError, setIsError] = useState(false);
   const navigate = useNavigate();
-  const { viewAccount, authorized, setAuthorized, password, evmClients } =
-    useContext(LedgerContext);
+  const {
+    viewAccount,
+    setAuthorized,
+    password,
+    evmClients,
+    isWalletAddressChanged,
+    resetViewAccountAuthorization,
+    setLedger,
+  } = useContext(LedgerContext);
   const { wallets } = useWallets();
 
   const messageData = useMemo(
@@ -37,6 +44,7 @@ export default function ViewAccountAuthorization() {
     try {
       setIsSigning(true);
       await viewAccount?.authorize(evmClients!, password!);
+      navigate("/panel/wallet");
       setAuthorized(true);
       setIsSuccess(true);
       setIsError(false);
@@ -49,10 +57,11 @@ export default function ViewAccountAuthorization() {
   };
 
   useEffect(() => {
-    if (authorized) {
-      navigate("/panel/wallet");
+    if (isWalletAddressChanged) {
+      resetViewAccountAuthorization();
+      setLedger(undefined);
     }
-  }, [authorized, navigate]);
+  }, [isWalletAddressChanged, resetViewAccountAuthorization, setLedger]);
 
   return (
     <div className="mx-auto w-full md:max-w-md px-3">

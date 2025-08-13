@@ -2,7 +2,7 @@ import { EvmClients } from "@src/services/Clients";
 import { metadata } from "@src/utils/erc20";
 import useSWR from "swr";
 import { Address } from "viem";
-import { useConditionalPrevious } from "./usePrevious";
+import { useConditionalPrevious } from "@src/hooks/usePrevious";
 
 const fetcher = async ([evmClients, tokenAddress]: [EvmClients, Address]) => {
   const externalClient = await evmClients.externalClient();
@@ -15,7 +15,6 @@ const fetcher = async ([evmClients, tokenAddress]: [EvmClients, Address]) => {
 
 export function useMetadata(
   tokenAddress: Address,
-  isWalletChanged: boolean,
   isChainSupported: boolean,
   evmClients?: EvmClients,
 ) {

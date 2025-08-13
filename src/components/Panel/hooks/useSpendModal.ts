@@ -6,7 +6,7 @@ import { useSwipe } from "./useSwipe";
 import { delay } from "@src/utils/common";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import { type TransactionDetails } from "@src/services/ledger";
-import { ensClient } from "@src/components/EnsProfile/ensClient";
+import { ens } from "@src/services/Ens";
 import { normalize } from "viem/ens";
 
 interface SpendFormData {
@@ -78,7 +78,7 @@ export const useTwoStepSpendModal = (decimals: number) => {
           if (data.recipient.startsWith("0x")) {
             recipient = data.recipient as Address;
           } else {
-            const ensAddress = await ensClient.getEnsAddress({
+            const ensAddress = await ens.client.getEnsAddress({
               name: normalize(data.recipient),
             });
             if (!ensAddress) {

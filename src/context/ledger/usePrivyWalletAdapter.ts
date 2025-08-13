@@ -12,9 +12,10 @@ export function usePrivyWalletAdapter() {
 
   const prevWallet = usePrevious(wallet);
 
-  const isWalletChanged =
-    wallet?.address !== prevWallet?.address ||
-    wallet?.chainId !== prevWallet?.chainId;
+  const isWalletNetworkChanged = wallet?.chainId !== prevWallet?.chainId;
+  const isWalletAddressChanged = wallet?.address !== prevWallet?.address;
+
+  const isWalletChanged = isWalletNetworkChanged || isWalletAddressChanged;
 
   const walletChainId = Number(wallet?.chainId.split(":")[1]);
   const chainSupported = targetChain.id === walletChainId;
@@ -30,6 +31,8 @@ export function usePrivyWalletAdapter() {
     wallet,
     prevWallet,
     isWalletChanged,
+    isWalletNetworkChanged,
+    isWalletAddressChanged,
     walletChainId,
     chainSupported,
     targetChain,

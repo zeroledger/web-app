@@ -14,14 +14,12 @@ export const useSwitchModal = (evmClients: EvmClients | undefined) => {
 
   useEffect(() => {
     if (isSwitchChainModalOpen && chainSupported) {
-      console.log("close");
       closeSwitchChainModal();
     }
   }, [isSwitchChainModalOpen, closeSwitchChainModal, chainSupported]);
 
   useEffect(() => {
     if (!chainSupported && evmClients && !isSwitchChainModalOpen) {
-      console.log("open");
       openSwitchChainModal();
     }
   }, [

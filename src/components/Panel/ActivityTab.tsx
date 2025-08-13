@@ -9,8 +9,7 @@ import {
   DisclosureButton,
   DisclosurePanel,
 } from "@headlessui/react";
-import { TOKEN_ADDRESS } from "@src/common.constants";
-import { useMetadata } from "@src/hooks/useMetadata";
+import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
 
 const formatAmount = (
   amount: bigint,
@@ -226,14 +225,9 @@ export default function ActivityTab({ active }: { active: boolean }) {
   const [groupedTransactions, setGroupedTransactions] =
     useState<GroupedTransactions>({});
   const [error, setError] = useState<string | null>(null);
-  const { ledger, isConnecting, evmClients, isWalletChanged, chainSupported } =
-    useContext(LedgerContext);
-  const { decimals, isMetadataLoading } = useMetadata(
-    TOKEN_ADDRESS,
-    isWalletChanged,
-    chainSupported,
-    evmClients,
-  );
+  const { ledger } = useContext(LedgerContext);
+  const { isConnecting, decimals, isMetadataLoading } =
+    useContext(PanelContext);
 
   const isLoading = isMetadataLoading || isConnecting;
 

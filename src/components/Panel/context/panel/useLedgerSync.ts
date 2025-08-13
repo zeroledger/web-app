@@ -4,27 +4,26 @@ import { Logger } from "@src/utils/logger";
 
 const logger = new Logger("useLedgerSync");
 
-export function useLedgerSync(authorized: boolean, ledger?: Ledger) {
+export function useLedgerSync(ledger?: Ledger) {
   const [syncState, setSyncState] = useState<"idle" | "inProgress" | "done">(
     "idle",
   );
   const [blocksToSync, setBlocksToSync] = useState<bigint>();
 
-  useEffect(() => {
-    const syncLedger = async () => {
-      if (authorized && ledger) {
-        setSyncState("inProgress");
-        await ledger.start();
-        setSyncState("done");
-      }
-    };
-    syncLedger();
-  }, [authorized, ledger]);
-
   const resetSyncState = useCallback(() => {
     setSyncState("idle");
     setBlocksToSync(undefined);
   }, []);
+
+  const syncLedger = useCallback(
+    async (ledger: Ledger) => {
+      setSyncState("inProgress");
+      resetSyncState();
+      await ledger.start();
+      setSyncState("done");
+    },
+    [resetSyncState],
+  );
 
   // Poll for sync status
   useEffect(() => {
@@ -55,5 +54,6 @@ export function useLedgerSync(authorized: boolean, ledger?: Ledger) {
     syncState,
     resetSyncState,
     blocksToSync,
+    syncLedger,
   };
 }

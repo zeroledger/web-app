@@ -8,24 +8,15 @@ import { Loader } from "@src/components/Loader";
 
 import { useResetWalletModal } from "./hooks/useResetWalletModal";
 import { useFaucet } from "./hooks/useFaucet";
-import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useContext } from "react";
 import { TwoStepSpendModal } from "@src/components/Modals/TwoStepSpendModal";
-import { useMetadata } from "@src/hooks/useMetadata";
-import { TOKEN_ADDRESS } from "@src/common.constants";
 import { useTwoStepWithdrawModal } from "./hooks/useWithdrawModal";
 import { useMultiStepDepositModal } from "./hooks/useDepositModal";
+import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
 
 export default function MenuTab() {
-  const { isConnecting } = useContext(LedgerContext);
-  const { evmClients, isWalletChanged, chainSupported } =
-    useContext(LedgerContext);
-  const { decimals, isMetadataLoading } = useMetadata(
-    TOKEN_ADDRESS,
-    isWalletChanged,
-    chainSupported,
-    evmClients,
-  );
+  const { isConnecting } = useContext(PanelContext);
+  const { decimals, isMetadataLoading } = useContext(PanelContext);
   const isLoading = isMetadataLoading || isConnecting;
   const {
     isModalOpen: isDepositModalOpen,

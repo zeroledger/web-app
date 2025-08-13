@@ -5,7 +5,7 @@ import { catchService } from "@src/services/core/catch.service";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 
 export default function SwitchChainModal() {
-  const { isSwitchChainModalOpen, targetChain, evmClients, open, password } =
+  const { isSwitchChainModalOpen, targetChain, evmClients } =
     useContext(LedgerContext);
 
   const handleSwitchChain = async () => {
@@ -14,7 +14,6 @@ export default function SwitchChainModal() {
       await externalClient?.switchChain({
         id: targetChain.id,
       });
-      open(password!);
     } catch (error) {
       catchService.catch(error as Error);
     }
@@ -26,7 +25,6 @@ export default function SwitchChainModal() {
       await externalClient?.addChain({
         chain: targetChain,
       });
-      open(password!);
     } catch (error) {
       catchService.catch(error as Error);
     }

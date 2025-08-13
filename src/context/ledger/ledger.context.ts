@@ -6,43 +6,72 @@ import { EvmClients } from "@src/services/Clients";
 import { ViewAccount } from "@src/services/Account";
 
 export const LedgerContext = createContext<{
-  ledger?: Ledger;
-  privateBalance: bigint;
-  isConnecting: boolean;
-  error?: Error;
-  blocksToSync?: bigint;
-  wallet?: ConnectedWallet;
-  clearError: () => void;
-  open: (password: string) => void;
+  // Ledger
+  ledger: Ledger | undefined;
+  setLedger: (ledger: Ledger | undefined) => void;
+  // Wallet
+  wallet: ConnectedWallet | undefined;
+  isWalletChanged: boolean;
+  isWalletNetworkChanged: boolean;
+  isWalletAddressChanged: boolean;
+  chainSupported: boolean;
+  // Switch Chain Modal
   isSwitchChainModalOpen: boolean;
   openSwitchChainModal: () => void;
   closeSwitchChainModal: () => void;
   setTargetChain: (chain: Chain) => void;
   targetChain: Chain;
-  evmClients?: EvmClients;
-  password?: string;
+  // EVM Clients
+  evmClients: EvmClients | undefined;
+  setEvmClients: (evmClients: EvmClients | undefined) => void;
+  // Password
+  password: string | undefined;
+  setPassword: (password: string | undefined) => void;
+  // Authorization
   authorized: boolean;
-  viewAccount?: ViewAccount;
   setAuthorized: (authorized: boolean) => void;
-  isWalletChanged: boolean;
-  chainSupported: boolean;
+  // View Account
+  viewAccount: ViewAccount | undefined;
+  resetViewAccountAuthorization: () => void;
+  // Ens Profile
+  ensProfile?: {
+    name?: string;
+    avatar?: string;
+  };
+  isEnsLoading: boolean;
+  // Reset
+  reset: () => void;
 }>({
-  privateBalance: 0n,
-  isConnecting: false,
-  blocksToSync: undefined,
+  // Ledger
+  ledger: undefined,
+  setLedger: () => {},
+  // Wallet
   wallet: undefined,
-  clearError: () => {},
-  open: () => {},
+  isWalletChanged: false,
+  isWalletNetworkChanged: false,
+  isWalletAddressChanged: false,
+  chainSupported: false,
+  // Switch Chain Modal
   isSwitchChainModalOpen: false,
   openSwitchChainModal: () => {},
   closeSwitchChainModal: () => {},
   setTargetChain: () => {},
   targetChain: mainnet,
+  // EVM Clients
   evmClients: undefined,
+  setEvmClients: () => {},
+  // Password
   password: undefined,
+  setPassword: () => {},
+  // Authorization
   authorized: false,
-  viewAccount: undefined,
   setAuthorized: () => {},
-  isWalletChanged: false,
-  chainSupported: false,
+  // View Account
+  viewAccount: undefined,
+  resetViewAccountAuthorization: () => {},
+  // Ens Profile
+  ensProfile: undefined,
+  isEnsLoading: false,
+  // Reset
+  reset: () => {},
 });
