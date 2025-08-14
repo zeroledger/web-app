@@ -8,8 +8,18 @@ import { type ConnectedWallet } from "@privy-io/react-auth";
 
 const axiosInstance = axios.create();
 
-// Dynamic imports for heavy dependencies
-const loadHeavyDependencies = async () => {
+export const initialize = async (
+  wallet: ConnectedWallet,
+  viewAccount: ViewAccount,
+  evmClients: EvmClients,
+  appPrefixKey: string,
+  tesUrl: string,
+  vaultAddress: Address,
+  forwarderAddress: Address,
+  tokenAddress: Address,
+  faucetUrl: string,
+) => {
+  // Dynamically load heavy dependencies (use preloaded if available)
   const [
     { MemoryQueue },
     { JsonRpcClient },
@@ -29,44 +39,6 @@ const loadHeavyDependencies = async () => {
     import("@src/services/Tes"),
     import("./Ledger"),
   ]);
-
-  return {
-    MemoryQueue,
-    JsonRpcClient,
-    DataSource,
-    Commitments,
-    CommitmentsHistory,
-    SyncService,
-    Tes,
-    Ledger,
-  };
-};
-
-// Cache for preloaded modules
-const preloadedModulesPromise = loadHeavyDependencies();
-
-export const initialize = async (
-  wallet: ConnectedWallet,
-  viewAccount: ViewAccount,
-  evmClients: EvmClients,
-  appPrefixKey: string,
-  tesUrl: string,
-  vaultAddress: Address,
-  forwarderAddress: Address,
-  tokenAddress: Address,
-  faucetUrl: string,
-) => {
-  // Dynamically load heavy dependencies (use preloaded if available)
-  const {
-    MemoryQueue,
-    JsonRpcClient,
-    DataSource,
-    Commitments,
-    CommitmentsHistory,
-    SyncService,
-    Tes,
-    Ledger,
-  } = await preloadedModulesPromise;
 
   // Create lightweight dependencies immediately
   const queue = new MemoryQueue();

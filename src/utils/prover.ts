@@ -69,8 +69,6 @@ const circuitTypes = [
 
 export type CircuitType = (typeof circuitTypes)[number];
 
-const snarkjs = import("snarkjs");
-
 class Prover {
   private cache: Map<CircuitType, Promise<[Uint8Array, Uint8Array]>> =
     new Map();
@@ -170,7 +168,7 @@ class Prover {
   async runPlonkProof(circuitType: CircuitType, inputs: CircuitSignals) {
     // 1. Fetch the WASM witness calculator
     const [wasmBuff, zkeyBuff] = await this.provedDeps(circuitType);
-    const { plonk } = await snarkjs;
+    const { plonk } = await import("snarkjs");
 
     // 3. Compute proof + public signals in one call
     //    fullProve = calc witness → generate proof
@@ -187,7 +185,7 @@ class Prover {
     proof: PlonkProof,
     publicSignals: PublicSignals,
   ) {
-    const { plonk } = await snarkjs;
+    const { plonk } = await import("snarkjs");
 
     // Get calldata for Solidity verifier
     const calldata = await plonk.exportSolidityCallData(proof, publicSignals);

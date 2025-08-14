@@ -1,5 +1,4 @@
 import { generatePrivateKey } from "viem/accounts";
-import { computePoseidon } from "@src/utils/poseidon";
 import { Address, Hex } from "viem";
 import { prover } from "@src/utils/prover";
 import {
@@ -40,7 +39,7 @@ async function generateDepositCommitmentData(
     const sValue = BigInt(generatePrivateKey());
     sValues.push(sValue);
     amounts.push(individualAmounts[i]);
-
+    const { computePoseidon } = await import("@src/utils/poseidon");
     const hash = await computePoseidon({
       amount: individualAmounts[i],
       entropy: sValue,

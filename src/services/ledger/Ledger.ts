@@ -26,7 +26,6 @@ import { EvmClients } from "@src/services/Clients";
 import { ViewAccount } from "@src/services/Account";
 import { compareEvents, EventLike } from "@src/utils/events";
 import { AxiosInstance } from "axios";
-import { computePoseidon } from "@src/utils/poseidon";
 import { LedgerEvents } from "./events";
 
 export type TransactionDetails = {
@@ -57,9 +56,6 @@ const loadHeavyDependencies = async () => {
   };
 };
 
-// Cache for preloaded modules
-const preloadedModulesPromise = loadHeavyDependencies();
-
 export class Ledger extends EventEmitter {
   private faucetRpc: ServiceClient<FaucetRpc>;
   private logger = new Logger(Ledger.name);
@@ -67,7 +63,11 @@ export class Ledger extends EventEmitter {
   private eventsCache: VaultEvent[] = [];
   private eventsHandlerDebounced: ReturnType<typeof debounce>;
   private updateBothBalancesDebounced: ReturnType<typeof debounce>;
-
+  private preloadedModulesPromise: Promise<{
+    asyncVaultUtils: typeof import("@src/utils/vault");
+    asyncMetaTxUtils: typeof import("@src/utils/metatx");
+    Tes: typeof import("@src/services/Tes").Tes;
+  }>;
   constructor(
     private readonly viewAccount: ViewAccount,
     private readonly evmClients: EvmClients,
@@ -84,6 +84,7 @@ export class Ledger extends EventEmitter {
     private readonly axios: AxiosInstance,
   ) {
     super();
+    this.preloadedModulesPromise = loadHeavyDependencies();
     this.faucetRpc = this.faucetRpcClient.getService(this.faucetUrl, {
       namespace: "faucet",
     });
@@ -146,7 +147,7 @@ export class Ledger extends EventEmitter {
 
   private async getEncryptionParams(user: Address) {
     const mainAccount = await this.mainAccount();
-    const { asyncVaultUtils } = await preloadedModulesPromise;
+    const { asyncVaultUtils } = await this.preloadedModulesPromise;
     const { publicKey: encryptionPublicKey, active: senderActive } =
       await asyncVaultUtils.isUserRegistered(
         user,
@@ -210,8 +211,8 @@ export class Ledger extends EventEmitter {
             mainAccount.address,
           );
         } else if (tesUrl.length && tesUrl !== this.tesService.tesUrl) {
-          const dynamicModules = await preloadedModulesPromise;
-          const shortLivedTes = new dynamicModules.Tes(
+          const { Tes } = await this.preloadedModulesPromise;
+          const shortLivedTes = new Tes(
             tesUrl,
             this.viewAccount,
             this.queue,
@@ -375,7 +376,7 @@ export class Ledger extends EventEmitter {
   prepareDepositParamsForApproval(value: bigint) {
     return this.enqueue(
       async () => {
-        const { asyncVaultUtils } = await preloadedModulesPromise;
+        const { asyncVaultUtils } = await this.preloadedModulesPromise;
         const mainAccount = await this.mainAccount();
         const { tesUrl, encryptionPublicKey } = await this.getEncryptionParams(
           mainAccount.address,
@@ -443,7 +444,7 @@ export class Ledger extends EventEmitter {
     return this.enqueue(
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
-          await preloadedModulesPromise;
+          await this.preloadedModulesPromise;
         const mainAccount = await this.mainAccount();
         const gas = await asyncVaultUtils.getDepositTxGas(depositParams);
 
@@ -497,7 +498,7 @@ export class Ledger extends EventEmitter {
     return this.enqueue(
       async () => {
         const mainAccount = await this.mainAccount();
-        const { asyncMetaTxUtils } = await preloadedModulesPromise;
+        const { asyncMetaTxUtils } = await this.preloadedModulesPromise;
         const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
           metaTransaction,
           this.forwarder,
@@ -518,7 +519,7 @@ export class Ledger extends EventEmitter {
     return this.enqueue(
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
-          await preloadedModulesPromise;
+          await this.preloadedModulesPromise;
         const mainAccount = await this.mainAccount();
         const { gasPrice, paymasterAddress } = await this.tesService.quote(
           this.token,
@@ -624,7 +625,7 @@ export class Ledger extends EventEmitter {
   ) {
     return this.enqueue(
       async () => {
-        const { asyncMetaTxUtils } = await preloadedModulesPromise;
+        const { asyncMetaTxUtils } = await this.preloadedModulesPromise;
         const mainAccount = await this.mainAccount();
         const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
           metaTransaction,
@@ -647,7 +648,7 @@ export class Ledger extends EventEmitter {
     return this.enqueue(
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
-          await preloadedModulesPromise;
+          await this.preloadedModulesPromise;
         const mainAccount = await this.mainAccount();
         const commitments = await this.commitments.all();
 
@@ -692,6 +693,8 @@ export class Ledger extends EventEmitter {
         this.logger.log(
           `Withdraw: gas without forwarding: ${gas.toString()}, coveredGas: ${gasToCover.toString()}`,
         );
+
+        const { computePoseidon } = await import("@src/utils/poseidon");
 
         return {
           metaTransaction: {
@@ -738,7 +741,7 @@ export class Ledger extends EventEmitter {
   withdraw(metaTransaction: UnsignedMetaTransaction, coveredGas: string) {
     return this.enqueue(
       async () => {
-        const { asyncMetaTxUtils } = await preloadedModulesPromise;
+        const { asyncMetaTxUtils } = await this.preloadedModulesPromise;
         const mainAccount = await this.mainAccount();
         const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
           metaTransaction,
@@ -761,7 +764,7 @@ export class Ledger extends EventEmitter {
     return this.enqueue(
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
-          await preloadedModulesPromise;
+          await this.preloadedModulesPromise;
         const mainAccount = await this.mainAccount();
         const { gasPrice, paymasterAddress } = await this.tesService.quote(
           this.token,
@@ -858,7 +861,7 @@ export class Ledger extends EventEmitter {
   send(metaTransaction: UnsignedMetaTransaction, coveredGas: string) {
     return this.enqueue(
       async () => {
-        const { asyncMetaTxUtils } = await preloadedModulesPromise;
+        const { asyncMetaTxUtils } = await this.preloadedModulesPromise;
         const mainAccount = await this.mainAccount();
         const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
           metaTransaction,

@@ -1,5 +1,4 @@
 import { generatePrivateKey } from "viem/accounts";
-import { computePoseidon } from "@src/utils/poseidon";
 import { CircuitType, getCircuitType, prover } from "@src/utils/prover";
 import { type Address, type Hex } from "viem";
 import {
@@ -20,6 +19,7 @@ async function createOutputs(amount: bigint, totalInputAmount: bigint) {
   const outputSValues: bigint[] = [];
 
   const receiverSValue = BigInt(generatePrivateKey());
+  const { computePoseidon } = await import("@src/utils/poseidon");
   const receiverHash = await computePoseidon({
     amount,
     entropy: receiverSValue,
@@ -32,6 +32,7 @@ async function createOutputs(amount: bigint, totalInputAmount: bigint) {
   // Create change output if needed
   if (hasChange) {
     const changeSValue = BigInt(generatePrivateKey());
+    const { computePoseidon } = await import("@src/utils/poseidon");
     const changeHash = await computePoseidon({
       amount: changeAmount,
       entropy: changeSValue,
