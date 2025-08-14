@@ -56,7 +56,7 @@ export default function MenuTab() {
   const { isFauceting, handleFaucet, amount } = useFaucet();
 
   const buttonStyle =
-    "w-full h-14 text-2xl flex items-center justify-between pl-6 pr-6 bg-transparent text-white font-semibold focus:outline-none transition";
+    "w-full h-14 text-2xl flex items-center justify-between pl-6 pr-6 bg-transparent text-white/80 hover:text-white/90 font-semibold focus:outline-none transition hover:cursor-pointer";
 
   const disabledButtonStyle = isFauceting
     ? "opacity-50 cursor-not-allowed"
@@ -91,13 +91,15 @@ export default function MenuTab() {
           Deposit
           <ArrowIcon />
         </button>
-        <button
-          className={`${buttonStyle} ${disabledButtonStyle}`}
-          disabled={isFauceting || isLoading}
+        <a
+          href="https://pryx.cash/#faq"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={buttonStyle}
         >
           F.A.Q
-          <QuestionIcon />
-        </button>
+          <QuestionIcon className="w-6 h-6" />
+        </a>
         <button
           className={`${buttonStyle} ${disabledButtonStyle}`}
           onClick={onResetWalletModalOpen}
