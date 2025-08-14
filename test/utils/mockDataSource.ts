@@ -1,4 +1,4 @@
-import type { DataSource } from "@src/services/core/db/leveldb.spurce";
+import type { DataSource } from "@src/services/core/db/leveldb.source";
 
 export const createMockDataSource = (): DataSource => {
   const store = new Map<string, string>();

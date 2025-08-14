@@ -1,4 +1,4 @@
-import { type CustomClient } from "@src/services/core/evmClient.service";
+import { type CustomClient } from "@src/services/Clients";
 import { Address, Hash, PublicClient } from "viem";
 import { VAULT_ABI, REGISTRY_ABI } from "./vault.abi";
 

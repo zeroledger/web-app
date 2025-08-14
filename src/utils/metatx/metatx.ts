@@ -1,6 +1,6 @@
 import { Address, Chain, Hex, PublicClient } from "viem";
 import { FORWARDER_ABI } from "./metatx.abi";
-import { CustomClient } from "@src/services/core/evmClient.service";
+import { CustomClient } from "@src/services/Clients";
 import { forwardRequestType } from "./metatx.constants";
 
 const getForwarderDomain = (
