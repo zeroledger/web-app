@@ -177,7 +177,6 @@ export default function DepositModal({
                   <SigningPreview
                     isSigning={isLoading}
                     isSuccess={isSuccess}
-                    isError={isError}
                     title="Sign Deposit Transaction"
                     description="Review and sign the deposit transaction"
                     messageData={
@@ -213,7 +212,6 @@ export default function DepositModal({
                     onSign={onSign}
                     buttonText="Sign & Deposit"
                     successText="Deposit Successful!"
-                    errorText="Deposit Failed"
                   />
                 </div>
               </div>
