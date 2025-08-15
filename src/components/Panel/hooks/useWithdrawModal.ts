@@ -114,21 +114,10 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
         try {
           setIsModalLoading(true);
 
-          const amount = parseUnits(form.getValues("amount"), decimals);
-
-          if (amount === privateBalance) {
-            // Full withdraw
-            await ledger!.withdraw(
-              metaTransactionData.metaTransaction,
-              metaTransactionData.coveredGas,
-            );
-          } else {
-            // Partial withdraw
-            await ledger!.partialWithdraw(
-              metaTransactionData.metaTransaction,
-              metaTransactionData.coveredGas,
-            );
-          }
+          await ledger!.executeMetaTransaction(
+            metaTransactionData.metaTransaction,
+            metaTransactionData.coveredGas,
+          );
 
           setIsModalSuccess(true);
         } catch (error) {
@@ -140,7 +129,7 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
           handleBack();
         }
       }),
-    [ledger, form, decimals, privateBalance, metaTransactionData, handleBack],
+    [ledger, metaTransactionData, handleBack],
   );
 
   return useMemo(

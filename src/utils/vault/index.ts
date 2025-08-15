@@ -1,5 +1,5 @@
 export { default as prepareDeposit } from "./prepareDeposit";
-export { getRegistry, isUserRegistered } from "./registry";
+export * from "./registry";
 export { default as prepareSpend } from "./prepareSpend";
 export { watchVault, getMissedEvents } from "./watcher";
 export { encode, decodeMetadata, decryptCommitment } from "./metadata";

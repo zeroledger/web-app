@@ -160,14 +160,12 @@ function TwoStepSpendModal({
                     <SigningPreview
                       isSigning={isLoading}
                       isSuccess={isSuccess}
-                      isError={!!errorMessage}
                       title={`Sign & Send ${type} Meta Transaction`}
                       description={`Review the transaction details before signing. This action cannot be undone`}
                       messageData={getSigningData}
                       onSign={onSign}
                       buttonText={`Sign & Send`}
                       successText={`${type} Successful!`}
-                      errorText="Transaction Failed"
                       extraContent={
                         <SecondStepExtraContent
                           isDetailsOpen={isDetailsOpen}

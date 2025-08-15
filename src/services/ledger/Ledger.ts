@@ -437,6 +437,31 @@ export class Ledger extends EventEmitter {
     );
   }
 
+  executeMetaTransaction(
+    metaTransaction: UnsignedMetaTransaction,
+    coveredGas: string,
+  ) {
+    return this.enqueue(
+      async () => {
+        const { asyncMetaTxUtils } = await this.preloadedModulesPromise;
+        const mainAccount = await this.mainAccount();
+        const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
+          metaTransaction,
+          this.forwarder,
+          await this.evmClients.externalClient(),
+        );
+        return await this.tesService.executeMetaTransaction(
+          signedMetaTransaction,
+          coveredGas,
+          mainAccount.address,
+        );
+      },
+      "executeMetaTransaction",
+      80_000,
+      true,
+    );
+  }
+
   prepareDepositMetaTransaction(
     depositParams: DepositParams,
     gasToCover: bigint,
@@ -494,27 +519,6 @@ export class Ledger extends EventEmitter {
     );
   }
 
-  deposit(metaTransaction: UnsignedMetaTransaction, coveredGas: string) {
-    return this.enqueue(
-      async () => {
-        const mainAccount = await this.mainAccount();
-        const { asyncMetaTxUtils } = await this.preloadedModulesPromise;
-        const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
-          metaTransaction,
-          this.forwarder,
-          await this.evmClients.externalClient(),
-        );
-        return await this.tesService.executeMetaTransaction(
-          signedMetaTransaction,
-          coveredGas,
-          mainAccount.address,
-        );
-      },
-      "LedgerService.deposit",
-      80_000,
-      true,
-    );
-  }
   preparePartialWithdrawMetaTransaction(value: bigint, recipient: Address) {
     return this.enqueue(
       async () => {
@@ -619,31 +623,6 @@ export class Ledger extends EventEmitter {
     );
   }
 
-  partialWithdraw(
-    metaTransaction: UnsignedMetaTransaction,
-    coveredGas: string,
-  ) {
-    return this.enqueue(
-      async () => {
-        const { asyncMetaTxUtils } = await this.preloadedModulesPromise;
-        const mainAccount = await this.mainAccount();
-        const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
-          metaTransaction,
-          this.forwarder,
-          await this.evmClients.externalClient(),
-        );
-        return await this.tesService.executeMetaTransaction(
-          signedMetaTransaction,
-          coveredGas,
-          mainAccount.address,
-        );
-      },
-      "partialWithdraw",
-      80_000,
-      true,
-    );
-  }
-
   prepareWithdrawMetaTransaction(recipient: Address) {
     return this.enqueue(
       async () => {
@@ -738,28 +717,6 @@ export class Ledger extends EventEmitter {
     );
   }
 
-  withdraw(metaTransaction: UnsignedMetaTransaction, coveredGas: string) {
-    return this.enqueue(
-      async () => {
-        const { asyncMetaTxUtils } = await this.preloadedModulesPromise;
-        const mainAccount = await this.mainAccount();
-        const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
-          metaTransaction,
-          this.forwarder,
-          await this.evmClients.externalClient(),
-        );
-        return await this.tesService.executeMetaTransaction(
-          signedMetaTransaction,
-          coveredGas,
-          mainAccount.address,
-        );
-      },
-      "LedgerService.withdraw",
-      80_000,
-      true,
-    );
-  }
-
   prepareSendMetaTransaction(value: bigint, recipient: Address) {
     return this.enqueue(
       async () => {
@@ -771,6 +728,10 @@ export class Ledger extends EventEmitter {
           mainAccount.address,
         );
 
+        /**
+         * Inputs rebate fee, outputs add fee
+         * That means 1 - 3 is the most expensive gas to cover
+         */
         const gasToCover = asyncVaultUtils.spendGasSponsoredLimit(1, 3, 1);
         const fee = gasPrice * gasToCover;
         const { selectedCommitmentRecords, totalAmount } =
@@ -858,24 +819,53 @@ export class Ledger extends EventEmitter {
     );
   }
 
-  send(metaTransaction: UnsignedMetaTransaction, coveredGas: string) {
+  prepareRegisterMetaTransaction() {
     return this.enqueue(
       async () => {
-        const { asyncMetaTxUtils } = await this.preloadedModulesPromise;
+        const { asyncVaultUtils, asyncMetaTxUtils } =
+          await this.preloadedModulesPromise;
+        const { publicKey } = this.viewAccount.getViewAccount()!;
+        if (!publicKey) {
+          throw new Error("View account is not configured");
+        }
+
         const mainAccount = await this.mainAccount();
-        const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
-          metaTransaction,
-          this.forwarder,
+        const registry = await asyncVaultUtils.getRegistry(
+          this.vault,
           await this.evmClients.externalClient(),
         );
-        return this.tesService.executeMetaTransaction(
-          signedMetaTransaction,
-          coveredGas,
-          mainAccount.address,
-        );
+        const gasToCover = asyncVaultUtils.registerGasSponsoredLimit();
+        return {
+          metaTransaction: {
+            from: mainAccount.address,
+            to: registry,
+            value: 0,
+            gas: await asyncVaultUtils.getRegisterTxGas(
+              publicKey,
+              this.vault,
+              await this.evmClients.externalClient(),
+            ),
+            nonce: await asyncMetaTxUtils.getForwarderNonce(
+              mainAccount.address,
+              this.forwarder,
+              this.evmClients.readClient,
+            ),
+            deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+            data: asyncVaultUtils.getRegisterTxData(publicKey),
+          } as UnsignedMetaTransaction,
+          coveredGas: gasToCover.toString(),
+          transactionDetails: {
+            type: "register",
+            registry,
+            from: mainAccount.address,
+            publicKey,
+            fee: 0,
+            paymaster: this.forwarder,
+          },
+        };
       },
-      "send",
-      80_000,
+      "prepareRegisterMetaTransaction",
+      240_000,
       true,
     );
   }

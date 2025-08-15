@@ -136,7 +136,7 @@ export const useMultiStepDepositModal = (decimals: number) => {
         try {
           setIsModalLoading(true);
 
-          await ledger!.deposit(
+          await ledger!.executeMetaTransaction(
             metaTransactionData.metaTransaction,
             metaTransactionData.coveredGas,
           );

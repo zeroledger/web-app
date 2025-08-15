@@ -12,7 +12,7 @@ export interface SigningData {
 export interface SigningPreviewProps {
   isSigning: boolean;
   isSuccess: boolean;
-  isError: boolean;
+  error?: Error;
   title: string;
   description: string;
   messageData: SigningData[];
@@ -21,7 +21,6 @@ export interface SigningPreviewProps {
   onError?: (error: Error) => void;
   buttonText?: string;
   successText?: string;
-  errorText?: string;
   warningText?: string;
   extraContent?: ReactNode;
 }
@@ -29,14 +28,13 @@ export interface SigningPreviewProps {
 export default function SigningPreview({
   isSigning,
   isSuccess,
-  isError,
+  error,
   title,
   description,
   messageData,
   onSign,
   buttonText = "Sign",
   successText = "Success!",
-  errorText = "Error",
   warningText,
   extraContent,
 }: SigningPreviewProps) {
@@ -81,7 +79,7 @@ export default function SigningPreview({
       {/* Status Messages */}
       <div
         className={`overflow-hidden transition-all duration-500 ease-in-out ${
-          isSuccess || isError ? "max-h-32 mb-6" : "max-h-0 mb-0"
+          isSuccess || error ? "max-h-32 mb-6" : "max-h-0 mb-0"
         }`}
       >
         {isSuccess && (
@@ -95,9 +93,11 @@ export default function SigningPreview({
           </div>
         )}
 
-        {isError && (
+        {error && (
           <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-4 text-center animate-fade-in">
-            <div className="text-red-400 font-semibold mb-1">{errorText}</div>
+            <div className="text-red-400 font-semibold mb-1">
+              {error.message ?? "Unknown error"}
+            </div>
             <div className="text-red-300 text-sm">
               Failed to complete operation
             </div>

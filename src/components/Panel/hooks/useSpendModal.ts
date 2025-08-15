@@ -105,7 +105,7 @@ export const useTwoStepSpendModal = (decimals: number) => {
         try {
           setIsModalLoading(true);
 
-          await ledger!.send(
+          await ledger!.executeMetaTransaction(
             metaTransactionData.metaTransaction,
             metaTransactionData.coveredGas,
           );
