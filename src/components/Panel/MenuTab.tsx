@@ -13,6 +13,7 @@ import { TwoStepSpendModal } from "@src/components/Modals/TwoStepSpendModal";
 import { useTwoStepWithdrawModal } from "./hooks/useWithdrawModal";
 import { useMultiStepDepositModal } from "./hooks/useDepositModal";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
+import { LANDING_URL } from "@src/common.constants";
 
 export default function MenuTab() {
   const { decimals, isLoading } = useContext(PanelContext);
@@ -92,7 +93,7 @@ export default function MenuTab() {
           <ArrowIcon />
         </button>
         <a
-          href="https://zeroledger.wtf/#faq"
+          href={`${LANDING_URL}/#faq`}
           target="_blank"
           rel="noopener noreferrer"
           className={buttonStyle}
