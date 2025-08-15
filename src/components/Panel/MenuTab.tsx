@@ -92,7 +92,7 @@ export default function MenuTab() {
           <ArrowIcon />
         </button>
         <a
-          href="https://pryx.cash/#faq"
+          href="https://zeroledger.wtf/#faq"
           target="_blank"
           rel="noopener noreferrer"
           className={buttonStyle}
