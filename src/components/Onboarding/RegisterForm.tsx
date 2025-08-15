@@ -123,7 +123,7 @@ export default function RegisterForm() {
                 />
               </svg>
             )}
-            {isConnecting ? "Connecting..." : "Open"}
+            {isConnecting ? "Opening" : "Open"}
           </Button>
         </div>
       </form>

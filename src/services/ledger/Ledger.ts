@@ -237,10 +237,9 @@ export class Ledger extends EventEmitter {
               this.viewAccount.viewPrivateKey()!,
             );
           }
-        } catch (error) {
-          this.logger.error(error as Error);
+        } catch {
           this.catchService.catch(
-            new Error("Fail to decrypt commitment, skip"),
+            new Error(`Fail to decrypt commitment ${shortCommitment}, skip`),
           );
         }
 
