@@ -17,8 +17,8 @@ import { catchService } from "@src/services/core/catch.service";
 import { backOff } from "exponential-backoff";
 import { ViewAccount } from "@src/services/Account";
 
-const AUTH_TOKEN_ABI = parseAbiParameters(
-  "address authAddress,bytes authSignature,address ownerAddress,bytes delegationSignature",
+export const AUTH_TOKEN_ABI = parseAbiParameters(
+  "address viewAddr,bytes challengeSignature, address ownerAddr,bytes ownerAccDelegationSignature",
 );
 
 const backoffOptions = {
