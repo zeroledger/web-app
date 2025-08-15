@@ -67,7 +67,9 @@ export class Tes {
 
   private signChallenge(random: Hex) {
     return this.viewAccount.getViewAccount()!.signMessage({
-      message: random,
+      message: {
+        raw: random,
+      },
     });
   }
 
@@ -237,6 +239,16 @@ export class Tes {
           withCredentials: true,
         },
       );
+    }, backoffOptions);
+  }
+
+  async getUserPublicKey(user: Address) {
+    return backOff(async () => {
+      await this.manageAuth(user);
+      const { data } = await this.axios.get<{
+        publicKey: Hex | null;
+      }>(`${this.tesUrl}/userMetadata/publicKey/${user}`);
+      return data.publicKey;
     }, backoffOptions);
   }
 

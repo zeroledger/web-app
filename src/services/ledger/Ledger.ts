@@ -27,6 +27,7 @@ import { ViewAccount } from "@src/services/Account";
 import { compareEvents, EventLike } from "@src/utils/events";
 import { AxiosInstance } from "axios";
 import { LedgerEvents } from "./events";
+import { shortString } from "@src/utils/common";
 
 export type TransactionDetails = {
   type: "deposit" | "partialWithdraw" | "withdraw" | "send";
@@ -147,16 +148,10 @@ export class Ledger extends EventEmitter {
 
   private async getEncryptionParams(user: Address) {
     const mainAccount = await this.mainAccount();
-    const { asyncVaultUtils } = await this.preloadedModulesPromise;
-    const { publicKey: encryptionPublicKey, active: senderActive } =
-      await asyncVaultUtils.isUserRegistered(
-        user,
-        this.vault,
-        this.evmClients.readClient,
-      );
-    if (!senderActive) {
+    const encryptionPublicKey = await this.tesService.getUserPublicKey(user);
+    if (!encryptionPublicKey) {
       this.logger.warn(
-        `${user} PEPK is not registered, getting trusted encryption token`,
+        `${user} view account public key is not registered, getting trusted encryption token`,
       );
       return {
         encryptionPublicKey: await this.tesService.getTrustedEncryptionToken(
@@ -201,9 +196,14 @@ export class Ledger extends EventEmitter {
           event.args.metadata,
         );
 
+        const shortCommitment = shortString(encryptedCommitment);
+
         let commitment: CommitmentStruct;
 
         if (tesUrl.length && tesUrl === this.tesService.tesUrl) {
+          this.logger.log(
+            `Decrypting commitment ${shortCommitment} via long default tes instance`,
+          );
           commitment = await this.tesService.decrypt(
             event.blockNumber!.toString(),
             this.token,
@@ -212,13 +212,16 @@ export class Ledger extends EventEmitter {
           );
         } else if (tesUrl.length && tesUrl !== this.tesService.tesUrl) {
           const { Tes } = await this.preloadedModulesPromise;
-          const shortLivedTes = new Tes(
+          const externalTes = new Tes(
             tesUrl,
             this.viewAccount,
             this.queue,
             this.axios,
           );
-          commitment = await shortLivedTes.decrypt(
+          this.logger.log(
+            `Decrypting commitment ${shortCommitment} via external tes instance`,
+          );
+          commitment = await externalTes.decrypt(
             event.blockNumber!.toString(),
             this.token,
             event.args.poseidonHash!.toString(),
@@ -226,7 +229,7 @@ export class Ledger extends EventEmitter {
           );
         } else {
           this.logger.log(
-            `local decryption of encryptedCommitment: ${encryptedCommitment}`,
+            `Decrypting commitment ${shortCommitment} via private view account key`,
           );
           commitment = decryptCommitment(
             encryptedCommitment,
@@ -814,57 +817,6 @@ export class Ledger extends EventEmitter {
         };
       },
       "prepareSendMetaTransaction",
-      240_000,
-      true,
-    );
-  }
-
-  prepareRegisterMetaTransaction() {
-    return this.enqueue(
-      async () => {
-        const { asyncVaultUtils, asyncMetaTxUtils } =
-          await this.preloadedModulesPromise;
-        const { publicKey } = this.viewAccount.getViewAccount()!;
-        if (!publicKey) {
-          throw new Error("View account is not configured");
-        }
-
-        const mainAccount = await this.mainAccount();
-        const registry = await asyncVaultUtils.getRegistry(
-          this.vault,
-          await this.evmClients.externalClient(),
-        );
-        const gasToCover = asyncVaultUtils.registerGasSponsoredLimit();
-        return {
-          metaTransaction: {
-            from: mainAccount.address,
-            to: registry,
-            value: 0,
-            gas: await asyncVaultUtils.getRegisterTxGas(
-              publicKey,
-              this.vault,
-              await this.evmClients.externalClient(),
-            ),
-            nonce: await asyncMetaTxUtils.getForwarderNonce(
-              mainAccount.address,
-              this.forwarder,
-              this.evmClients.readClient,
-            ),
-            deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
-            data: asyncVaultUtils.getRegisterTxData(publicKey),
-          } as UnsignedMetaTransaction,
-          coveredGas: gasToCover.toString(),
-          transactionDetails: {
-            type: "register",
-            registry,
-            from: mainAccount.address,
-            publicKey,
-            fee: 0,
-            paymaster: this.forwarder,
-          },
-        };
-      },
-      "prepareRegisterMetaTransaction",
       240_000,
       true,
     );

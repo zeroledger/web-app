@@ -9,6 +9,7 @@ import { Avatar } from "../EnsProfile/Avatar";
 import { Name } from "../EnsProfile/Name";
 import { Address } from "viem";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
+import clsx from "clsx";
 
 export default function WalletTab() {
   const { privateBalance, error, blocksToSync, decimals, isLoading } =
@@ -51,12 +52,15 @@ export default function WalletTab() {
         )}
       </a>
       <div
-        className="flex items-center gap-2 relative my-3 hover:cursor-pointer"
+        className="flex items-center gap-2 relative my-4 hover:cursor-pointer"
         onClick={handleCopyAddress}
       >
         {!isEnsLoading && address && (
           <Name
-            className="text-center text-2xl"
+            className={clsx("text-center", {
+              "text-2xl": ensProfile?.name,
+              "text-lg": !ensProfile?.name,
+            })}
             name={ensProfile?.name}
             address={address}
           />
