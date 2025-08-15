@@ -198,43 +198,54 @@ export class Ledger extends EventEmitter {
 
         const shortCommitment = shortString(encryptedCommitment);
 
-        let commitment: CommitmentStruct;
+        let commitment: CommitmentStruct | undefined = undefined;
 
-        if (tesUrl.length && tesUrl === this.tesService.tesUrl) {
-          this.logger.log(
-            `Decrypting commitment ${shortCommitment} via long default tes instance`,
+        try {
+          if (tesUrl.length && tesUrl === this.tesService.tesUrl) {
+            this.logger.log(
+              `Decrypting commitment ${shortCommitment} via long default tes instance`,
+            );
+            commitment = await this.tesService.decrypt(
+              event.blockNumber!.toString(),
+              this.token,
+              event.args.poseidonHash!.toString(),
+              mainAccount.address,
+            );
+          } else if (tesUrl.length && tesUrl !== this.tesService.tesUrl) {
+            const { Tes } = await this.preloadedModulesPromise;
+            const externalTes = new Tes(
+              tesUrl,
+              this.viewAccount,
+              this.queue,
+              this.axios,
+            );
+            this.logger.log(
+              `Decrypting commitment ${shortCommitment} via external tes instance`,
+            );
+            commitment = await externalTes.decrypt(
+              event.blockNumber!.toString(),
+              this.token,
+              event.args.poseidonHash!.toString(),
+              mainAccount.address,
+            );
+          } else {
+            this.logger.log(
+              `Decrypting commitment ${shortCommitment} via private view account key`,
+            );
+            commitment = decryptCommitment(
+              encryptedCommitment,
+              this.viewAccount.viewPrivateKey()!,
+            );
+          }
+        } catch (error) {
+          this.logger.error(error as Error);
+          this.catchService.catch(
+            new Error("Fail to decrypt commitment, skip"),
           );
-          commitment = await this.tesService.decrypt(
-            event.blockNumber!.toString(),
-            this.token,
-            event.args.poseidonHash!.toString(),
-            mainAccount.address,
-          );
-        } else if (tesUrl.length && tesUrl !== this.tesService.tesUrl) {
-          const { Tes } = await this.preloadedModulesPromise;
-          const externalTes = new Tes(
-            tesUrl,
-            this.viewAccount,
-            this.queue,
-            this.axios,
-          );
-          this.logger.log(
-            `Decrypting commitment ${shortCommitment} via external tes instance`,
-          );
-          commitment = await externalTes.decrypt(
-            event.blockNumber!.toString(),
-            this.token,
-            event.args.poseidonHash!.toString(),
-            mainAccount.address,
-          );
-        } else {
-          this.logger.log(
-            `Decrypting commitment ${shortCommitment} via private view account key`,
-          );
-          commitment = decryptCommitment(
-            encryptedCommitment,
-            this.viewAccount.viewPrivateKey()!,
-          );
+        }
+
+        if (!commitment) {
+          continue;
         }
 
         const ledgerRecord = LedgerRecordDto.from(
