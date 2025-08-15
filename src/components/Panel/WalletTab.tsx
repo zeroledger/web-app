@@ -44,11 +44,12 @@ export default function WalletTab() {
         {!isEnsLoading && (
           <Avatar
             avatar={ensProfile?.avatar}
-            className="h-15 w-15 rounded-full"
+            address={address}
+            className="h-15 w-15 rounded-lg"
           />
         )}
         {isEnsLoading && (
-          <div className="bg-gray-700 h-15 w-15 rounded-full animate-pulse" />
+          <div className="bg-gray-700 h-15 w-15 rounded-lg animate-pulse" />
         )}
       </a>
       <div

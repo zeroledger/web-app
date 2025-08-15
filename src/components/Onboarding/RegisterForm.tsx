@@ -51,7 +51,8 @@ export default function RegisterForm() {
           <>
             <Avatar
               avatar={ensProfile?.avatar}
-              className="h-15 w-15 rounded-full"
+              address={wallet!.address as Address}
+              className="h-15 w-15 rounded-lg"
             />
             <Name
               className="text-base/6"
@@ -62,7 +63,7 @@ export default function RegisterForm() {
         )}
         {isEnsLoading && (
           <>
-            <div className="bg-white/50 h-15 w-15 rounded-full animate-pulse" />
+            <div className="bg-white/50 h-15 w-15 rounded-lg animate-pulse" />
             <div className="h-8 w-38 bg-white/50 animate-pulse rounded" />
           </>
         )}
