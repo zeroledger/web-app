@@ -351,6 +351,28 @@ export class Ledger extends EventEmitter {
     return commitments.reduce((acc, c) => acc + BigInt(c.value), 0n);
   }
 
+  async getConsolidationRatio() {
+    const nonZeroCommitments = await this.commitments.getNonZeroCommitments();
+
+    if (nonZeroCommitments.length <= 3) {
+      return 1; // No consolidation needed
+    }
+
+    const totalBalance = nonZeroCommitments.reduce(
+      (acc, c) => acc + c.value,
+      0n,
+    );
+    const top3Balance = nonZeroCommitments
+      .slice(0, 3)
+      .reduce((acc, c) => acc + c.value, 0n);
+
+    if (totalBalance === 0n) {
+      return 1;
+    }
+
+    return Number(top3Balance) / Number(totalBalance);
+  }
+
   async start() {
     // enqueue prevents handleIncomingEventsDebounced to be activated before sync is done,
     // so that old commitments processed before 'real-time' incoming

@@ -19,6 +19,7 @@ import {
   FORWARDER_ADDRESS,
 } from "@src/common.constants";
 import { usePrivateBalance } from "./usePrivateBalance";
+import { useConsolidationRatio } from "./useConsolidationRatio";
 import { useLedgerSync } from "./useLedgerSync";
 import { Address } from "viem";
 import { EvmClients } from "@src/services/Clients";
@@ -58,6 +59,7 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
   } = useMetadata(TOKEN_ADDRESS, chainSupported, evmClients);
 
   const privateBalance = usePrivateBalance(mutate, ledger);
+  const consolidationRatio = useConsolidationRatio(ledger);
 
   const accountSwitch = useCallback(async () => {
     try {
@@ -149,6 +151,7 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
       decimals,
       metadataError,
       privateBalance,
+      consolidationRatio,
       isLoading:
         isConnecting ||
         syncState === "inProgress" ||
@@ -163,6 +166,7 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
       isConnecting,
       error,
       privateBalance,
+      consolidationRatio,
       symbol,
       publicBalance,
       decimals,

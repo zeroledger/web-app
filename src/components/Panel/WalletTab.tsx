@@ -12,8 +12,14 @@ import { PanelContext } from "@src/components/Panel/context/panel/panel.context"
 import clsx from "clsx";
 
 export default function WalletTab() {
-  const { privateBalance, error, blocksToSync, decimals, isLoading } =
-    useContext(PanelContext);
+  const {
+    privateBalance,
+    error,
+    blocksToSync,
+    decimals,
+    isLoading,
+    consolidationRatio,
+  } = useContext(PanelContext);
   const { wallet, ensProfile, isEnsLoading } = useContext(LedgerContext);
 
   const address = wallet?.address as Address | undefined;
@@ -90,6 +96,12 @@ export default function WalletTab() {
       )}
       {!isLoading && !error && (
         <div className="text-4xl h-12 font-extrabold text-white">{`$${formatBalance(privateBalance, decimals)}`}</div>
+      )}
+      {!isLoading && !error && consolidationRatio < 1 && (
+        <div className="text-sm text-yellow-600/90 text-center mt-2 px-4">
+          To spend more than {Math.round(consolidationRatio * 100)}% of account
+          balance you need first consolidate your commitments.
+        </div>
       )}
       <div className="flex gap-6 mt-8">
         <button

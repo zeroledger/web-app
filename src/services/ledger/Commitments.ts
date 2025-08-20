@@ -77,6 +77,23 @@ export default class Commitments {
     return data.map((item) => LedgerRecordDto.of(item));
   }
 
+  async getNonZeroCommitments() {
+    const allCommitments = await this.all();
+    return allCommitments
+      .map((c) => ({
+        value: BigInt(c.value),
+        sValue: BigInt(c.sValue),
+        hash: BigInt(c.hash),
+      }))
+      .filter((c) => c.value > 0n)
+      .sort((a, b) => {
+        if (a.value === b.value) {
+          return 0;
+        }
+        return a.value > b.value ? -1 : 1; // Sort in descending order
+      });
+  }
+
   async findCommitments(amount: bigint) {
     // Sort commitments by amount in descending order
     const sortedCommitments = [...(await this.all())]
