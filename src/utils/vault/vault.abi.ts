@@ -3,57 +3,7 @@ export const VAULT_ABI = [
     inputs: [
       {
         internalType: "address",
-        name: "_depositVerifier",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "_spend11Verifier",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "_spend12Verifier",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "_spend13Verifier",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "_spend21Verifier",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "_spend22Verifier",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "_spend23Verifier",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "_spend31Verifier",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "_spend32Verifier",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "_spend161Verifier",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "_encryptionRegistry",
+        name: "_verifiers",
         type: "address",
       },
       {
@@ -341,32 +291,6 @@ export const VAULT_ABI = [
     type: "function",
   },
   {
-    inputs: [],
-    name: "depositVerifier",
-    outputs: [
-      {
-        internalType: "contract DepositVerifier",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "encryptionRegistry",
-    outputs: [
-      {
-        internalType: "contract EncryptionRegistry",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
     inputs: [
       {
         internalType: "address",
@@ -490,127 +414,23 @@ export const VAULT_ABI = [
   },
   {
     inputs: [],
-    name: "spend11Verifier",
-    outputs: [
-      {
-        internalType: "contract Spend11Verifier",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "spend12Verifier",
-    outputs: [
-      {
-        internalType: "contract Spend12Verifier",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "spend13Verifier",
-    outputs: [
-      {
-        internalType: "contract Spend13Verifier",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "spend161Verifier",
-    outputs: [
-      {
-        internalType: "contract Spend161Verifier",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "spend21Verifier",
-    outputs: [
-      {
-        internalType: "contract Spend21Verifier",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "spend22Verifier",
-    outputs: [
-      {
-        internalType: "contract Spend22Verifier",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "spend23Verifier",
-    outputs: [
-      {
-        internalType: "contract Spend23Verifier",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "spend31Verifier",
-    outputs: [
-      {
-        internalType: "contract Spend31Verifier",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "spend32Verifier",
-    outputs: [
-      {
-        internalType: "contract Spend32Verifier",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
     name: "trustedForwarder",
     outputs: [
       {
         internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "verifiers",
+    outputs: [
+      {
+        internalType: "contract Verifiers",
         name: "",
         type: "address",
       },
