@@ -12,8 +12,7 @@ export const OnesHash =
 
 export const APP_PREFIX_KEY = `${document.location.hostname}.zeroledger-app`;
 
-export const TOKEN_ADDRESS: Address =
-  "0x6Af5C33c20ca6169B3D98A2bcc94bDD0F4f68ffd";
+export const TOKEN_ADDRESS: Address = import.meta.env.VITE_TOKEN_ADDRESS;
 
 // expected to have same address on all chains
 export const VAULT_ADDRESS: Address = import.meta.env.VITE_VAULT_ADDRESS;
