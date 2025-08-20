@@ -13,6 +13,7 @@ import { UseFormReturn } from "react-hook-form";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import { type TransactionDetails } from "@src/services/ledger";
 import { DepositParams } from "@src/utils/vault/types";
+import { useMemo } from "react";
 
 interface DepositFormData {
   amount: string;
@@ -63,6 +64,63 @@ export default function DepositModal({
       handleSubmit(onFormSubmit)();
     }
   };
+
+  const depositTransactionDetails = useMemo(
+    () =>
+      metaTransactionData?.transactionDetails
+        ? [
+            {
+              label: "From",
+              value: shortString(metaTransactionData.transactionDetails.from),
+            },
+            {
+              label: "To",
+              value: shortString(metaTransactionData.transactionDetails.to),
+            },
+            {
+              label: "Vault Contract",
+              value: shortString(
+                metaTransactionData.transactionDetails.vaultContract,
+              ),
+            },
+            {
+              label: "Token",
+              value: shortString(metaTransactionData.transactionDetails.token),
+            },
+            {
+              label: "Outputs",
+              value: (
+                <>
+                  {metaTransactionData.transactionDetails.outputs.map(
+                    (output) => (
+                      <div key={output}>{shortString(output.toString())}</div>
+                    ),
+                  )}
+                </>
+              ),
+            },
+            {
+              label: "Amount",
+              value: `${formatEther(metaTransactionData.transactionDetails.value)} USD`,
+            },
+            {
+              label: "Fee",
+              value: `${formatEther(metaTransactionData.transactionDetails.fee)} USD`,
+            },
+            {
+              label: "Gas",
+              value: metaTransactionData.coveredGas,
+            },
+            {
+              label: "Paymaster",
+              value: shortString(
+                metaTransactionData.transactionDetails.paymaster,
+              ),
+            },
+          ]
+        : [],
+    [metaTransactionData?.transactionDetails, metaTransactionData?.coveredGas],
+  );
 
   return (
     <div
@@ -179,36 +237,7 @@ export default function DepositModal({
                     isSuccess={isSuccess}
                     title="Sign Deposit Transaction"
                     description="Review and sign the deposit transaction"
-                    messageData={
-                      metaTransactionData?.transactionDetails
-                        ? [
-                            {
-                              label: "From",
-                              value: shortString(
-                                metaTransactionData.transactionDetails.from,
-                              ),
-                            },
-                            {
-                              label: "To",
-                              value: shortString(
-                                metaTransactionData.transactionDetails.to,
-                              ),
-                            },
-                            {
-                              label: "Amount",
-                              value: `${formatEther(metaTransactionData.transactionDetails.value)} USD`,
-                            },
-                            {
-                              label: "Fee",
-                              value: `${formatEther(metaTransactionData.transactionDetails.fee)} USD`,
-                            },
-                            {
-                              label: "Gas",
-                              value: metaTransactionData.coveredGas,
-                            },
-                          ]
-                        : []
-                    }
+                    messageData={depositTransactionDetails}
                     onSign={onSign}
                     buttonText="Sign & Deposit"
                     successText="Deposit Successful!"

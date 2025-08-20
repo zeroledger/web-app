@@ -7,7 +7,7 @@ const getForwarderDomain = (
   chainId: Chain["id"],
   verifyingContract: Address,
 ) => ({
-  name: "BaseForwarder",
+  name: "ZeroLedgerForwarder",
   version: "1",
   chainId,
   verifyingContract: verifyingContract,

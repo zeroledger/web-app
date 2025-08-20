@@ -66,7 +66,7 @@ function TwoStepSpendModal({
     }
   };
 
-  const getSigningData = useMemo(
+  const signingData = useMemo(
     () => prepareSigningData(metaTransactionData?.metaTransaction),
     [metaTransactionData?.metaTransaction],
   );
@@ -162,7 +162,7 @@ function TwoStepSpendModal({
                       isSuccess={isSuccess}
                       title={`Sign & Send ${type} Meta Transaction`}
                       description={`Review the transaction details before signing. This action cannot be undone`}
-                      messageData={getSigningData}
+                      messageData={signingData}
                       onSign={onSign}
                       buttonText={`Sign & Send`}
                       successText={`${type} Successful!`}

@@ -2,7 +2,7 @@ import { Address, formatEther, parseEther } from "viem";
 import { EventEmitter } from "node:events";
 import debounce from "debounce";
 import { FaucetRpc, FaucetRequestDto } from "@src/services/core/faucet.dto";
-import { approve } from "@src/utils/erc20";
+import { approve, allowance } from "@src/utils/erc20";
 import { JsonRpcClient, ServiceClient } from "@src/services/core/rpc";
 import { Logger } from "@src/utils/logger";
 import { MemoryQueue } from "@src/services/core/queue";
@@ -414,11 +414,21 @@ export class Ledger extends EventEmitter {
             tesUrl,
           );
 
+        const client = await this.evmClients.externalClient();
+
+        const spendAllowance = await allowance({
+          client,
+          tokenAddress: this.token,
+          ownerAddress: mainAccount.address,
+          spenderAddress: this.vault,
+        });
+
         const depositParams = {
           depositStruct,
-          client: await this.evmClients.externalClient(),
+          client,
           contract: this.vault,
           proof: proofData.calldata_proof,
+          approveRequired: spendAllowance < value,
         };
 
         return {

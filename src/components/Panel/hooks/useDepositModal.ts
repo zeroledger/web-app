@@ -81,8 +81,21 @@ export const useMultiStepDepositModal = (decimals: number) => {
               parseUnits(data.amount, decimals),
             );
 
-          setDepositParamsData(depositParamsData);
-          setCurrentStep("params");
+          if (depositParamsData.depositParams.approveRequired) {
+            setDepositParamsData(depositParamsData);
+            setCurrentStep("params");
+            setIsModalLoading(false);
+            return;
+          }
+
+          const metaTransactionData =
+            await ledger!.prepareDepositMetaTransaction(
+              depositParamsData.depositParams,
+              depositParamsData.gasToCover,
+            );
+
+          setMetaTransactionData(metaTransactionData);
+          setCurrentStep("preview");
           setIsModalLoading(false);
         } catch (error) {
           console.error("Failed to prepare deposit params:", error);

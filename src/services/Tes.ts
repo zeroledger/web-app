@@ -223,23 +223,21 @@ export class Tes {
     coveredGas: string,
     mainAccountAddress: Address,
   ) {
-    return backOff(async () => {
-      await this.manageAuth(mainAccountAddress);
-      await this.axios.post(
-        `${this.tesUrl}/paymaster/execute`,
-        {
-          metatx,
-          coveredGas,
+    await backOff(() => this.manageAuth(mainAccountAddress), backoffOptions);
+    await this.axios.post(
+      `${this.tesUrl}/paymaster/execute`,
+      {
+        metatx,
+        coveredGas,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "x-custom-tes-csrf": this.csrf,
         },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "x-custom-tes-csrf": this.csrf,
-          },
-          withCredentials: true,
-        },
-      );
-    }, backoffOptions);
+        withCredentials: true,
+      },
+    );
   }
 
   async getUserPublicKey(user: Address) {
