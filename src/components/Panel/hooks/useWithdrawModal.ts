@@ -31,7 +31,7 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
     coveredGas: string;
     transactionDetails: TransactionDetails;
   }>();
-
+  const [promise, setPromise] = useState<Promise<void>>(asyncOperationPromise);
   const { disableSwipe, enableSwipe } = useSwipe();
 
   const form = useForm<WithdrawFormData>({
@@ -42,94 +42,102 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
   });
 
   const onModalOpen = useCallback(
-    async () =>
-      await asyncOperationPromise.then(() => {
-        setIsModalSuccess(false);
-        setIsModalLoading(false);
-        setErrorMessage(undefined);
-        setCurrentStep("form");
-        setMetaTransactionData(undefined);
-        disableSwipe();
-        setIsModalOpen(true);
-      }),
-    [disableSwipe],
+    () =>
+      setPromise(
+        promise.then(() => {
+          setIsModalSuccess(false);
+          setIsModalLoading(false);
+          setErrorMessage(undefined);
+          setCurrentStep("form");
+          setMetaTransactionData(undefined);
+          disableSwipe();
+          setIsModalOpen(true);
+        }),
+      ),
+    [disableSwipe, promise],
   );
 
   const handleBack = useCallback(
-    async () =>
-      await asyncOperationPromise.then(async () => {
-        setIsModalOpen(false);
-        await delay(500);
-        form.reset();
-        setMetaTransactionData(undefined);
-        setCurrentStep("form");
-        enableSwipe();
-      }),
-    [form, enableSwipe],
+    () =>
+      setPromise(
+        promise.then(async () => {
+          setIsModalOpen(false);
+          await delay(500);
+          form.reset();
+          setMetaTransactionData(undefined);
+          setCurrentStep("form");
+          enableSwipe();
+        }),
+      ),
+    [form, enableSwipe, promise],
   );
 
   const handleFormSubmit = useCallback(
-    async (data: WithdrawFormData) =>
-      await asyncOperationPromise.then(async () => {
-        try {
-          setIsModalLoading(true);
+    (data: WithdrawFormData) =>
+      setPromise(
+        promise.then(async () => {
+          try {
+            setIsModalLoading(true);
 
-          const recipient = await ens.universalResolve(data.recipient);
+            const recipient = await ens.universalResolve(data.recipient);
 
-          const amount = parseUnits(data.amount, decimals);
-          let metaTransactionData;
+            const amount = parseUnits(data.amount, decimals);
+            let metaTransactionData;
 
-          if (amount === privateBalance) {
-            // Full withdraw
-            const fullWithdrawData =
-              await ledger!.prepareWithdrawMetaTransaction(recipient);
-            metaTransactionData = fullWithdrawData;
-          } else {
-            // Partial withdraw
-            metaTransactionData =
-              await ledger!.preparePartialWithdrawMetaTransaction(
-                amount,
-                recipient,
-              );
+            if (amount === privateBalance) {
+              // Full withdraw
+              const fullWithdrawData =
+                await ledger!.prepareWithdrawMetaTransaction(recipient);
+              metaTransactionData = fullWithdrawData;
+            } else {
+              // Partial withdraw
+              metaTransactionData =
+                await ledger!.preparePartialWithdrawMetaTransaction(
+                  amount,
+                  recipient,
+                );
+            }
+            setMetaTransactionData(metaTransactionData);
+            setCurrentStep("preview");
+            setIsModalLoading(false);
+          } catch (error) {
+            console.error("Failed to prepare withdraw transaction:", error);
+            setErrorMessage("Failed to prepare withdraw transaction");
+            setIsModalLoading(false);
+            await delay(3000);
+            handleBack();
           }
-          setMetaTransactionData(metaTransactionData);
-          setCurrentStep("preview");
-          setIsModalLoading(false);
-        } catch (error) {
-          console.error("Failed to prepare withdraw transaction:", error);
-          setErrorMessage("Failed to prepare withdraw transaction");
-          setIsModalLoading(false);
-          await delay(3000);
-          handleBack();
-        }
-      }),
-    [ledger, decimals, privateBalance, handleBack],
+        }),
+      ),
+    [ledger, decimals, privateBalance, handleBack, promise],
   );
 
   const handleSign = useCallback(
-    async () =>
-      await asyncOperationPromise.then(async () => {
-        if (!metaTransactionData) return;
+    () =>
+      setPromise(
+        promise.then(async () => {
+          if (!metaTransactionData) return;
 
-        try {
-          setIsModalLoading(true);
+          try {
+            setIsModalLoading(true);
 
-          await ledger!.executeMetaTransaction(
-            metaTransactionData.metaTransaction,
-            metaTransactionData.coveredGas,
-          );
+            await ledger!.executeMetaTransaction(
+              metaTransactionData.metaTransaction,
+              metaTransactionData.coveredGas,
+            );
 
-          setIsModalSuccess(true);
-        } catch (error) {
-          setErrorMessage("Failed to sign withdraw transaction");
-          console.error(error);
-        } finally {
-          setIsModalLoading(false);
-          await delay(2000);
-          handleBack();
-        }
-      }),
-    [ledger, metaTransactionData, handleBack],
+            setIsModalSuccess(true);
+          } catch (error) {
+            setErrorMessage("Failed to sign withdraw transaction");
+            console.error(error);
+          } finally {
+            setIsModalLoading(false);
+            await delay(2000);
+            handleBack();
+          }
+        }),
+      ),
+    [ledger, metaTransactionData, handleBack, promise],
   );
 
   return useMemo(

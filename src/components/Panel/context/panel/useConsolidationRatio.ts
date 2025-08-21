@@ -26,11 +26,9 @@ export function useConsolidationRatio(ledger?: Ledger) {
 
     // Listen for balance changes to update consolidation ratio
     ledger?.on(LedgerEvents.PRIVATE_BALANCE_CHANGE, setter);
-    ledger?.on(LedgerEvents.ONCHAIN_BALANCE_CHANGE, setter);
 
     return () => {
       ledger?.off(LedgerEvents.PRIVATE_BALANCE_CHANGE, setter);
-      ledger?.off(LedgerEvents.ONCHAIN_BALANCE_CHANGE, setter);
     };
   }, [ledger]);
 

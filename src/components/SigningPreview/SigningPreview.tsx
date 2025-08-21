@@ -16,7 +16,7 @@ export interface SigningPreviewProps {
   title: string;
   description: string;
   messageData: SigningData[];
-  onSign: () => Promise<void>;
+  onSign: () => void;
   onSuccess?: () => void;
   onError?: (error: Error) => void;
   buttonText?: string;

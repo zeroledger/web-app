@@ -26,8 +26,8 @@ interface DepositModalProps {
   isError: boolean;
   currentStep: "form" | "params" | "preview";
   onFormSubmit: (data: DepositFormData) => void;
-  onApprove: () => Promise<void>;
-  onSign: () => Promise<void>;
+  onApprove: () => void;
+  onSign: () => void;
   onBack: () => void;
   formMethods: UseFormReturn<DepositFormData>;
   metaTransactionData?: {

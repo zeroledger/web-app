@@ -29,6 +29,7 @@ export const useTwoStepSpendModal = (decimals: number) => {
     coveredGas: string;
     transactionDetails: TransactionDetails;
   }>();
+  const [promise, setPromise] = useState<Promise<void>>(asyncOperationPromise);
 
   const { disableSwipe, enableSwipe } = useSwipe();
 
@@ -40,86 +41,95 @@ export const useTwoStepSpendModal = (decimals: number) => {
   });
 
   const onModalOpen = useCallback(
-    async () =>
-      await asyncOperationPromise.then(() => {
-        setIsModalSuccess(false);
-        setIsModalLoading(false);
-        setErrorMessage(undefined);
-        setCurrentStep("form");
-        setMetaTransactionData(undefined);
-        disableSwipe();
-        setIsModalOpen(true);
-      }),
-    [disableSwipe],
+    () =>
+      setPromise(
+        promise.then(() => {
+          setIsModalSuccess(false);
+          setIsModalLoading(false);
+          setErrorMessage(undefined);
+          setCurrentStep("form");
+          setMetaTransactionData(undefined);
+          disableSwipe();
+          setIsModalOpen(true);
+        }),
+      ),
+    [disableSwipe, promise],
   );
 
   const handleBack = useCallback(
-    async () =>
-      await asyncOperationPromise.then(async () => {
-        setIsModalOpen(false);
-        await delay(500);
-        form.reset();
-        setMetaTransactionData(undefined);
-        setCurrentStep("form");
-        enableSwipe();
-      }),
-    [form, enableSwipe],
+    () =>
+      setPromise(
+        promise.then(async () => {
+          setIsModalOpen(false);
+          await delay(500);
+          form.reset();
+          setMetaTransactionData(undefined);
+          setCurrentStep("form");
+          enableSwipe();
+        }),
+      ),
+    [form, enableSwipe, promise],
   );
 
   const handleFormSubmit = useCallback(
-    async (data: SpendFormData) =>
-      await asyncOperationPromise.then(async () => {
-        try {
-          setIsModalLoading(true);
+    (data: SpendFormData) =>
+      setPromise(
+        promise.then(async () => {
+          try {
+            setIsModalLoading(true);
 
-          const recipient = await ens.universalResolve(data.recipient);
+            const recipient = await ens.universalResolve(data.recipient);
 
-          // This is a placeholder - in reality, you would call the ledger service
-          // to prepare the metatransaction data
-          const metaTransactionData = await ledger!.prepareSendMetaTransaction(
-            parseUnits(data.amount, decimals),
-            recipient,
-          );
+            // This is a placeholder - in reality, you would call the ledger service
+            // to prepare the metatransaction data
+            const metaTransactionData =
+              await ledger!.prepareSendMetaTransaction(
+                parseUnits(data.amount, decimals),
+                recipient,
+              );
 
-          setMetaTransactionData(metaTransactionData);
-          setCurrentStep("preview");
-          setIsModalLoading(false);
-        } catch (error) {
-          console.error("Failed to prepare metaTransaction:", error);
-          setErrorMessage(
-            (error as Error)?.message ?? "Failed to prepare metaTransaction",
-          );
-          setIsModalLoading(false);
-          await delay(3000);
-          handleBack();
-        }
-      }),
-    [ledger, decimals, handleBack],
+            setMetaTransactionData(metaTransactionData);
+            setCurrentStep("preview");
+            setIsModalLoading(false);
+          } catch (error) {
+            console.error("Failed to prepare metaTransaction:", error);
+            setErrorMessage(
+              (error as Error)?.message ?? "Failed to prepare metaTransaction",
+            );
+            setIsModalLoading(false);
+            await delay(3000);
+            handleBack();
+          }
+        }),
+      ),
+    [ledger, decimals, handleBack, promise],
   );
 
   const handleSign = useCallback(
-    async () =>
-      await asyncOperationPromise.then(async () => {
-        if (!metaTransactionData) return;
+    () =>
+      setPromise(
+        promise.then(async () => {
+          if (!metaTransactionData) return;
 
-        try {
-          setIsModalLoading(true);
+          try {
+            setIsModalLoading(true);
 
-          await ledger!.executeMetaTransaction(
-            metaTransactionData.metaTransaction,
-            metaTransactionData.coveredGas,
-          );
-          setIsModalSuccess(true);
-        } catch (error) {
-          setErrorMessage("Failed to send metaTransaction");
-          console.error(error);
-        } finally {
-          setIsModalLoading(false);
-          await delay(2000);
-          handleBack();
-        }
-      }),
-    [ledger, metaTransactionData, handleBack],
+            await ledger!.executeMetaTransaction(
+              metaTransactionData.metaTransaction,
+              metaTransactionData.coveredGas,
+            );
+            setIsModalSuccess(true);
+          } catch (error) {
+            setErrorMessage("Failed to send metaTransaction");
+            console.error(error);
+          } finally {
+            setIsModalLoading(false);
+            await delay(2000);
+            handleBack();
+          }
+        }),
+      ),
+    [ledger, metaTransactionData, handleBack, promise],
   );
 
   return useMemo(

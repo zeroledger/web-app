@@ -32,7 +32,7 @@ export const useMultiStepDepositModal = (decimals: number) => {
     coveredGas: string;
     transactionDetails: TransactionDetails;
   }>();
-
+  const [promise, setPromise] = useState<Promise<void>>(asyncOperationPromise);
   const { disableSwipe, enableSwipe } = useSwipe();
 
   const form = useForm<DepositFormData>({
@@ -42,128 +42,137 @@ export const useMultiStepDepositModal = (decimals: number) => {
   });
 
   const onModalOpen = useCallback(
-    async () =>
-      await asyncOperationPromise.then(() => {
-        setIsModalSuccess(false);
-        setIsModalLoading(false);
-        setIsModalError(false);
-        setCurrentStep("form");
-        setDepositParamsData(undefined);
-        setMetaTransactionData(undefined);
-        disableSwipe();
-        setIsModalOpen(true);
-      }),
-    [disableSwipe],
+    () =>
+      setPromise(
+        promise.then(() => {
+          setIsModalLoading(false);
+          setIsModalError(false);
+          setCurrentStep("form");
+          setDepositParamsData(undefined);
+          setMetaTransactionData(undefined);
+          disableSwipe();
+          setIsModalOpen(true);
+        }),
+      ),
+    [disableSwipe, promise],
   );
 
   const handleBack = useCallback(
-    async () =>
-      await asyncOperationPromise.then(async () => {
-        setIsModalOpen(false);
-        await delay(500);
-        form.reset();
-        setDepositParamsData(undefined);
-        setMetaTransactionData(undefined);
-        setCurrentStep("form");
-        enableSwipe();
-      }),
-    [form, enableSwipe],
+    () =>
+      setPromise(
+        promise.then(async () => {
+          setIsModalOpen(false);
+          await delay(500);
+          form.reset();
+          setDepositParamsData(undefined);
+          setMetaTransactionData(undefined);
+          setCurrentStep("form");
+          enableSwipe();
+        }),
+      ),
+    [form, enableSwipe, promise],
   );
 
   const handleFormSubmit = useCallback(
-    async (data: DepositFormData) =>
-      await asyncOperationPromise.then(async () => {
-        try {
-          setIsModalLoading(true);
+    (data: DepositFormData) =>
+      setPromise(
+        promise.then(async () => {
+          try {
+            setIsModalLoading(true);
 
-          const depositParamsData =
-            await ledger!.prepareDepositParamsForApproval(
-              parseUnits(data.amount, decimals),
-            );
+            const depositParamsData =
+              await ledger!.prepareDepositParamsForApproval(
+                parseUnits(data.amount, decimals),
+              );
 
-          if (depositParamsData.depositParams.approveRequired) {
-            setDepositParamsData(depositParamsData);
-            setCurrentStep("params");
+            if (depositParamsData.depositParams.approveRequired) {
+              setDepositParamsData(depositParamsData);
+              setCurrentStep("params");
+              setIsModalLoading(false);
+              return;
+            }
+
+            const metaTransactionData =
+              await ledger!.prepareDepositMetaTransaction(
+                depositParamsData.depositParams,
+                depositParamsData.gasToCover,
+              );
+
+            setMetaTransactionData(metaTransactionData);
+            setCurrentStep("preview");
             setIsModalLoading(false);
-            return;
+          } catch (error) {
+            console.error("Failed to prepare deposit params:", error);
+            setIsModalError(true);
+            setIsModalLoading(false);
+            await delay(3000);
+            handleBack();
           }
-
-          const metaTransactionData =
-            await ledger!.prepareDepositMetaTransaction(
-              depositParamsData.depositParams,
-              depositParamsData.gasToCover,
-            );
-
-          setMetaTransactionData(metaTransactionData);
-          setCurrentStep("preview");
-          setIsModalLoading(false);
-        } catch (error) {
-          console.error("Failed to prepare deposit params:", error);
-          setIsModalError(true);
-          setIsModalLoading(false);
-          await delay(3000);
-          handleBack();
-        }
-      }),
-    [ledger, decimals, handleBack],
+        }),
+      ),
+    [ledger, decimals, handleBack, promise],
   );
 
   const handleParamsApprove = useCallback(
-    async () =>
-      await asyncOperationPromise.then(async () => {
-        if (!depositParamsData) return;
+    () =>
+      setPromise(
+        promise.then(async () => {
+          if (!depositParamsData) return;
 
-        try {
-          setIsModalLoading(true);
+          try {
+            setIsModalLoading(true);
 
-          await ledger!.approveDeposit(depositParamsData.depositParams);
+            await ledger!.approveDeposit(depositParamsData.depositParams);
 
-          const metaTransactionData =
-            await ledger!.prepareDepositMetaTransaction(
-              depositParamsData.depositParams,
-              depositParamsData.gasToCover,
+            const metaTransactionData =
+              await ledger!.prepareDepositMetaTransaction(
+                depositParamsData.depositParams,
+                depositParamsData.gasToCover,
+              );
+
+            setMetaTransactionData(metaTransactionData);
+            setCurrentStep("preview");
+            setIsModalLoading(false);
+          } catch (error) {
+            console.error(
+              "Failed to approve deposit or prepare meta transaction:",
+              error,
             );
-
-          setMetaTransactionData(metaTransactionData);
-          setCurrentStep("preview");
-          setIsModalLoading(false);
-        } catch (error) {
-          console.error(
-            "Failed to approve deposit or prepare meta transaction:",
-            error,
-          );
-          setIsModalError(true);
-          setIsModalLoading(false);
-          await delay(3000);
-          handleBack();
-        }
-      }),
-    [ledger, depositParamsData, handleBack],
+            setIsModalError(true);
+            setIsModalLoading(false);
+            await delay(3000);
+            handleBack();
+          }
+        }),
+      ),
+    [ledger, depositParamsData, handleBack, promise],
   );
 
   const handleSign = useCallback(
-    async () =>
-      await asyncOperationPromise.then(async () => {
-        if (!metaTransactionData) return;
+    () =>
+      setPromise(
+        promise.then(async () => {
+          if (!metaTransactionData) return;
 
-        try {
-          setIsModalLoading(true);
+          try {
+            setIsModalLoading(true);
 
-          await ledger!.executeMetaTransaction(
-            metaTransactionData.metaTransaction,
-            metaTransactionData.coveredGas,
-          );
-          setIsModalSuccess(true);
-        } catch (error) {
-          setIsModalError(true);
-          console.error(error);
-        } finally {
-          setIsModalLoading(false);
-          await delay(2000);
-          handleBack();
-        }
-      }),
-    [ledger, metaTransactionData, handleBack],
+            await ledger!.executeMetaTransaction(
+              metaTransactionData.metaTransaction,
+              metaTransactionData.coveredGas,
+            );
+            setIsModalSuccess(true);
+          } catch (error) {
+            setIsModalError(true);
+            console.error(error);
+          } finally {
+            setIsModalLoading(false);
+            await delay(2000);
+            handleBack();
+          }
+        }),
+      ),
+    [ledger, metaTransactionData, handleBack, promise],
   );
 
   return useMemo(

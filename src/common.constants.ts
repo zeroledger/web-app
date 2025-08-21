@@ -47,3 +47,6 @@ export const WS_RPC: { [prop: number]: string[] } = {
 export const pollingInterval: { [prop: number]: number } = {
   [optimismSepolia.id]: 10000,
 };
+
+export const SHARED_INPUT =
+  16345784317541686154474118656352090725662212393131703302641232392927716723243n;

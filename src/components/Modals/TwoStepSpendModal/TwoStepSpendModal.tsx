@@ -29,7 +29,7 @@ interface TwoStepSpendModalProps {
   errorMessage?: string;
   currentStep: "form" | "preview";
   onFormSubmit: (data: SpendFormData) => void;
-  onSign: () => Promise<void>;
+  onSign: () => void;
   onBack: () => void;
   formMethods: UseFormReturn<SpendFormData>;
   type: "Payment" | "Withdraw";
