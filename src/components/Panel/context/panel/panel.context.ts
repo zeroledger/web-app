@@ -10,6 +10,7 @@ export const PanelContext = createContext<{
   decimals: number;
   metadataError?: Error;
   consolidationRatio: number;
+  balanceForConsolidation: bigint;
 }>({
   symbol: "",
   publicBalance: 0n,
@@ -17,4 +18,5 @@ export const PanelContext = createContext<{
   privateBalance: 0n,
   isLoading: false,
   consolidationRatio: 1,
+  balanceForConsolidation: 0n,
 });

@@ -1,6 +1,6 @@
 import { useState, useContext, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
-import { parseUnits } from "viem";
+import { Address, parseUnits } from "viem";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useSwipe } from "./useSwipe";
 import { delay } from "@src/utils/common";
@@ -15,7 +15,11 @@ interface SpendFormData {
 
 const asyncOperationPromise = Promise.resolve();
 
-export const useTwoStepSpendModal = (decimals: number) => {
+export const useTwoStepSpendModal = (
+  decimals: number,
+  ownerAddress: Address,
+  balanceForConsolidation: bigint,
+) => {
   const { ledger } = useContext(LedgerContext);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalLoading, setIsModalLoading] = useState(false);
@@ -71,6 +75,49 @@ export const useTwoStepSpendModal = (decimals: number) => {
     [form, enableSwipe, promise],
   );
 
+  const onConsolidationOpen = useCallback(() => {
+    setPromise(
+      promise.then(async () => {
+        try {
+          disableSwipe();
+          setIsModalSuccess(false);
+          setErrorMessage(undefined);
+          setIsModalOpen(true);
+          setIsModalLoading(true);
+
+          console.log("balanceForConsolidation", balanceForConsolidation);
+
+          // This is a placeholder - in reality, you would call the ledger service
+          // to prepare the metatransaction data
+          const metaTransactionData = await ledger!.prepareSendMetaTransaction(
+            balanceForConsolidation,
+            ownerAddress,
+            true,
+          );
+
+          setMetaTransactionData(metaTransactionData);
+          setCurrentStep("preview");
+          setIsModalLoading(false);
+        } catch (error) {
+          console.error("Failed to prepare metaTransaction:", error);
+          setErrorMessage(
+            (error as Error)?.message ?? "Failed to prepare metaTransaction",
+          );
+          setIsModalLoading(false);
+          await delay(3000);
+          handleBack();
+        }
+      }),
+    );
+  }, [
+    promise,
+    disableSwipe,
+    ledger,
+    ownerAddress,
+    balanceForConsolidation,
+    handleBack,
+  ]);
+
   const handleFormSubmit = useCallback(
     (data: SpendFormData) =>
       setPromise(
@@ -86,6 +133,7 @@ export const useTwoStepSpendModal = (decimals: number) => {
               await ledger!.prepareSendMetaTransaction(
                 parseUnits(data.amount, decimals),
                 recipient,
+                false,
               );
 
             setMetaTransactionData(metaTransactionData);
@@ -145,6 +193,7 @@ export const useTwoStepSpendModal = (decimals: number) => {
       handleSign,
       handleBack,
       metaTransactionData,
+      onConsolidationOpen,
     }),
     [
       isModalOpen,
@@ -158,6 +207,7 @@ export const useTwoStepSpendModal = (decimals: number) => {
       handleSign,
       handleBack,
       metaTransactionData,
+      onConsolidationOpen,
     ],
   );
 };

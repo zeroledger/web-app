@@ -1,5 +1,10 @@
 import { generatePrivateKey } from "viem/accounts";
-import { CircuitType, getCircuitType, prover } from "@src/utils/prover";
+import {
+  CircuitType,
+  getCircuitType,
+  prover,
+  validInputCounts,
+} from "@src/utils/prover";
 import { type Address, type Hex } from "viem";
 import {
   type SpendInput,
@@ -9,6 +14,35 @@ import {
   type SelectedCommitmentRecord,
 } from "./types";
 import { encode } from "./metadata";
+
+const SHARED_INPUT = {
+  value: 0n,
+  sValue: BigInt(
+    "0xa4ab13e44b87313fad927d17efc647642903c8a860f5a2093a2d1c903df80730",
+  ),
+  hash: 16345784317541686154474118656352090725662212393131703302641232392927716723243n,
+};
+
+function formalizeCommitments(
+  commitments: SelectedCommitmentRecord[],
+): SelectedCommitmentRecord[] {
+  if (validInputCounts.some((count) => count === commitments.length)) {
+    return commitments;
+  }
+
+  // find closed valid input count that bigger than inputs.length
+  const closedValidInputCount = validInputCounts.find(
+    (count) => count > commitments.length,
+  );
+
+  if (!closedValidInputCount) {
+    throw new Error("Invalid input count");
+  }
+
+  return commitments.concat(
+    Array(closedValidInputCount - commitments.length).fill(SHARED_INPUT),
+  );
+}
 
 async function createOutputs(amount: bigint, totalInputAmount: bigint) {
   const hasChange = totalInputAmount > amount;
@@ -176,17 +210,22 @@ export default async function prepareSpend({
     totalMovingPrivatelyAmounts,
   );
 
+  const formalizedCommitments = formalizeCommitments(commitments);
+
   const proofInput = {
-    input_amounts: commitments.map((c) => c.value),
-    input_sValues: commitments.map((c) => c.sValue),
-    inputs_hashes: commitments.map((c) => c.hash),
+    input_amounts: formalizedCommitments.map((c) => c.value),
+    input_sValues: formalizedCommitments.map((c) => c.sValue),
+    inputs_hashes: formalizedCommitments.map((c) => c.hash),
     output_amounts: outputAmounts,
     output_sValues: outputSValues,
     outputs_hashes: outputHashes,
     fee: publicSpendAmount,
   };
 
-  const circuitType = getCircuitType(commitments.length, outputHashes.length);
+  const circuitType = getCircuitType(
+    formalizedCommitments.length,
+    outputHashes.length,
+  );
 
   const { calldata_proof } = await generateSpendProof(circuitType, proofInput);
 

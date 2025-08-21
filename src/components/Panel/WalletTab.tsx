@@ -19,6 +19,7 @@ export default function WalletTab() {
     decimals,
     isLoading,
     consolidationRatio,
+    balanceForConsolidation,
   } = useContext(PanelContext);
   const { wallet, ensProfile, isEnsLoading } = useContext(LedgerContext);
 
@@ -37,7 +38,8 @@ export default function WalletTab() {
     handleBack,
     currentStep,
     metaTransactionData,
-  } = useTwoStepSpendModal(decimals);
+    onConsolidationOpen,
+  } = useTwoStepSpendModal(decimals, address!, balanceForConsolidation);
 
   return (
     <div className="flex flex-col items-center justify-center h-full px-4 pt-4">
@@ -100,7 +102,14 @@ export default function WalletTab() {
       {!isLoading && !error && consolidationRatio < 1 && (
         <div className="text-sm text-yellow-600/90 text-center mt-2 px-4">
           To spend more than {Math.round(consolidationRatio * 100)}% of account
-          balance you need first consolidate your commitments.
+          balance you need first{" "}
+          <button
+            onClick={onConsolidationOpen}
+            className="text-white/70 hover:cursor-pointer underline hover:text-white"
+          >
+            consolidate
+          </button>{" "}
+          your commitments.
         </div>
       )}
       <div className="flex gap-6 mt-8">

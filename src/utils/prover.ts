@@ -207,6 +207,8 @@ class Prover {
 
 export const prover = new Prover();
 
+export const validInputCounts = [1, 2, 3, 16];
+
 export function getCircuitType(
   inputCount: number,
   outputCount: number,
@@ -219,6 +221,7 @@ export function getCircuitType(
   if (inputCount === 2 && outputCount === 3) return "spend23";
   if (inputCount === 3 && outputCount === 1) return "spend31";
   if (inputCount === 3 && outputCount === 2) return "spend32";
+  // consolidation
   if (inputCount === 16 && outputCount === 1) return "spend161";
 
   throw new Error(

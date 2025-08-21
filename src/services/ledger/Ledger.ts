@@ -355,7 +355,7 @@ export class Ledger extends EventEmitter {
     const nonZeroCommitments = await this.commitments.getNonZeroCommitments();
 
     if (nonZeroCommitments.length <= 3) {
-      return 1; // No consolidation needed
+      return { ratio: 1, balanceForConsolidation: 0n }; // No consolidation needed
     }
 
     const totalBalance = nonZeroCommitments.reduce(
@@ -367,10 +367,15 @@ export class Ledger extends EventEmitter {
       .reduce((acc, c) => acc + c.value, 0n);
 
     if (totalBalance === 0n) {
-      return 1;
+      return { ratio: 1, balanceForConsolidation: 0n };
     }
 
-    return Number(top3Balance) / Number(totalBalance);
+    return {
+      ratio: Number(top3Balance) / Number(totalBalance),
+      balanceForConsolidation: nonZeroCommitments
+        .slice(0, 16)
+        .reduce((acc, c) => acc + c.value, 0n),
+    };
   }
 
   async start() {
@@ -762,7 +767,11 @@ export class Ledger extends EventEmitter {
     );
   }
 
-  prepareSendMetaTransaction(value: bigint, recipient: Address) {
+  prepareSendMetaTransaction(
+    value: bigint,
+    recipient: Address,
+    consolidation: boolean,
+  ) {
     return this.enqueue(
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
@@ -780,7 +789,10 @@ export class Ledger extends EventEmitter {
         const gasToCover = asyncVaultUtils.spendGasSponsoredLimit(1, 3, 1);
         const fee = gasPrice * gasToCover;
         const { selectedCommitmentRecords, totalAmount } =
-          await this.commitments.findCommitments(value - fee);
+          await this.commitments.findCommitments(
+            value - fee,
+            consolidation ? 16 : 3,
+          );
 
         if (selectedCommitmentRecords.length === 0) {
           throw new Error("No commitments found to cover the requested amount");

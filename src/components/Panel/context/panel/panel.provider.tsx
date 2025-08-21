@@ -59,7 +59,8 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
   } = useMetadata(TOKEN_ADDRESS, chainSupported, evmClients);
 
   const privateBalance = usePrivateBalance(mutate, ledger);
-  const consolidationRatio = useConsolidationRatio(ledger);
+  const { ratio: consolidationRatio, balanceForConsolidation } =
+    useConsolidationRatio(ledger);
 
   const accountSwitch = useCallback(async () => {
     try {
@@ -151,7 +152,6 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
       decimals,
       metadataError,
       privateBalance,
-      consolidationRatio,
       isLoading:
         isConnecting ||
         syncState === "inProgress" ||
@@ -159,6 +159,8 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
         isMetadataLoading,
       error,
       blocksToSync,
+      consolidationRatio,
+      balanceForConsolidation,
     }),
     [
       syncState,
@@ -166,12 +168,13 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
       isConnecting,
       error,
       privateBalance,
-      consolidationRatio,
       symbol,
       publicBalance,
       decimals,
       isMetadataLoading,
       metadataError,
+      consolidationRatio,
+      balanceForConsolidation,
     ],
   );
 

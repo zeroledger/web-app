@@ -94,7 +94,7 @@ export default class Commitments {
       });
   }
 
-  async findCommitments(amount: bigint) {
+  async findCommitments(amount: bigint, maxCount: number = 3) {
     // Sort commitments by amount in descending order
     const sortedCommitments = [...(await this.all())]
       .map((c) => ({
@@ -117,10 +117,7 @@ export default class Commitments {
     while (i < sortedCommitments.length && accumulatedAmount < amount) {
       accumulatedAmount = 0n;
       selectedCommitmentRecords = [];
-      for (let j = i; j < i + 3 && j < sortedCommitments.length; j++) {
-        if (accumulatedAmount >= amount) {
-          break;
-        }
+      for (let j = i; j < i + maxCount && j < sortedCommitments.length; j++) {
         accumulatedAmount += sortedCommitments[j].value;
         selectedCommitmentRecords.push(sortedCommitments[j]);
       }

@@ -2,17 +2,20 @@ import { useEffect, useState } from "react";
 import { type Ledger, LedgerEvents } from "@src/services/ledger";
 
 export function useConsolidationRatio(ledger?: Ledger) {
-  const [consolidationRatio, setConsolidationRatio] = useState<number>(1);
+  const [consolidationParams, setConsolidationParams] = useState<{
+    ratio: number;
+    balanceForConsolidation: bigint;
+  }>({ ratio: 1, balanceForConsolidation: 0n });
 
   useEffect(() => {
     const updateConsolidationRatio = async () => {
       if (ledger) {
         try {
-          const ratio = await ledger.getConsolidationRatio();
-          setConsolidationRatio(ratio);
+          const data = await ledger.getConsolidationRatio();
+          setConsolidationParams(data);
         } catch (error) {
           console.error("Failed to get consolidation ratio:", error);
-          setConsolidationRatio(1);
+          setConsolidationParams({ ratio: 1, balanceForConsolidation: 0n });
         }
       }
     };
@@ -32,5 +35,5 @@ export function useConsolidationRatio(ledger?: Ledger) {
     };
   }, [ledger]);
 
-  return consolidationRatio;
+  return consolidationParams;
 }
