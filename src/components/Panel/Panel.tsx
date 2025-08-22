@@ -4,7 +4,7 @@ import { useSwipeable } from "react-swipeable";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import WalletTab from "./WalletTab";
-import ActivityTab from "./ActivityTab";
+import { ActivityTab } from "./ActivityTab";
 import MenuTab from "./MenuTab";
 import { SwipeProvider } from "./context/SwipeContext";
 import { useSwipe } from "./hooks/useSwipe";

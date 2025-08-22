@@ -1,15 +1,13 @@
-import { useEffect, useState } from "react";
-import { formatUnits } from "viem";
-import { shortString } from "@src/utils/common";
-import { LedgerContext } from "@src/context/ledger/ledger.context";
-import { useContext } from "react";
-import { type HistoryRecordDto } from "@src/services/ledger";
 import {
   Disclosure,
   DisclosureButton,
   DisclosurePanel,
 } from "@headlessui/react";
-import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
+import { type HistoryRecordDto } from "@src/services/ledger";
+import { formatUnits } from "viem";
+import { shortString } from "@src/utils/common";
+
+const linkStyle = "underline text-blue-300 hover:text-blue-400";
 
 const formatAmount = (
   amount: bigint,
@@ -21,30 +19,7 @@ const formatAmount = (
   return `${prefix} $${amountNumber}`;
 };
 
-function TransactionSkeleton() {
-  return (
-    <li className="bg-white/5 rounded-lg p-4 text-white shadow animate-pulse">
-      <div className="h-6 w-1/3 bg-white/20 rounded mb-3" />
-      <div className="h-9 w-2/3 bg-white/10 rounded mb-3" />
-      <div className="h-6 w-1/2 bg-white/10 rounded mb-3" />
-      <div className="h-6 w-1/2 bg-white/10 rounded" />
-    </li>
-  );
-}
-
-// const disabledLinkStyle = "text-white/70 cursor-default";
-const linkStyle = "underline text-blue-300 hover:text-blue-400";
-// const idsContainerStyle = "flex flex-wrap text-xs gap-1 text-white/70";
-
-type GroupedTransactions = Record<
-  string,
-  {
-    incomings: HistoryRecordDto[];
-    outgoings: HistoryRecordDto[];
-  }
->;
-
-function TransactionGroup({
+export default function TransactionGroup({
   txHash,
   transactions,
   decimals,
@@ -217,69 +192,5 @@ function TransactionGroup({
         )}
       </div>
     </li>
-  );
-}
-
-export default function ActivityTab({ active }: { active: boolean }) {
-  const [loading, setLoading] = useState(true);
-  const [groupedTransactions, setGroupedTransactions] =
-    useState<GroupedTransactions>({});
-  const [error, setError] = useState<string | null>(null);
-  const { ledger } = useContext(LedgerContext);
-  const { decimals, isLoading } = useContext(PanelContext);
-
-  useEffect(() => {
-    const loadTransactions = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const txs = await ledger!.getTransactions();
-        if (txs) {
-          setGroupedTransactions(txs);
-        }
-      } catch (error) {
-        console.error("Failed to load transactions:", error);
-        setError("Failed to load transactions");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (active && !isLoading) {
-      loadTransactions();
-    }
-  }, [active, isLoading, ledger]);
-
-  const transactionGroups = Object.entries(groupedTransactions);
-
-  return (
-    <div className="h-full pt-4">
-      <div className="h-full overflow-y-auto px-4">
-        <ul className="flex flex-col gap-4 h-full">
-          {isLoading || loading ? (
-            Array.from({ length: 10 }).map((_, idx) => (
-              <TransactionSkeleton key={idx} />
-            ))
-          ) : error ? (
-            <div className="h-full flex items-center justify-center text-red-400">
-              {error}
-            </div>
-          ) : transactionGroups.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-white/70">
-              No transactions yet
-            </div>
-          ) : (
-            transactionGroups.map(([txHash, transactions]) => (
-              <TransactionGroup
-                key={txHash}
-                txHash={txHash}
-                transactions={transactions}
-                decimals={decimals}
-              />
-            ))
-          )}
-        </ul>
-      </div>
-    </div>
   );
 }

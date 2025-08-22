@@ -292,19 +292,24 @@ export default class CommitmentsHistory {
 
   async eachRevert(
     fn: (historyRecord: HistoryRecordDto) => Promise<void> | void,
+    cursor?: string,
+    limit?: number,
   ) {
     /**
      * store to filter duplicated messages of head and tail
      */
     const duplicates: Record<string, true> = {};
-
+    let currentCount = 0;
     const head = await this.getHeadNode();
-    let node: Node | undefined = await this.getTailNode();
+    let node: Node | undefined = cursor
+      ? await this.getNode(cursor)
+      : await this.getTailNode();
 
-    while (node) {
+    while (node && (limit === undefined || currentCount < limit)) {
       if (!duplicates[node.id]) {
         await fn(node.data);
         duplicates[node.id] = true;
+        currentCount++;
       }
       // Continue until we reach the head node, then stop
       if (node.id === head?.id) {
@@ -319,6 +324,26 @@ export default class CommitmentsHistory {
     await this.eachRevert((historyRecord) => {
       historyRecords.push(historyRecord);
     });
+    return historyRecords;
+  }
+
+  async getTransactionCount(): Promise<number> {
+    let count = 0;
+    await this.eachRevert(() => {
+      count++;
+    });
+    return count;
+  }
+
+  async getPaginatedTransactions(limit: number, cursor?: string) {
+    const historyRecords: HistoryRecordDto[] = [];
+    await this.eachRevert(
+      (historyRecord) => {
+        historyRecords.push(historyRecord);
+      },
+      cursor,
+      limit,
+    );
     return historyRecords;
   }
 

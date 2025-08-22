@@ -336,6 +336,62 @@ export class Ledger extends EventEmitter {
     }
   }
 
+  async getPaginatedTransactions(
+    limit: number,
+    cursor?: string,
+  ): Promise<{
+    transactions: Record<
+      string,
+      { incomings: HistoryRecordDto[]; outgoings: HistoryRecordDto[] }
+    >;
+    nextCursor?: string;
+  }> {
+    try {
+      const transactions =
+        await this.commitmentsHistory.getPaginatedTransactions(limit, cursor);
+
+      // Group transactions by transaction hash and categorize as incomings/outgoings
+      const groupedTransactions = transactions.reduce(
+        (groups, transaction) => {
+          const txHash = transaction.transactionHash || "unknown";
+
+          if (!groups[txHash]) {
+            groups[txHash] = {
+              incomings: [],
+              outgoings: [],
+            };
+          }
+
+          // Categorize based on status
+          if (transaction.status === "added") {
+            groups[txHash].incomings.push(transaction);
+          } else if (transaction.status === "spend") {
+            groups[txHash].outgoings.push(transaction);
+          }
+
+          return groups;
+        },
+        {} as Record<
+          string,
+          { incomings: HistoryRecordDto[]; outgoings: HistoryRecordDto[] }
+        >,
+      );
+
+      return {
+        transactions: groupedTransactions,
+        nextCursor:
+          transactions.length === limit
+            ? transactions[transactions.length - 1].id
+            : undefined,
+      };
+    } catch (error) {
+      this.catchService.catch(error as Error);
+      return {
+        transactions: {},
+      };
+    }
+  }
+
   async syncStatus() {
     const currentBlock = await this.evmClients.readClient.getBlockNumber();
     const lastSyncedBlock = BigInt(await this.syncService.getLastSyncedBlock());
