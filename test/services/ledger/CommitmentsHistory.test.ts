@@ -174,33 +174,4 @@ describe("CommitmentsHistory", () => {
       expect(await service.has(record.id)).toBe(false);
     });
   });
-
-  describe("getTransactionCount", () => {
-    it("should return 0 for empty list", async () => {
-      const count = await service.getTransactionCount();
-      expect(count).toBe(0);
-    });
-
-    it("should return correct count for single record", async () => {
-      const record = createMockHistoryRecord();
-      await service.add(record);
-      const count = await service.getTransactionCount();
-      expect(count).toBe(1);
-    });
-
-    it("should return correct count for multiple records", async () => {
-      const records = [
-        createMockHistoryRecord("added", "0x1111111111111111", "100", "1", "1"),
-        createMockHistoryRecord("spend", "0x2222222222222222", "200", "2", "2"),
-        createMockHistoryRecord("added", "0x3333333333333333", "300", "3", "3"),
-      ];
-
-      for (const record of records) {
-        await service.add(record);
-      }
-
-      const count = await service.getTransactionCount();
-      expect(count).toBe(3);
-    });
-  });
 });

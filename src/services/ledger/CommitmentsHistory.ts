@@ -291,7 +291,10 @@ export default class CommitmentsHistory {
   }
 
   async eachRevert(
-    fn: (historyRecord: HistoryRecordDto) => Promise<void> | void,
+    fn: (
+      historyRecord: HistoryRecordDto,
+      node: Node,
+    ) => Promise<boolean> | boolean,
     cursor?: string,
     limit?: number,
   ) {
@@ -306,13 +309,14 @@ export default class CommitmentsHistory {
       : await this.getTailNode();
 
     while (node && (limit === undefined || currentCount < limit)) {
+      let stopIteration = false;
       if (!duplicates[node.id]) {
-        await fn(node.data);
+        stopIteration = await fn(node.data, node);
         duplicates[node.id] = true;
         currentCount++;
       }
       // Continue until we reach the head node, then stop
-      if (node.id === head?.id) {
+      if (node.id === head?.id || stopIteration) {
         break;
       }
       node = node.prevId ? await this.getNode(node.prevId) : undefined;
@@ -323,27 +327,8 @@ export default class CommitmentsHistory {
     const historyRecords: HistoryRecordDto[] = [];
     await this.eachRevert((historyRecord) => {
       historyRecords.push(historyRecord);
+      return false;
     });
-    return historyRecords;
-  }
-
-  async getTransactionCount(): Promise<number> {
-    let count = 0;
-    await this.eachRevert(() => {
-      count++;
-    });
-    return count;
-  }
-
-  async getPaginatedTransactions(limit: number, cursor?: string) {
-    const historyRecords: HistoryRecordDto[] = [];
-    await this.eachRevert(
-      (historyRecord) => {
-        historyRecords.push(historyRecord);
-      },
-      cursor,
-      limit,
-    );
     return historyRecords;
   }
 

@@ -298,44 +298,6 @@ export class Ledger extends EventEmitter {
     }
   }
 
-  async getTransactions() {
-    try {
-      const transactions = await this.commitmentsHistory.all();
-
-      // Group transactions by transaction hash and categorize as incomings/outgoings
-      const groupedTransactions = transactions.reduce(
-        (groups, transaction) => {
-          const txHash = transaction.transactionHash || "unknown";
-
-          if (!groups[txHash]) {
-            groups[txHash] = {
-              incomings: [],
-              outgoings: [],
-            };
-          }
-
-          // Categorize based on status
-          if (transaction.status === "added") {
-            groups[txHash].incomings.push(transaction);
-          } else if (transaction.status === "spend") {
-            groups[txHash].outgoings.push(transaction);
-          }
-
-          return groups;
-        },
-        {} as Record<
-          string,
-          { incomings: typeof transactions; outgoings: typeof transactions }
-        >,
-      );
-
-      return groupedTransactions;
-    } catch (error) {
-      this.catchService.catch(error as Error);
-      return {};
-    }
-  }
-
   async getPaginatedTransactions(
     limit: number,
     cursor?: string,
@@ -346,43 +308,40 @@ export class Ledger extends EventEmitter {
     >;
     nextCursor?: string;
   }> {
+    let amount = 0;
+    let nextCursor: string | undefined;
     try {
-      const transactions =
-        await this.commitmentsHistory.getPaginatedTransactions(limit, cursor);
+      const transactions = {} as Record<
+        string,
+        { incomings: HistoryRecordDto[]; outgoings: HistoryRecordDto[] }
+      >;
+      await this.commitmentsHistory.eachRevert((historyRecord, { prevId }) => {
+        const txHash = historyRecord.transactionHash || "unknown";
+        nextCursor = prevId;
 
-      // Group transactions by transaction hash and categorize as incomings/outgoings
-      const groupedTransactions = transactions.reduce(
-        (groups, transaction) => {
-          const txHash = transaction.transactionHash || "unknown";
-
-          if (!groups[txHash]) {
-            groups[txHash] = {
-              incomings: [],
-              outgoings: [],
-            };
+        if (!transactions[txHash]) {
+          amount += 1;
+          if (amount > limit) {
+            return true;
           }
+          transactions[txHash] = {
+            incomings: [],
+            outgoings: [],
+          };
+        }
 
-          // Categorize based on status
-          if (transaction.status === "added") {
-            groups[txHash].incomings.push(transaction);
-          } else if (transaction.status === "spend") {
-            groups[txHash].outgoings.push(transaction);
-          }
-
-          return groups;
-        },
-        {} as Record<
-          string,
-          { incomings: HistoryRecordDto[]; outgoings: HistoryRecordDto[] }
-        >,
-      );
+        // Categorize based on status
+        if (historyRecord.status === "added") {
+          transactions[txHash].incomings.push(historyRecord);
+        } else if (historyRecord.status === "spend") {
+          transactions[txHash].outgoings.push(historyRecord);
+        }
+        return false;
+      }, cursor);
 
       return {
-        transactions: groupedTransactions,
-        nextCursor:
-          transactions.length === limit
-            ? transactions[transactions.length - 1].id
-            : undefined,
+        transactions,
+        nextCursor: nextCursor,
       };
     } catch (error) {
       this.catchService.catch(error as Error);
