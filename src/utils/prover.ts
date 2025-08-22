@@ -22,6 +22,10 @@ import spend31WasmUrl from "@src/assets/spend_31/spend_31.wasm?url";
 import spend31Zkey from "@src/assets/spend_31/spend_31.zkey?url";
 import spend32WasmUrl from "@src/assets/spend_32/spend_32.wasm?url";
 import spend32Zkey from "@src/assets/spend_32/spend_32.zkey?url";
+import spend33WasmUrl from "@src/assets/spend_33/spend_33.wasm?url";
+import spend33Zkey from "@src/assets/spend_33/spend_33.zkey?url";
+import spend81WasmUrl from "@src/assets/spend_81/spend_81.wasm?url";
+import spend81Zkey from "@src/assets/spend_81/spend_81.zkey?url";
 import spend161WasmUrl from "@src/assets/spend_161/spend_161.wasm?url";
 import spend161Zkey from "@src/assets/spend_161/spend_161.zkey?url";
 
@@ -57,14 +61,16 @@ export type Proof = [
 const circuitTypes = [
   "deposit",
   "spend32",
+  "spend33",
   "spend22",
   "spend23",
-  "spend21",
-  "spend31",
   "spend12",
   "spend13",
-  "spend11",
+  "spend81",
   "spend161",
+  "spend21",
+  "spend31",
+  "spend11",
 ] as const;
 
 export type CircuitType = (typeof circuitTypes)[number];
@@ -152,6 +158,14 @@ class Prover {
         wasm = this.urlBuffLoader(spend32WasmUrl);
         zkey = this.urlBuffLoader(spend32Zkey);
         break;
+      case "spend33":
+        wasm = this.urlBuffLoader(spend33WasmUrl);
+        zkey = this.urlBuffLoader(spend33Zkey);
+        break;
+      case "spend81":
+        wasm = this.urlBuffLoader(spend81WasmUrl);
+        zkey = this.urlBuffLoader(spend81Zkey);
+        break;
       case "spend161":
         wasm = this.urlBuffLoader(spend161WasmUrl);
         zkey = this.urlBuffLoader(spend161Zkey);
@@ -207,7 +221,7 @@ class Prover {
 
 export const prover = new Prover();
 
-export const validInputCounts = [1, 2, 3, 16];
+export const validInputCounts = [1, 2, 3, 8, 16];
 
 export function getCircuitType(
   inputCount: number,
@@ -221,7 +235,9 @@ export function getCircuitType(
   if (inputCount === 2 && outputCount === 3) return "spend23";
   if (inputCount === 3 && outputCount === 1) return "spend31";
   if (inputCount === 3 && outputCount === 2) return "spend32";
+  if (inputCount === 3 && outputCount === 3) return "spend33";
   // consolidation
+  if (inputCount === 8 && outputCount === 1) return "spend81";
   if (inputCount === 16 && outputCount === 1) return "spend161";
 
   throw new Error(
