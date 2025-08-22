@@ -69,6 +69,7 @@ export class Ledger extends EventEmitter {
     asyncMetaTxUtils: typeof import("@src/utils/metatx");
     Tes: typeof import("@src/services/Tes").Tes;
   }>;
+  private _unwatchVault?: () => void;
   constructor(
     private readonly viewAccount: ViewAccount,
     private readonly evmClients: EvmClients,
@@ -196,7 +197,9 @@ export class Ledger extends EventEmitter {
           event.args.metadata,
         );
 
-        const shortCommitment = shortString(encryptedCommitment);
+        const shortCommitment = shortString(
+          BigInt(encryptedCommitment).toString(),
+        );
 
         let commitment: CommitmentStruct | undefined = undefined;
 
@@ -383,10 +386,14 @@ export class Ledger extends EventEmitter {
     // so that old commitments processed before 'real-time' incoming
     await this.enqueue(
       async () => {
-        watchVault(this.evmClients.readClient, this.vault, (events) => {
-          this.eventsCache.push(...events);
-          this.eventsHandlerDebounced();
-        });
+        this._unwatchVault = watchVault(
+          this.evmClients.readClient,
+          this.vault,
+          (events) => {
+            this.eventsCache.push(...events);
+            this.eventsHandlerDebounced();
+          },
+        );
         const currentBlock = await this.evmClients.readClient.getBlockNumber();
         const mainAccount = await this.mainAccount();
         const tesSyncEvents = await this.tesService.syncWithTes(
@@ -906,6 +913,7 @@ export class Ledger extends EventEmitter {
 
   softReset() {
     return this.enqueue(async () => {
+      this._unwatchVault?.();
       this.updateBothBalancesDebounced.clear();
       this.eventsHandlerDebounced.clear();
       this.eventsCache = [];

@@ -124,16 +124,16 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
       reset();
       return;
     }
-    const newAccount = !viewAccount!.hasEncryptedViewAccount(
+    const unregisteredAccount = !viewAccount!.hasEncryptedViewAccount(
       wallet.address as Address,
     );
 
-    if (newAccount) {
+    if (unregisteredAccount) {
       reset();
       return;
     }
 
-    if (!newAccount && chainSupported) {
+    if (!unregisteredAccount && chainSupported) {
       accountSwitch();
     }
   }, [

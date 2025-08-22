@@ -22,7 +22,7 @@ export const AUTH_TOKEN_ABI = parseAbiParameters(
 );
 
 const backoffOptions = {
-  numOfAttempts: 4,
+  numOfAttempts: 3,
 };
 
 export class Tes {

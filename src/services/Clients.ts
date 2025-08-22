@@ -63,7 +63,8 @@ export class EvmClients {
 
   async close() {
     /**
-     * @dev do not need to close since clients maintain connection automatically
+     * @dev do not need to close ws connections since viem clients maintain them automatically
      */
+    this._externalClient = undefined;
   }
 }

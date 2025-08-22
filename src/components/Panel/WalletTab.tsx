@@ -100,7 +100,7 @@ export default function WalletTab() {
         <div className="text-4xl h-12 font-extrabold text-white">{`$${formatBalance(privateBalance, decimals)}`}</div>
       )}
       {!isLoading && !error && consolidationRatio < 1 && (
-        <div className="text-sm text-yellow-600/90 text-center mt-2 px-4">
+        <div className="text-sm text-yellow-100/70 text-center mt-2 px-4">
           To spend more than {Math.round(consolidationRatio * 100)}% of account
           balance you need first{" "}
           <button
