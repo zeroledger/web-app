@@ -242,11 +242,20 @@ export class Tes {
 
   async getUserPublicKey(user: Address) {
     return backOff(async () => {
-      await this.manageAuth(user);
       const { data } = await this.axios.get<{
         publicKey: Hex | null;
       }>(`${this.tesUrl}/userMetadata/publicKey/${user}`);
       return data.publicKey;
+    }, backoffOptions);
+  }
+
+  async getDecoyRecipient(amount = 1) {
+    return backOff(async () => {
+      const { data } = await this.axios.get<{
+        publicKey: Hex;
+        address: Address;
+      } | null>(`${this.tesUrl}/userMetadata/decoyRecipient?amount=${amount}`);
+      return data;
     }, backoffOptions);
   }
 

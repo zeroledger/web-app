@@ -142,3 +142,8 @@ export type SelectedCommitmentRecord = {
   sValue: bigint;
   hash: bigint;
 };
+
+export type DecoyParams = {
+  address: Address;
+  publicKey: Hex;
+} | null;

@@ -12,8 +12,10 @@ import {
   type OutputsOwnersStruct,
   type PublicOutput,
   type SelectedCommitmentRecord,
+  DecoyParams,
 } from "./types";
 import { encode } from "./metadata";
+import { shuffle } from "@src/utils/common";
 
 const SHARED_INPUT = {
   value: 0n,
@@ -44,13 +46,17 @@ function formalizeCommitments(
   );
 }
 
-async function createOutputs(amount: bigint, totalInputAmount: bigint) {
+type OutputRecord = SelectedCommitmentRecord & {
+  type: "receiver" | "change" | "decoy";
+};
+
+async function createOutputs(
+  amount: bigint,
+  totalInputAmount: bigint,
+  assignDecoy: boolean,
+) {
   const hasChange = totalInputAmount > amount;
   const changeAmount = hasChange ? totalInputAmount - amount : 0n;
-
-  const outputHashes: bigint[] = [];
-  const outputAmounts: bigint[] = [];
-  const outputSValues: bigint[] = [];
 
   const receiverSValue = BigInt(generatePrivateKey());
   const { computePoseidon } = await import("@src/utils/poseidon");
@@ -59,29 +65,46 @@ async function createOutputs(amount: bigint, totalInputAmount: bigint) {
     entropy: receiverSValue,
   });
 
-  outputHashes.push(receiverHash);
-  outputAmounts.push(amount);
-  outputSValues.push(receiverSValue);
+  const result: OutputRecord[] = [
+    {
+      hash: receiverHash,
+      value: amount,
+      sValue: receiverSValue,
+      type: "receiver",
+    },
+  ];
 
   // Create change output if needed
   if (hasChange) {
     const changeSValue = BigInt(generatePrivateKey());
-    const { computePoseidon } = await import("@src/utils/poseidon");
     const changeHash = await computePoseidon({
       amount: changeAmount,
       entropy: changeSValue,
     });
 
-    outputHashes.push(changeHash);
-    outputAmounts.push(changeAmount);
-    outputSValues.push(changeSValue);
+    result.push({
+      hash: changeHash,
+      value: changeAmount,
+      sValue: changeSValue,
+      type: "change",
+    });
   }
 
-  return {
-    outputHashes,
-    outputAmounts,
-    outputSValues,
-  };
+  if (assignDecoy) {
+    const decoySValue = BigInt(generatePrivateKey());
+
+    result.push({
+      hash: await computePoseidon({
+        amount: 0n,
+        entropy: decoySValue,
+      }),
+      value: 0n,
+      sValue: decoySValue,
+      type: "decoy",
+    });
+  }
+
+  return shuffle(result);
 }
 
 async function generateSpendProof(
@@ -104,9 +127,8 @@ async function generateSpendProof(
 type TransactionStructCreationInput = {
   token: Address;
   inputHashes: bigint[];
-  outputAmounts: bigint[];
-  outputSValues: bigint[];
-  outputHashes: bigint[];
+  outputs: OutputRecord[];
+  decoyParams: DecoyParams;
   spender: Address;
   spenderEncryptionPublicKey: Hex;
   spenderTesUrl: string;
@@ -119,9 +141,8 @@ type TransactionStructCreationInput = {
 function createTransactionStruct({
   token,
   inputHashes,
-  outputAmounts,
-  outputSValues,
-  outputHashes,
+  outputs,
+  decoyParams,
   spender,
   spenderEncryptionPublicKey,
   spenderTesUrl,
@@ -130,34 +151,40 @@ function createTransactionStruct({
   receiverTesUrl,
   publicOutputs,
 }: TransactionStructCreationInput): TransactionStruct {
+  const receiverRecordIndex = outputs.findIndex(
+    ({ type }) => type === "receiver",
+  );
+  const changeRecordIndex = outputs.findIndex(({ type }) => type === "change");
+  const decoyRecordIndex = outputs.findIndex(({ type }) => type === "decoy");
+
   const outputsOwners: OutputsOwnersStruct[] = [
     {
       owner: receiver,
-      indexes: [0],
+      indexes: [receiverRecordIndex],
     },
   ];
 
   const metadata = [
     encode(
       {
-        amount: outputAmounts[0],
-        sValue: outputSValues[0],
+        amount: outputs[receiverRecordIndex]!.value,
+        sValue: outputs[receiverRecordIndex]!.sValue,
       },
       receiverTesUrl,
       receiverEncryptionPublicKey,
     ),
   ];
 
-  if (outputHashes.length > 1) {
+  if (changeRecordIndex !== -1) {
     outputsOwners.push({
       owner: spender,
-      indexes: [1],
+      indexes: [changeRecordIndex],
     });
     metadata.push(
       encode(
         {
-          amount: outputAmounts[1],
-          sValue: outputSValues[1],
+          amount: outputs[changeRecordIndex].value,
+          sValue: outputs[changeRecordIndex].sValue,
         },
         spenderTesUrl,
         spenderEncryptionPublicKey,
@@ -165,10 +192,27 @@ function createTransactionStruct({
     );
   }
 
+  if (decoyRecordIndex !== -1) {
+    outputsOwners.push({
+      owner: decoyParams!.address,
+      indexes: [decoyRecordIndex],
+    });
+    metadata.push(
+      encode(
+        {
+          amount: outputs[decoyRecordIndex].value,
+          sValue: outputs[decoyRecordIndex].sValue,
+        },
+        "",
+        decoyParams!.publicKey,
+      ),
+    );
+  }
+
   return {
     token,
     inputsPoseidonHashes: inputHashes,
-    outputsPoseidonHashes: outputHashes,
+    outputsPoseidonHashes: outputs.map((o) => o.hash),
     metadata,
     outputsOwners,
     publicOutputs,
@@ -188,6 +232,7 @@ export type PrepareSpendParams = {
   receiverEncryptionPublicKey: Hex;
   receiverTesUrl?: string;
   publicOutputs: PublicOutput[];
+  decoyParams: DecoyParams;
 };
 
 export default async function prepareSpend({
@@ -203,11 +248,13 @@ export default async function prepareSpend({
   receiverEncryptionPublicKey,
   receiverTesUrl = "",
   publicOutputs,
+  decoyParams,
 }: PrepareSpendParams) {
   const totalMovingPrivatelyAmounts = totalMovingAmount - publicSpendAmount;
-  const { outputHashes, outputAmounts, outputSValues } = await createOutputs(
+  const outputs = await createOutputs(
     privateSpendAmount,
     totalMovingPrivatelyAmounts,
+    Boolean(decoyParams),
   );
 
   const formalizedCommitments = formalizeCommitments(commitments);
@@ -216,15 +263,15 @@ export default async function prepareSpend({
     input_amounts: formalizedCommitments.map((c) => c.value),
     input_sValues: formalizedCommitments.map((c) => c.sValue),
     inputs_hashes: formalizedCommitments.map((c) => c.hash),
-    output_amounts: outputAmounts,
-    output_sValues: outputSValues,
-    outputs_hashes: outputHashes,
+    output_amounts: outputs.map((c) => c.value),
+    output_sValues: outputs.map((c) => c.sValue),
+    outputs_hashes: outputs.map((c) => c.hash),
     fee: publicSpendAmount,
   };
 
   const circuitType = getCircuitType(
     formalizedCommitments.length,
-    outputHashes.length,
+    Object.keys(outputs).length,
   );
 
   const { calldata_proof } = await generateSpendProof(circuitType, proofInput);
@@ -232,9 +279,8 @@ export default async function prepareSpend({
   const transactionStruct = createTransactionStruct({
     token,
     inputHashes: proofInput.inputs_hashes,
-    outputAmounts,
-    outputSValues,
-    outputHashes,
+    outputs,
+    decoyParams,
     spender,
     spenderEncryptionPublicKey,
     spenderTesUrl,

@@ -642,6 +642,7 @@ export class Ledger extends EventEmitter {
             receiverEncryptionPublicKey: encryptionPublicKey,
             receiverTesUrl: tesUrl,
             publicOutputs,
+            decoyParams: null,
           });
 
         const partialWithdrawParams = {
@@ -837,6 +838,8 @@ export class Ledger extends EventEmitter {
           tesUrl: receiverTesUrl,
         } = await this.getEncryptionParams(recipient);
 
+        const decoyParams = await this.tesService.getDecoyRecipient();
+
         const { proofData, transactionStruct } =
           await asyncVaultUtils.prepareSpend({
             commitments: selectedCommitmentRecords,
@@ -851,6 +854,7 @@ export class Ledger extends EventEmitter {
             receiverEncryptionPublicKey,
             receiverTesUrl,
             publicOutputs,
+            decoyParams,
           });
 
         const sendParams = {
