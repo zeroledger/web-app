@@ -10,7 +10,7 @@ export const SUPPORTED_CHAINS = ENV === "test" ? [optimismSepolia] : [base];
 export const OnesHash =
   "0x1111111111111111111111111111111111111111111111111111111111111111";
 
-export const APP_PREFIX_KEY = `${document.location.hostname}.${import.meta.env.APP_VERSION}`;
+export const APP_PREFIX_KEY = `${document.location.hostname}.${import.meta.env.VITE_APP_VERSION}`;
 
 export const TOKEN_ADDRESS: Address = import.meta.env.VITE_TOKEN_ADDRESS;
 
