@@ -35,7 +35,7 @@
     "@heroicons/react": "^2.2.0",
     "@privy-io/react-auth": "^2.20.0",
     "@tailwindcss/vite": "^4.0.12",
-    "@zeroledger/vycrypt": "^0.0.1-alpha",
+    "@zeroledger/vycrypt": "^0.0.1-betta",
     "axios": "^1.8.3",
     "browser-level": "^2.0.0",
     "circomlibjs": "^0.1.7",
