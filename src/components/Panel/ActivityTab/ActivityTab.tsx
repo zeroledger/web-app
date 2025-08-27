@@ -31,11 +31,6 @@ export default function ActivityTab({ active }: { active: boolean }) {
     try {
       const result = await ledger!.getPaginatedTransactions(10);
       if (result) {
-        console.log("Initial load result:", {
-          nextCursor: result.nextCursor,
-          transactionCount: Object.keys(result.transactions).length,
-        });
-
         setGroupedTransactions(result.transactions);
         setNextCursor(result.nextCursor);
       }
@@ -56,11 +51,6 @@ export default function ActivityTab({ active }: { active: boolean }) {
     try {
       const result = await ledger!.getPaginatedTransactions(10, nextCursor);
       if (result) {
-        console.log("Load more result:", {
-          nextCursor: result.nextCursor,
-          transactionCount: Object.keys(result.transactions).length,
-        });
-
         setGroupedTransactions((prev) => ({
           ...prev,
           ...result.transactions,

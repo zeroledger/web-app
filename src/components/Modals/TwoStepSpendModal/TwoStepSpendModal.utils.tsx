@@ -9,7 +9,7 @@ export const prepareSigningData = (
   if (!metaTransaction) return [];
   return [
     {
-      label: "Forwarder Contract",
+      label: "Vault Contract",
       value: shortString(metaTransaction.to),
     },
     {
@@ -64,7 +64,7 @@ export const prepareMinimalTransactionDetails = (
   if (!transactionDetails) return [];
   return [
     {
-      label: "To",
+      label: "Recipient",
       value: shortString(transactionDetails.to),
     },
     {
@@ -88,8 +88,8 @@ export const prepareFullTransactionDetails = (
       value: formatTransactionDetailsType(transactionDetails.type),
     },
     {
-      label: "Vault Contract",
-      value: shortString(transactionDetails.vaultContract),
+      label: "Forwarder Contract",
+      value: shortString(transactionDetails.forwarder),
     },
     {
       label: "Token",

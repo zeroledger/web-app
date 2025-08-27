@@ -164,31 +164,29 @@ function createTransactionStruct({
     },
   ];
 
-  const metadata = [
-    encode(
-      {
-        amount: outputs[receiverRecordIndex]!.value,
-        sValue: outputs[receiverRecordIndex]!.sValue,
-      },
-      receiverTesUrl,
-      receiverEncryptionPublicKey,
-    ),
-  ];
+  const metadata: Hex[] = [];
+
+  metadata[receiverRecordIndex] = encode(
+    {
+      amount: outputs[receiverRecordIndex]!.value,
+      sValue: outputs[receiverRecordIndex]!.sValue,
+    },
+    receiverTesUrl,
+    receiverEncryptionPublicKey,
+  );
 
   if (changeRecordIndex !== -1) {
     outputsOwners.push({
       owner: spender,
       indexes: [changeRecordIndex],
     });
-    metadata.push(
-      encode(
-        {
-          amount: outputs[changeRecordIndex].value,
-          sValue: outputs[changeRecordIndex].sValue,
-        },
-        spenderTesUrl,
-        spenderEncryptionPublicKey,
-      ),
+    metadata[changeRecordIndex] = encode(
+      {
+        amount: outputs[changeRecordIndex].value,
+        sValue: outputs[changeRecordIndex].sValue,
+      },
+      spenderTesUrl,
+      spenderEncryptionPublicKey,
     );
   }
 
@@ -197,15 +195,13 @@ function createTransactionStruct({
       owner: decoyParams!.address,
       indexes: [decoyRecordIndex],
     });
-    metadata.push(
-      encode(
-        {
-          amount: outputs[decoyRecordIndex].value,
-          sValue: outputs[decoyRecordIndex].sValue,
-        },
-        "",
-        decoyParams!.publicKey,
-      ),
+    metadata[decoyRecordIndex] = encode(
+      {
+        amount: outputs[decoyRecordIndex].value,
+        sValue: outputs[decoyRecordIndex].sValue,
+      },
+      "",
+      decoyParams!.publicKey,
     );
   }
 

@@ -85,8 +85,6 @@ export const useTwoStepSpendModal = (
           setIsModalOpen(true);
           setIsModalLoading(true);
 
-          console.log("balanceForConsolidation", balanceForConsolidation);
-
           // This is a placeholder - in reality, you would call the ledger service
           // to prepare the metatransaction data
           const metaTransactionData = await ledger!.prepareSendMetaTransaction(

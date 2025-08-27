@@ -38,6 +38,7 @@ export type TransactionDetails = {
   value: bigint;
   fee: bigint;
   paymaster: Address;
+  forwarder: Address;
   inputs: bigint[];
   outputs: bigint[];
 };
@@ -576,6 +577,7 @@ export class Ledger extends EventEmitter {
             value: depositParams.depositStruct.total_deposit_amount,
             fee: depositParams.depositStruct.fee,
             paymaster: depositParams.depositStruct.feeRecipient,
+            forwarder: this.forwarder,
             inputs: [],
             outputs: await Promise.all(
               depositParams.depositStruct.depositCommitmentParams.map(
@@ -685,6 +687,7 @@ export class Ledger extends EventEmitter {
             value: value - fee,
             fee: fee,
             paymaster: paymasterAddress,
+            forwarder: this.forwarder,
             inputs: transactionStruct.inputsPoseidonHashes,
             outputs: transactionStruct.outputsPoseidonHashes,
           } as TransactionDetails,
@@ -775,6 +778,7 @@ export class Ledger extends EventEmitter {
             token: withdrawParams.token,
             fee: withdrawParams.fee,
             paymaster: withdrawParams.feeRecipient,
+            forwarder: this.forwarder,
             inputs: await Promise.all(
               withdrawParams.withdrawItems.map((item) =>
                 computePoseidon({ amount: item.amount, entropy: item.sValue }),
@@ -840,6 +844,8 @@ export class Ledger extends EventEmitter {
 
         const decoyParams = await this.tesService.getDecoyRecipient();
 
+        this.logger.log(`decoyParams: ${JSON.stringify(decoyParams)}`);
+
         const { proofData, transactionStruct } =
           await asyncVaultUtils.prepareSpend({
             commitments: selectedCommitmentRecords,
@@ -854,7 +860,12 @@ export class Ledger extends EventEmitter {
             receiverEncryptionPublicKey,
             receiverTesUrl,
             publicOutputs,
-            decoyParams,
+            decoyParams:
+              consolidation ||
+              decoyParams?.address === mainAccount.address ||
+              decoyParams?.address === recipient
+                ? null
+                : decoyParams,
           });
 
         const sendParams = {
@@ -891,6 +902,7 @@ export class Ledger extends EventEmitter {
             value: value - fee,
             fee: fee,
             paymaster: paymasterAddress,
+            forwarder: this.forwarder,
             inputs: transactionStruct.inputsPoseidonHashes,
             outputs: transactionStruct.outputsPoseidonHashes,
           } as TransactionDetails,
@@ -937,7 +949,7 @@ export class Ledger extends EventEmitter {
       this.eventsHandlerDebounced.clear();
       this.eventsCache = [];
       this.tesService.reset();
-    });
+    }, "softReset");
   }
 
   async reset() {
