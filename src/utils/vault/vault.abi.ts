@@ -404,9 +404,9 @@ export const VAULT_ABI = [
             type: "address",
           },
           {
-            internalType: "uint256",
+            internalType: "uint240",
             name: "total_deposit_amount",
-            type: "uint256",
+            type: "uint240",
           },
           {
             components: [
@@ -431,9 +431,9 @@ export const VAULT_ABI = [
             type: "tuple[3]",
           },
           {
-            internalType: "uint256",
+            internalType: "uint240",
             name: "fee",
-            type: "uint256",
+            type: "uint240",
           },
           {
             internalType: "address",
@@ -729,17 +729,12 @@ export const VAULT_ABI = [
     inputs: [
       {
         internalType: "address",
-        name: "",
+        name: "verifiers",
         type: "address",
       },
       {
         internalType: "address",
-        name: "",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "",
+        name: "trustedForwarder",
         type: "address",
       },
     ],
@@ -776,9 +771,9 @@ export const VAULT_ABI = [
       {
         components: [
           {
-            internalType: "uint256",
+            internalType: "uint240",
             name: "amount",
-            type: "uint256",
+            type: "uint240",
           },
           {
             internalType: "uint256",
