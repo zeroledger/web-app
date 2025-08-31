@@ -9,7 +9,7 @@ RUN apk add --no-cache make && apk add --no-cache bash
 COPY ./package.json ./package.json
 COPY ./package-lock.json ./package-lock.json
 
-RUN npm install --force
+RUN npm install
 
 FROM deps AS build
 COPY ./src ./src
