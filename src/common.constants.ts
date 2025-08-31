@@ -44,6 +44,10 @@ export const WS_RPC: { [prop: number]: string[] } = {
   ],
 };
 
+export const SCAN_URL: { [prop: number]: string } = {
+  [baseSepolia.id]: "https://sepolia.basescan.org",
+};
+
 export const pollingInterval: { [prop: number]: number } = {
   [baseSepolia.id]: 10000,
 };

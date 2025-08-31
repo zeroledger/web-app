@@ -21,7 +21,7 @@ export default function ActivityTab({ active }: { active: boolean }) {
     useState<GroupedTransactions>({});
   const [error, setError] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | undefined>();
-  const { ledger } = useContext(LedgerContext);
+  const { ledger, targetChain } = useContext(LedgerContext);
   const { decimals, isLoading } = useContext(PanelContext);
 
   // Load initial transactions
@@ -102,6 +102,7 @@ export default function ActivityTab({ active }: { active: boolean }) {
                     txHash={txHash}
                     transactions={transactions}
                     decimals={decimals}
+                    targetChain={targetChain}
                   />
                 ))}
               </ul>

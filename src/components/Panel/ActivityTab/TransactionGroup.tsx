@@ -4,8 +4,9 @@ import {
   DisclosurePanel,
 } from "@headlessui/react";
 import { type HistoryRecordDto } from "@src/services/ledger";
-import { formatUnits } from "viem";
+import { Chain, formatUnits } from "viem";
 import { shortString } from "@src/utils/common";
+import { SCAN_URL } from "@src/common.constants";
 
 const linkStyle = "underline text-blue-300 hover:text-blue-400";
 
@@ -23,6 +24,7 @@ export default function TransactionGroup({
   txHash,
   transactions,
   decimals,
+  targetChain,
 }: {
   txHash: string;
   transactions: {
@@ -30,6 +32,7 @@ export default function TransactionGroup({
     outgoings: HistoryRecordDto[];
   };
   decimals: number;
+  targetChain: Chain;
 }) {
   const isUnknown = txHash === "unknown";
   const { incomings, outgoings } = transactions;
@@ -64,7 +67,7 @@ export default function TransactionGroup({
             <div className="text-sm">
               {`Transaction: `}
               <a
-                href={`https://sepolia.basescan.org/tx/${txHash}`}
+                href={`${SCAN_URL[targetChain.id]}/tx/${txHash}`}
                 className={linkStyle}
                 target="_blank"
               >

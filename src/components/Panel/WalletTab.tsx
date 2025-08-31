@@ -10,6 +10,7 @@ import { Name } from "../EnsProfile/Name";
 import { Address } from "viem";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
 import clsx from "clsx";
+import { SCAN_URL } from "@src/common.constants";
 
 export default function WalletTab() {
   const {
@@ -21,7 +22,8 @@ export default function WalletTab() {
     consolidationRatio,
     balanceForConsolidation,
   } = useContext(PanelContext);
-  const { wallet, ensProfile, isEnsLoading } = useContext(LedgerContext);
+  const { wallet, ensProfile, isEnsLoading, targetChain } =
+    useContext(LedgerContext);
 
   const address = wallet?.address as Address | undefined;
 
@@ -44,7 +46,7 @@ export default function WalletTab() {
   return (
     <div className="flex flex-col items-center justify-center h-full px-4 pt-4">
       <a
-        href={`https://sepolia.basescan.org/address/${address}`}
+        href={`${SCAN_URL[targetChain.id]}/address/${address}`}
         target="_blank"
         rel="noopener noreferrer"
         className="hover:cursor-pointer"
