@@ -64,7 +64,7 @@ export default function TransactionGroup({
             <div className="text-sm">
               {`Transaction: `}
               <a
-                href={`https://sepolia-optimism.etherscan.io/tx/${txHash}`}
+                href={`https://sepolia.basescan.org/tx/${txHash}`}
                 className={linkStyle}
                 target="_blank"
               >

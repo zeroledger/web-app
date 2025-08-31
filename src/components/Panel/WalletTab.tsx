@@ -44,7 +44,7 @@ export default function WalletTab() {
   return (
     <div className="flex flex-col items-center justify-center h-full px-4 pt-4">
       <a
-        href={`https://sepolia-optimism.etherscan.io/address/${address}`}
+        href={`https://sepolia.basescan.org/address/${address}`}
         target="_blank"
         rel="noopener noreferrer"
         className="hover:cursor-pointer"

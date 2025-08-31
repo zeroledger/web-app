@@ -3,7 +3,7 @@ import {
   PrivyProvider,
   WalletListEntry,
 } from "@privy-io/react-auth";
-import { optimismSepolia } from "viem/chains";
+import { baseSepolia } from "viem/chains";
 import { ReactNode } from "react";
 import { PRIVY_APP_ID } from "@src/common.constants";
 
@@ -29,8 +29,8 @@ const config = {
       "wallet_connect",
     ] as WalletListEntry[],
   },
-  supportedChains: [optimismSepolia],
-  defaultChain: optimismSepolia,
+  supportedChains: [baseSepolia],
+  defaultChain: baseSepolia,
 };
 
 export const PrivyContextProvider = ({

@@ -13,7 +13,7 @@ This document outlines comprehensive manual testing scenarios for the faucet fun
 
 ## Test Environment Setup
 
-1. **Network**: Optimism Sepolia testnet
+1. **Network**: Base Sepolia testnet
 2. **Token**: USD token (specified in constants)
 3. **Faucet Service**: Running and accessible
 4. **Faucet URL**: Configured in constants

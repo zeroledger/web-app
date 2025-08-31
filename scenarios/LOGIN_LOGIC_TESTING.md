@@ -7,13 +7,13 @@ This document outlines comprehensive manual testing scenarios for the login func
 ## Prerequisites
 
 - User has a web3 wallet (MetaMask, Coinbase Wallet, etc.)
-- User has access to Optimism Sepolia testnet
+- User has access to Base Sepolia testnet
 - Application is accessible via browser
 - TES service is operational
 
 ## Test Environment Setup
 
-1. **Network**: Optimism Sepolia testnet
+1. **Network**: Base Sepolia testnet
 2. **Supported Wallets**: MetaMask, Coinbase Wallet, Base Account, Rainbow, Uniswap, Safe, WalletConnect
 3. **Browser**: Chrome, Firefox, Safari, Edge
 4. **Device**: Desktop, Mobile (responsive testing)
@@ -521,7 +521,7 @@ This document outlines comprehensive manual testing scenarios for the login func
 
 **Steps**:
 
-1. Connect wallet on supported network (Optimism Sepolia)
+1. Connect wallet on supported network (Base Sepolia)
 2. Switch to unsupported network in wallet (e.g., Polygon)
 3. Verify switch chain modal appears
 4. Click "Switch Chain" button

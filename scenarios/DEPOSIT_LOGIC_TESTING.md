@@ -13,8 +13,8 @@ This document outlines comprehensive manual testing scenarios for the deposit fu
 
 ## Test Environment Setup
 
-1. **Network**: Optimism Sepolia testnet
-2. **Token**: [Testnet USD token](https://sepolia-optimism.etherscan.io/token/0x6af5c33c20ca6169b3d98a2bcc94bdd0f4f68ffd)
+1. **Network**: Base Sepolia testnet
+2. **Token**: [Testnet USD token](https://sepolia.basescan.org/token/0xb41357E5794EA79D476D9049aF48CaFFa28be95F)
 3. **Vault**: Deployed vault contract
 4. **TES Service**: Running and accessible
 

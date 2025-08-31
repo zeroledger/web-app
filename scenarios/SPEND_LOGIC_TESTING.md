@@ -13,7 +13,7 @@ This document outlines comprehensive manual testing scenarios for the spend func
 
 ## Test Environment Setup
 
-1. **Network**: Optimism Sepolia testnet
+1. **Network**: Base Sepolia testnet
 2. **Token**: USD token (specified in constants)
 3. **Vault**: Deployed vault contract
 4. **TES Service**: Running and accessible

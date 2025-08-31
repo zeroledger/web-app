@@ -1,11 +1,11 @@
 import { type Address } from "viem";
-import { base, optimismSepolia } from "viem/chains";
+import { base, baseSepolia } from "viem/chains";
 
 export const ENV = document.location.hostname.match(/localhost|tmp|test/i)
   ? "test"
   : "prod";
 
-export const SUPPORTED_CHAINS = ENV === "test" ? [optimismSepolia] : [base];
+export const SUPPORTED_CHAINS = ENV === "test" ? [baseSepolia] : [base];
 
 export const OnesHash =
   "0x1111111111111111111111111111111111111111111111111111111111111111";
@@ -30,20 +30,20 @@ export const LANDING_URL = import.meta.env.VITE_LANDING_URL;
 export const PRIVY_APP_ID: Address = import.meta.env.VITE_PRIVY_APP_ID;
 
 export const RPC: { [prop: number]: string[] } = {
-  [optimismSepolia.id]: [
-    "https://optimism-sepolia-rpc.publicnode.com",
-    `https://optimism-sepolia.infura.io/v3/${import.meta.env.VITE_INFURA_RPC_KEY}`,
-    `https://opt-sepolia.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_RPC_KEY}`,
+  [baseSepolia.id]: [
+    "https://base-sepolia-rpc.publicnode.com",
+    `https://base-sepolia.infura.io/v3/${import.meta.env.VITE_INFURA_RPC_KEY}`,
+    `https://base-sepolia.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_RPC_KEY}`,
   ],
 };
 
 export const WS_RPC: { [prop: number]: string[] } = {
-  [optimismSepolia.id]: [
-    "wss://optimism-sepolia-rpc.publicnode.com",
-    `wss://opt-sepolia.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_RPC_KEY}`,
+  [baseSepolia.id]: [
+    "wss://base-sepolia-rpc.publicnode.com",
+    `wss://base-sepolia.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_RPC_KEY}`,
   ],
 };
 
 export const pollingInterval: { [prop: number]: number } = {
-  [optimismSepolia.id]: 10000,
+  [baseSepolia.id]: 10000,
 };
