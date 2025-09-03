@@ -265,8 +265,8 @@ export default async function prepareSpend({
   );
 
   const outputs = await createOutputs(
-    movingAmount - publicMovingAmount - protocolFee,
     privateSpend,
+    movingAmount - publicMovingAmount - protocolFee,
     Boolean(decoyParams),
   );
 

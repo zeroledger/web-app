@@ -14,7 +14,7 @@ export const prepareSigningData = (
     },
     {
       label: "Gas",
-      value: shortString(metaTransaction.gas.toString()),
+      value: `${metaTransaction.gas.toString()} wei`,
     },
     { label: "Nonce", value: toHex(metaTransaction.nonce) },
     {

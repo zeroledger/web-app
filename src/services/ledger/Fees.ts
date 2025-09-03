@@ -79,12 +79,12 @@ export class Fees {
   async getDepositFeesData(decimals: number): Promise<DepositFeesData> {
     const { asyncVaultUtils } = await this.preloadedModulesPromise;
     const { deposit: depositFee } = await this.getProtocolFees();
-    const coveredGas = asyncVaultUtils.depositGasSponsoredLimit();
-    const { fee, paymasterAddress, roundedFee } = await this.getBaseFeesData(
-      decimals,
-      depositFee,
-      coveredGas,
-    );
+    const { fee, paymasterAddress, roundedFee, coveredGas } =
+      await this.getBaseFeesData(
+        decimals,
+        depositFee,
+        asyncVaultUtils.depositGasSponsoredLimit(),
+      );
 
     return {
       coveredGas,
@@ -101,14 +101,12 @@ export class Fees {
   ): Promise<WithdrawFeesData> {
     const { asyncVaultUtils } = await this.preloadedModulesPromise;
     const { withdraw: withdrawFee } = await this.getProtocolFees();
-    const coveredGas = asyncVaultUtils.withdrawGasSponsoredLimit(
-      withdrawingItemsAmount,
-    );
-    const { fee, paymasterAddress, roundedFee } = await this.getBaseFeesData(
-      decimals,
-      withdrawFee,
-      coveredGas,
-    );
+    const { fee, paymasterAddress, roundedFee, coveredGas } =
+      await this.getBaseFeesData(
+        decimals,
+        withdrawFee,
+        asyncVaultUtils.withdrawGasSponsoredLimit(withdrawingItemsAmount),
+      );
     return {
       coveredGas,
       fee,
@@ -120,13 +118,14 @@ export class Fees {
 
   async getSpendFeesData(decimals: number): Promise<SpendFeesData> {
     const { asyncVaultUtils } = await this.preloadedModulesPromise;
-    const coveredGas = asyncVaultUtils.spendGasSponsoredLimit(1, 3, 2);
     const { spend: spendFee } = await this.getProtocolFees();
-    const { fee, paymasterAddress, roundedFee } = await this.getBaseFeesData(
-      decimals,
-      spendFee,
-      coveredGas,
-    );
+
+    const { fee, paymasterAddress, roundedFee, coveredGas } =
+      await this.getBaseFeesData(
+        decimals,
+        spendFee,
+        asyncVaultUtils.spendGasSponsoredLimit(1, 3, 2),
+      );
     return {
       coveredGas,
       fee,
@@ -139,19 +138,19 @@ export class Fees {
   private async getBaseFeesData(
     decimals: number,
     protocolFees: bigint,
-    coveredGas: bigint,
+    gasToCover: bigint,
   ) {
     const { gasPrice, paymasterAddress } = await this.tesService.quote(
       this.token,
       (await this.evmClients.externalClient()).account.address,
     );
 
-    const draftFee = coveredGas * gasPrice;
+    const draftFee = gasToCover * gasPrice;
     const roundedFee = roundToCents(draftFee + protocolFees, decimals);
     const fee = parseUnits(roundedFee, decimals) - protocolFees;
 
     return {
-      coveredGas,
+      coveredGas: fee / gasPrice,
       fee,
       paymasterAddress,
       roundedFee,

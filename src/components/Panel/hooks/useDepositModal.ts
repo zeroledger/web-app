@@ -151,11 +151,10 @@ export const useMultiStepDepositModal = (decimals: number) => {
     () =>
       setPromise(
         promise.then(async () => {
-          if (!state.depositParams || !state.depositFees) {
-            throw new Error("Error getting deposit params");
-          }
-
           try {
+            if (!state.depositParams || !state.depositFees) {
+              throw new Error("Error getting deposit params");
+            }
             setState((prev) => ({
               ...prev,
               isModalLoading: true,
@@ -201,11 +200,10 @@ export const useMultiStepDepositModal = (decimals: number) => {
     () =>
       setPromise(
         promise.then(async () => {
-          if (!state.depositFees || !state.metaTransaction) {
-            throw new Error("Error configuring meta transaction");
-          }
-
           try {
+            if (!state.depositFees || !state.metaTransaction) {
+              throw new Error("Error configuring meta transaction");
+            }
             setState((prev) => ({
               ...prev,
               isModalLoading: true,

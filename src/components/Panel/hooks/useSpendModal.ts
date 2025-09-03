@@ -103,9 +103,6 @@ export const useTwoStepSpendModal = (
     setPromise(
       promise.then(async () => {
         try {
-          if (!state.spendFees) {
-            throw new Error("Error getting spend fees");
-          }
           disableSwipe();
           setState((prev) => ({
             ...prev,
@@ -115,19 +112,20 @@ export const useTwoStepSpendModal = (
             isModalLoading: true,
           }));
 
-          // This is a placeholder - in reality, you would call the ledger service
-          // to prepare the metatransaction data
+          const spendFees = await ledger!.fees.getSpendFeesData(decimals);
+
           const metaTransactionData =
             await ledger!.transactions.prepareSendMetaTransaction(
               balanceForConsolidation,
               ownerAddress,
               true,
-              state.spendFees,
+              spendFees,
             );
 
           setState((prev) => ({
             ...prev,
             ...metaTransactionData,
+            spendFees,
             step: "preview" as const,
             isModalLoading: false,
           }));
@@ -208,11 +206,10 @@ export const useTwoStepSpendModal = (
     () =>
       setPromise(
         promise.then(async () => {
-          if (!state.metaTransaction || !state.spendFees) {
-            throw new Error("Error getting meta transaction");
-          }
-
           try {
+            if (!state.metaTransaction || !state.spendFees) {
+              throw new Error("Error getting meta transaction");
+            }
             setState((prev) => ({
               ...prev,
               isModalLoading: true,

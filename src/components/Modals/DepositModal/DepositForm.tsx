@@ -86,7 +86,7 @@ export const DepositForm = ({
         />
         <div className="mt-1 text-base text-white flex gap-2 justify-end">
           {isLoading && (
-            <div className="animate-pulse h-6 w-1/3 bg-white/10 rounded" />
+            <div className="animate-pulse h-5 w-1/3 bg-white/10 rounded" />
           )}
           {depositFees && (
             <div className="text-sm text-white/80">

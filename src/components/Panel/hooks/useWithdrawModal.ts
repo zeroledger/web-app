@@ -27,7 +27,7 @@ export interface WithdrawModalState {
   isModalSuccess: boolean;
   errorMessage?: string;
   withdrawFees?: WithdrawFeesData;
-  withdrawItems?: CommitmentStruct[];
+  itemsToWithdraw?: CommitmentStruct[];
   spendFees?: SpendFeesData;
   withdrawParams?: WithdrawParams;
   metaTransaction?: UnsignedMetaTransaction;
@@ -103,10 +103,14 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
     (data: WithdrawFormData) =>
       setPromise(
         promise.then(async () => {
-          if (!state.spendFees || !state.withdrawFees || !state.withdrawItems) {
-            throw new Error("Error getting fees");
-          }
           try {
+            if (
+              !state.spendFees ||
+              !state.withdrawFees ||
+              !state.itemsToWithdraw
+            ) {
+              throw new Error("Error getting fees");
+            }
             setState((prev) => ({
               ...prev,
               isModalLoading: true,
@@ -123,7 +127,7 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
                 await ledger!.transactions.prepareWithdrawMetaTransaction(
                   recipient,
                   state.withdrawFees,
-                  state.withdrawItems,
+                  state.itemsToWithdraw,
                 );
               metaTransactionData = fullWithdrawData;
             } else {
@@ -161,11 +165,15 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
     () =>
       setPromise(
         promise.then(async () => {
-          if (!state.metaTransaction || !state.withdrawFees) {
-            throw new Error("Error getting meta transaction");
-          }
-
           try {
+            if (
+              !state.metaTransaction ||
+              !state.withdrawFees ||
+              !state.spendFees ||
+              !state.transactionDetails
+            ) {
+              throw new Error("Error getting meta transaction");
+            }
             setState((prev) => ({
               ...prev,
               isModalLoading: true,
@@ -173,7 +181,9 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
 
             await ledger!.transactions.executeMetaTransaction(
               state.metaTransaction,
-              state.withdrawFees.coveredGas.toString(),
+              state.transactionDetails.type === "withdraw"
+                ? state.withdrawFees.coveredGas.toString()
+                : state.spendFees?.coveredGas.toString(),
             );
 
             setState((prev) => ({

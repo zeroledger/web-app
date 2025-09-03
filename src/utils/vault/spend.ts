@@ -5,7 +5,7 @@ import { encodeFunctionData } from "viem";
 import {
   AVERAGE_ERC_20_TRANSFER_COST,
   FORWARDER_EXECUTION_COST,
-  INPUT_REMOVAL_GAS_REBATE,
+  INPUT_REMOVAL_GAS_COST,
   OUTPUT_RECORD_GAS_COST,
   PROOF_VERIFICATION_GAS_COST,
   GAS_LIMIT_DENOMINATOR,
@@ -19,10 +19,10 @@ export const spendGasSponsoredLimit = (
   expectedOutputs: number,
   expectedPublicOutputs: number,
 ) => {
-  const rebates = BigInt(expectedInputs - 1) * INPUT_REMOVAL_GAS_REBATE;
-  const writes = BigInt(expectedOutputs - 1) * OUTPUT_RECORD_GAS_COST;
+  const rebates = BigInt(expectedInputs) * INPUT_REMOVAL_GAS_COST;
+  const writes = BigInt(expectedOutputs) * OUTPUT_RECORD_GAS_COST;
   const transfers =
-    BigInt(expectedPublicOutputs - 1) * AVERAGE_ERC_20_TRANSFER_COST;
+    BigInt(expectedPublicOutputs) * AVERAGE_ERC_20_TRANSFER_COST;
   const base = PROOF_VERIFICATION_GAS_COST;
   return (
     ((base + transfers + writes + rebates) * GAS_LIMIT_NOMINATOR) /

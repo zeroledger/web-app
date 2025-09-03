@@ -76,8 +76,12 @@ function TwoStepSpendModal({
   );
 
   const fullTransactionDetails = useMemo(
-    () => prepareFullTransactionDetails(transactionDetails),
-    [transactionDetails],
+    () =>
+      prepareFullTransactionDetails(
+        transactionDetails,
+        (state as WithdrawModalState).spendFees?.paymasterAddress,
+      ),
+    [transactionDetails, state],
   );
 
   const minimalTransactionDetails = useMemo(
@@ -142,6 +146,7 @@ function TwoStepSpendModal({
             {!isModalLoading &&
               !isModalSuccess &&
               !errorMessage &&
+              isModalOpen &&
               step === "form" && (
                 <>
                   <BackButton onClick={onBack} />
@@ -165,6 +170,7 @@ function TwoStepSpendModal({
             {!isModalLoading &&
               !isModalSuccess &&
               !errorMessage &&
+              isModalOpen &&
               step === "preview" && (
                 <>
                   <BackButton onClick={onBack} />

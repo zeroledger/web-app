@@ -63,11 +63,14 @@ export const SpendForm = ({
     error: isWithdrawError,
   } = useWithdrawFees(ledger!, decimals);
 
+  const isFeesLoading = isSpendLoading || isWithdrawLoading;
+
   useEffect(() => {
     if (isSpendError || isWithdrawError) {
       setState((prev) => ({
         ...prev,
         isModalError: true,
+        errorMessage: "Error getting fees",
       }));
     }
     if (type === "Payment" && spendFees) {
@@ -156,25 +159,26 @@ export const SpendForm = ({
               privateBalance,
             );
             setValue("amount", value);
-            setWithdrawAll(value === formatUnits(privateBalance, decimals));
+            setWithdrawAll(
+              value === formatUnits(privateBalance, decimals) &&
+                type === "Withdraw",
+            );
             clearErrors("amount");
           }}
           onKeyDown={onEnter}
         />
-        <div className="mt-1 text-base text-white flex items-center gap-2">
-          <div className="font-medium">{type} Fees:</div>
-          {isSpendLoading ||
-            (isWithdrawLoading && (
-              <div className="h-6 w-1/2 bg-white/10 rounded" />
-            ))}
-          {spendFees && !withdrawAll && (
-            <div className="text-base text-white">
-              {spendFees.roundedFee} USD
+        <div className="mt-1 text-sm text-white/80 flex items-center gap-2 justify-end">
+          {isFeesLoading && (
+            <div className="animate-pulse h-5 w-1/2 bg-white/10 rounded" />
+          )}
+          {spendFees && !withdrawAll && !isFeesLoading && (
+            <div>
+              {type} fee: {spendFees.roundedFee} USD
             </div>
           )}
-          {withdrawAll && withdrawFeesData && (
-            <div className="text-base text-white">
-              {withdrawFeesData.withdrawFees.roundedFee} USD
+          {withdrawAll && withdrawFeesData && !isFeesLoading && (
+            <div>
+              {type} fee:{withdrawFeesData.withdrawFees.roundedFee} USD
             </div>
           )}
         </div>
