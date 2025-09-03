@@ -1,6 +1,6 @@
 import { encodeFunctionData } from "viem";
 import { VAULT_ABI } from "./vault.abi";
-import { WithdrawParams } from "./types";
+import { type WithdrawParams } from "./types";
 import {
   AVERAGE_ERC_20_TRANSFER_COST,
   FORWARDER_EXECUTION_COST,
@@ -23,13 +23,7 @@ export function getWithdrawTxData(params: WithdrawParams) {
   return encodeFunctionData({
     abi: VAULT_ABI,
     functionName: "withdraw",
-    args: [
-      params.token,
-      params.withdrawItems,
-      params.recipient,
-      params.fee,
-      params.feeRecipient,
-    ],
+    args: [params.token, params.withdrawItems, params.withdrawRecipients],
   });
 }
 
@@ -38,13 +32,7 @@ export function getWithdrawTxGas(params: WithdrawParams) {
     address: params.contract,
     abi: VAULT_ABI,
     functionName: "withdraw",
-    args: [
-      params.token,
-      params.withdrawItems,
-      params.recipient,
-      params.fee,
-      params.feeRecipient,
-    ],
+    args: [params.token, params.withdrawItems, params.withdrawRecipients],
   });
 }
 
@@ -53,13 +41,7 @@ export async function getWithdrawRequest(params: WithdrawParams) {
     address: params.contract,
     abi: VAULT_ABI,
     functionName: "withdraw",
-    args: [
-      params.token,
-      params.withdrawItems,
-      params.recipient,
-      params.fee,
-      params.feeRecipient,
-    ],
+    args: [params.token, params.withdrawItems, params.withdrawRecipients],
   });
   return request;
 }

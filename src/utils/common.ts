@@ -141,3 +141,21 @@ export const formatBalance = (value: bigint, decimals: number): string => {
   // If no decimal part, just return the integer part
   return integerPart;
 };
+
+/**
+ * Rounds a token amount up to the nearest cent (2 decimals).
+ *
+ * @param amount - token amount as bigint (smallest units)
+ * @param decimals - token decimals (e.g., 18 for ETH, 6 for USDC)
+ * @returns string value rounded up to cents
+ */
+export function roundToCents(amount: bigint, decimals: number): string {
+  // Convert bigint to decimal string
+  const human = parseFloat(formatUnits(amount, decimals));
+
+  // Multiply by 100 (cents), ceil, then divide back
+  const rounded = Math.ceil(human * 100) / 100;
+
+  // Return as string with 2 decimal places
+  return rounded.toFixed(2);
+}

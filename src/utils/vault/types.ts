@@ -11,14 +11,14 @@ export type DepositCommitmentParamsStruct = {
 
 export type DepositStruct = {
   token: Address;
-  total_deposit_amount: bigint;
+  amount: bigint;
   depositCommitmentParams: [
     DepositCommitmentParamsStruct,
     DepositCommitmentParamsStruct,
     DepositCommitmentParamsStruct,
   ];
-  fee: bigint;
-  feeRecipient: Address;
+  forwarderFee: bigint;
+  forwarderFeeRecipient: Address;
 };
 
 export type DepositParams = {
@@ -39,11 +39,12 @@ export type DepositProofData = {
 };
 
 export type DepositData = {
-  depositAmount: bigint;
-  fee: bigint;
+  valueLeftForUser: bigint;
+  protocolDepositFee: bigint;
+  forwarderFee: bigint;
   individualAmounts: bigint[];
   user: Address;
-  feeRecipient: Address;
+  forwarderFeeRecipient: Address;
 };
 
 export type DepositCommitmentData = {
@@ -103,9 +104,10 @@ export type WithdrawParams = {
   contract: Address;
   token: Address;
   withdrawItems: CommitmentStruct[];
-  recipient: Address;
-  fee: bigint;
-  feeRecipient: Address;
+  withdrawRecipients: {
+    recipient: Address;
+    amount: bigint;
+  }[];
 };
 
 export type VaultEvent = Log<

@@ -4,18 +4,18 @@ import {
   serializeCommitment,
 } from "@src/utils/vault/metadata";
 import {
-  Address,
+  type Address,
   encodeAbiParameters,
-  Hash,
-  Hex,
+  type Hash,
+  type Hex,
   parseAbiParameters,
 } from "viem";
-import { MemoryQueue } from "@src/services/core/queue";
-import type { SignedMetaTransaction } from "@src/utils/metatx";
-import { AxiosInstance } from "axios";
 import { catchService } from "@src/services/core/catch.service";
 import { backOff } from "exponential-backoff";
-import { ViewAccount } from "@src/services/Account";
+import type { MemoryQueue } from "@src/services/core/queue";
+import type { SignedMetaTransaction } from "@src/utils/metatx";
+import type { AxiosInstance } from "axios";
+import type { ViewAccount } from "@src/services/Account";
 
 export const AUTH_TOKEN_ABI = parseAbiParameters(
   "address viewAddr,bytes challengeSignature, address ownerAddr,bytes ownerAccDelegationSignature",

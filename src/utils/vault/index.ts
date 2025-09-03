@@ -6,3 +6,4 @@ export * from "./deposit";
 export * from "./spend";
 export * from "./withdraw";
 export * from "./types";
+export * from "./getContracts";

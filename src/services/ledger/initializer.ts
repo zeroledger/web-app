@@ -8,6 +8,8 @@ import { type ConnectedWallet } from "@privy-io/react-auth";
 
 const axiosInstance = axios.create();
 
+export type Ledger = Awaited<ReturnType<typeof initialize>>;
+
 export const initialize = async (
   wallet: ConnectedWallet,
   viewAccount: ViewAccount,
@@ -15,7 +17,6 @@ export const initialize = async (
   appPrefixKey: string,
   tesUrl: string,
   vaultAddress: Address,
-  forwarderAddress: Address,
   tokenAddress: Address,
   faucetUrl: string,
 ) => {
@@ -28,7 +29,9 @@ export const initialize = async (
     { default: CommitmentsHistory },
     { default: SyncService },
     { Tes },
-    { Ledger },
+    { Transactions },
+    { Fees },
+    { Watcher },
   ] = await Promise.all([
     import("@src/services/core/queue"),
     import("@src/services/core/rpc"),
@@ -37,7 +40,9 @@ export const initialize = async (
     import("./CommitmentsHistory"),
     import("./SyncService"),
     import("@src/services/Tes"),
-    import("./Ledger"),
+    import("./Transactions"),
+    import("./Fees"),
+    import("./Watcher"),
   ]);
 
   // Create lightweight dependencies immediately
@@ -56,19 +61,29 @@ export const initialize = async (
   const syncService = new SyncService(zeroLedgerDataSource, address);
   const tesService = new Tes(tesUrl, viewAccount, queue, axiosInstance);
 
-  return new Ledger(
-    viewAccount,
-    evmClients,
-    vaultAddress,
-    forwarderAddress,
-    tokenAddress,
-    faucetUrl,
-    faucetRpcClient,
-    queue,
-    commitments,
-    commitmentsHistory,
-    syncService,
-    tesService,
-    axiosInstance,
-  );
+  return {
+    fees: new Fees(evmClients, vaultAddress, tokenAddress, tesService),
+    watcher: new Watcher(
+      viewAccount,
+      evmClients,
+      vaultAddress,
+      tokenAddress,
+      queue,
+      commitments,
+      commitmentsHistory,
+      syncService,
+      tesService,
+      axiosInstance,
+    ),
+    transactions: new Transactions(
+      evmClients,
+      vaultAddress,
+      tokenAddress,
+      faucetUrl,
+      faucetRpcClient,
+      queue,
+      commitments,
+      tesService,
+    ),
+  };
 };

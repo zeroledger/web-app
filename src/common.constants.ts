@@ -14,12 +14,7 @@ export const APP_PREFIX_KEY = `${document.location.hostname}.${import.meta.env.V
 
 export const TOKEN_ADDRESS: Address = import.meta.env.VITE_TOKEN_ADDRESS;
 
-// expected to have same address on all chains
 export const VAULT_ADDRESS: Address = import.meta.env.VITE_VAULT_ADDRESS;
-
-// expected to have same address on all chains
-export const FORWARDER_ADDRESS: Address = import.meta.env
-  .VITE_FORWARDER_ADDRESS;
 
 export const FAUCET_URL: Address = import.meta.env.VITE_FAUCET_URL;
 

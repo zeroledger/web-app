@@ -216,40 +216,57 @@ function createTransactionStruct({
 }
 
 export type PrepareSpendParams = {
+  // commitments to spend
   commitments: SelectedCommitmentRecord[];
+  // token to spend
   token: Address;
-  totalMovingAmount: bigint;
-  privateSpendAmount: bigint;
-  publicSpendAmount: bigint;
+  // amount to spend privately including change
+  movingAmount: bigint;
+  // protocol fee
+  protocolFee: bigint;
+  // sender address
   spender: Address;
+  // spender encryption public key
   spenderEncryptionPublicKey: Hex;
+  // spender tes url
   spenderTesUrl?: string;
+  // receiver address
   receiver: Address;
+  // receiver encryption public key
   receiverEncryptionPublicKey: Hex;
+  // receiver tes url
   receiverTesUrl?: string;
+  // amount to send to receiver
+  privateSpend: bigint;
+  // public outputs
   publicOutputs: PublicOutput[];
+  // decoy params
   decoyParams: DecoyParams;
 };
 
 export default async function prepareSpend({
-  commitments,
   token,
-  totalMovingAmount,
-  privateSpendAmount,
-  publicSpendAmount,
+  commitments,
+  movingAmount,
+  protocolFee,
   spender,
   spenderEncryptionPublicKey,
   spenderTesUrl = "",
   receiver,
   receiverEncryptionPublicKey,
   receiverTesUrl = "",
+  privateSpend,
   publicOutputs,
   decoyParams,
 }: PrepareSpendParams) {
-  const totalMovingPrivatelyAmounts = totalMovingAmount - publicSpendAmount;
+  const publicMovingAmount = publicOutputs.reduce(
+    (acc, item) => acc + item.amount,
+    0n,
+  );
+
   const outputs = await createOutputs(
-    privateSpendAmount,
-    totalMovingPrivatelyAmounts,
+    movingAmount - publicMovingAmount - protocolFee,
+    privateSpend,
     Boolean(decoyParams),
   );
 
@@ -262,7 +279,8 @@ export default async function prepareSpend({
     output_amounts: outputs.map((c) => c.value),
     output_sValues: outputs.map((c) => c.sValue),
     outputs_hashes: outputs.map((c) => c.hash),
-    fee: publicSpendAmount,
+    // todo: rename in circuit to public spend amount
+    fee: publicMovingAmount + protocolFee,
   };
 
   const circuitType = getCircuitType(

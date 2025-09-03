@@ -1,4 +1,4 @@
 export * from "./ledger.dto";
 export * from "./events";
-export { type Ledger, type TransactionDetails } from "./Ledger";
-export { initialize } from "./initializer";
+export { type Transactions, type TransactionDetails } from "./Transactions";
+export { initialize, type Ledger } from "./initializer";

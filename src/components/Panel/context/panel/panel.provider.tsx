@@ -16,7 +16,6 @@ import {
   APP_PREFIX_KEY,
   TES_URL,
   VAULT_ADDRESS,
-  FORWARDER_ADDRESS,
 } from "@src/common.constants";
 import { usePrivateBalance } from "./usePrivateBalance";
 import { useConsolidationRatio } from "./useConsolidationRatio";
@@ -88,7 +87,6 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
         APP_PREFIX_KEY,
         TES_URL,
         VAULT_ADDRESS,
-        FORWARDER_ADDRESS,
         TOKEN_ADDRESS,
         FAUCET_URL,
       );

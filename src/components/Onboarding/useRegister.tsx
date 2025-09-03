@@ -2,7 +2,6 @@ import { useCallback, useContext, useState } from "react";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useNavigate } from "react-router-dom";
 import {
-  FORWARDER_ADDRESS,
   APP_PREFIX_KEY,
   FAUCET_URL,
   pollingInterval,
@@ -54,7 +53,6 @@ export const useRegister = () => {
           APP_PREFIX_KEY,
           TES_URL,
           VAULT_ADDRESS,
-          FORWARDER_ADDRESS,
           TOKEN_ADDRESS,
           FAUCET_URL,
         );

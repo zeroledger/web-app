@@ -15,7 +15,7 @@ import {
 // computes like avg tx gas limit * 1.1 + agv forwarder execution gas
 export const depositGasSponsoredLimit = () =>
   ((OUTPUT_RECORD_GAS_COST * 3n +
-    AVERAGE_ERC_20_TRANSFER_COST * 2n +
+    AVERAGE_ERC_20_TRANSFER_COST * 3n +
     PROOF_VERIFICATION_GAS_COST) *
     GAS_LIMIT_NOMINATOR) /
     GAS_LIMIT_DENOMINATOR +

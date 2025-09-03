@@ -18,10 +18,10 @@ async function createDepositStruct(
 ): Promise<DepositStruct> {
   return {
     token,
-    total_deposit_amount: data.depositAmount,
+    amount: data.valueLeftForUser,
     depositCommitmentParams: depositCommitmentData.depositCommitmentParams,
-    fee: data.fee,
-    feeRecipient: data.feeRecipient,
+    forwarderFee: data.forwarderFee,
+    forwarderFeeRecipient: data.forwarderFeeRecipient,
   };
 }
 
@@ -114,19 +114,22 @@ export default async function prepareDeposit(
   user: Address,
   value: bigint,
   userEncryptionPublicKey: Hex,
-  fee: bigint,
-  feeRecipient: Address,
+  protocolDepositFee: bigint,
+  forwarderFee: bigint,
+  forwarderFeeRecipient: Address,
   tesUrl = "",
 ) {
+  const valueLeftForUser = value - protocolDepositFee - forwarderFee;
   const random = BigInt(Math.ceil(Math.random() * 3));
-  const firstAmount = value / random;
-  const secondAmount = value - firstAmount;
+  const firstAmount = valueLeftForUser / random;
+  const secondAmount = valueLeftForUser - firstAmount;
   const depositData: DepositData = {
-    depositAmount: value,
+    valueLeftForUser,
     individualAmounts: shuffle([firstAmount, secondAmount, 0n]),
     user,
-    fee,
-    feeRecipient,
+    protocolDepositFee,
+    forwarderFee,
+    forwarderFeeRecipient,
   };
 
   const depositCommitmentData = await generateDepositCommitmentData(
@@ -138,7 +141,7 @@ export default async function prepareDeposit(
 
   const proofData = await generateDepositProof(
     depositCommitmentData.hashes,
-    depositData.depositAmount,
+    depositData.valueLeftForUser,
     depositCommitmentData.amounts,
     depositCommitmentData.sValues,
   );

@@ -5,27 +5,6 @@ export const VAULT_ABI = [
     type: "constructor",
   },
   {
-    inputs: [],
-    name: "AccessControlBadConfirmation",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "account",
-        type: "address",
-      },
-      {
-        internalType: "bytes32",
-        name: "neededRole",
-        type: "bytes32",
-      },
-    ],
-    name: "AccessControlUnauthorizedAccount",
-    type: "error",
-  },
-  {
     inputs: [
       {
         internalType: "address",
@@ -80,6 +59,17 @@ export const VAULT_ABI = [
   {
     inputs: [],
     name: "ReentrancyGuardReentrantCall",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "token",
+        type: "address",
+      },
+    ],
+    name: "SafeERC20FailedOperation",
     type: "error",
   },
   {
@@ -185,81 +175,6 @@ export const VAULT_ABI = [
     inputs: [
       {
         indexed: true,
-        internalType: "bytes32",
-        name: "role",
-        type: "bytes32",
-      },
-      {
-        indexed: true,
-        internalType: "bytes32",
-        name: "previousAdminRole",
-        type: "bytes32",
-      },
-      {
-        indexed: true,
-        internalType: "bytes32",
-        name: "newAdminRole",
-        type: "bytes32",
-      },
-    ],
-    name: "RoleAdminChanged",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "bytes32",
-        name: "role",
-        type: "bytes32",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "account",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "sender",
-        type: "address",
-      },
-    ],
-    name: "RoleGranted",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "bytes32",
-        name: "role",
-        type: "bytes32",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "account",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "sender",
-        type: "address",
-      },
-    ],
-    name: "RoleRevoked",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
         internalType: "address",
         name: "user",
         type: "address",
@@ -273,13 +188,7 @@ export const VAULT_ABI = [
       {
         indexed: false,
         internalType: "uint256",
-        name: "total_deposit_amount",
-        type: "uint256",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "fee",
+        name: "amount",
         type: "uint256",
       },
     ],
@@ -312,12 +221,6 @@ export const VAULT_ABI = [
         internalType: "uint256[]",
         name: "outputHashes",
         type: "uint256[]",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "fee",
-        type: "uint256",
       },
     ],
     name: "TransactionSpent",
@@ -370,28 +273,9 @@ export const VAULT_ABI = [
         name: "total",
         type: "uint256",
       },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "fee",
-        type: "uint256",
-      },
     ],
     name: "Withdrawal",
     type: "event",
-  },
-  {
-    inputs: [],
-    name: "DEFAULT_ADMIN_ROLE",
-    outputs: [
-      {
-        internalType: "bytes32",
-        name: "",
-        type: "bytes32",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
   },
   {
     inputs: [],
@@ -441,7 +325,7 @@ export const VAULT_ABI = [
           },
           {
             internalType: "uint240",
-            name: "total_deposit_amount",
+            name: "amount",
             type: "uint240",
           },
           {
@@ -468,12 +352,12 @@ export const VAULT_ABI = [
           },
           {
             internalType: "uint240",
-            name: "fee",
+            name: "forwarderFee",
             type: "uint240",
           },
           {
             internalType: "address",
-            name: "feeRecipient",
+            name: "forwarderFeeRecipient",
             type: "address",
           },
         ],
@@ -522,19 +406,13 @@ export const VAULT_ABI = [
     type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "bytes32",
-        name: "role",
-        type: "bytes32",
-      },
-    ],
-    name: "getRoleAdmin",
+    inputs: [],
+    name: "getManager",
     outputs: [
       {
-        internalType: "bytes32",
+        internalType: "address",
         name: "",
-        type: "bytes32",
+        type: "address",
       },
     ],
     stateMutability: "view",
@@ -554,42 +432,13 @@ export const VAULT_ABI = [
     type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "bytes32",
-        name: "role",
-        type: "bytes32",
-      },
-      {
-        internalType: "address",
-        name: "account",
-        type: "address",
-      },
-    ],
-    name: "grantRole",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "bytes32",
-        name: "role",
-        type: "bytes32",
-      },
-      {
-        internalType: "address",
-        name: "account",
-        type: "address",
-      },
-    ],
-    name: "hasRole",
+    inputs: [],
+    name: "getVerifiers",
     outputs: [
       {
-        internalType: "bool",
+        internalType: "address",
         name: "",
-        type: "bool",
+        type: "address",
       },
     ],
     stateMutability: "view",
@@ -610,21 +459,6 @@ export const VAULT_ABI = [
       {
         internalType: "address",
         name: "manager",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "admin",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "maintainer",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "securityCouncil",
         type: "address",
       },
     ],
@@ -683,42 +517,6 @@ export const VAULT_ABI = [
       },
     ],
     stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "bytes32",
-        name: "role",
-        type: "bytes32",
-      },
-      {
-        internalType: "address",
-        name: "callerConfirmation",
-        type: "address",
-      },
-    ],
-    name: "renounceRole",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "bytes32",
-        name: "role",
-        type: "bytes32",
-      },
-      {
-        internalType: "address",
-        name: "account",
-        type: "address",
-      },
-    ],
-    name: "revokeRole",
-    outputs: [],
-    stateMutability: "nonpayable",
     type: "function",
   },
   {
@@ -796,25 +594,6 @@ export const VAULT_ABI = [
     type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "bytes4",
-        name: "interfaceId",
-        type: "bytes4",
-      },
-    ],
-    name: "supportsInterface",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
     inputs: [],
     name: "unpause",
     outputs: [],
@@ -871,19 +650,21 @@ export const VAULT_ABI = [
         type: "tuple[]",
       },
       {
-        internalType: "address",
-        name: "recipient",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "fee",
-        type: "uint256",
-      },
-      {
-        internalType: "address",
-        name: "feeRecipient",
-        type: "address",
+        components: [
+          {
+            internalType: "address",
+            name: "recipient",
+            type: "address",
+          },
+          {
+            internalType: "uint240",
+            name: "amount",
+            type: "uint240",
+          },
+        ],
+        internalType: "struct WithdrawRecipient[]",
+        name: "recipients",
+        type: "tuple[]",
       },
     ],
     name: "withdraw",
