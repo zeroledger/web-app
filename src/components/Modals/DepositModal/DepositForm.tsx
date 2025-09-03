@@ -44,12 +44,14 @@ export const DepositForm = ({
         ...prev,
         isModalError: true,
       }));
+      return;
     }
     if (depositFees) {
       setState((prev) => ({
         ...prev,
         depositFees,
       }));
+      return;
     }
   }, [error, depositFees, setState]);
 
@@ -82,12 +84,13 @@ export const DepositForm = ({
           }}
           onKeyDown={onEnter}
         />
-        <div className="mt-1 text-base text-white flex items-center gap-2">
-          <div className="font-medium">Deposit Fees:</div>
-          {isLoading && <div className="h-6 w-1/2 bg-white/10 rounded" />}
+        <div className="mt-1 text-base text-white flex gap-2 justify-end">
+          {isLoading && (
+            <div className="animate-pulse h-6 w-1/3 bg-white/10 rounded" />
+          )}
           {depositFees && (
-            <div className="text-base text-white">
-              {depositFees.roundedFee} USD
+            <div className="text-sm text-white/80">
+              deposit fee: {depositFees.roundedFee} USD
             </div>
           )}
         </div>

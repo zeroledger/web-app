@@ -58,6 +58,8 @@ export default function DepositModal({
     step,
   } = state;
 
+  console.log(state);
+
   const depositTransactionDetails =
     transactionDetails && depositFees
       ? [
@@ -152,6 +154,7 @@ export default function DepositModal({
           {!isModalLoading &&
             !isModalSuccess &&
             !isModalError &&
+            isModalOpen &&
             state.step === "form" && (
               <div className="flex-1 content-center py-5">
                 <BackButton onClick={onBack} />

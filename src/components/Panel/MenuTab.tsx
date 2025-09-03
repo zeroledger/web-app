@@ -31,7 +31,7 @@ export default function MenuTab() {
   const {
     state: withdrawState,
     setState: setWithdrawState,
-    form,
+    form: withdrawForm,
     onModalOpen: onWithdrawModalOpen,
     handleFormSubmit: handleWithdrawFormSubmit,
     handleSign: handleWithdrawSign,
@@ -135,7 +135,7 @@ export default function MenuTab() {
         onFormSubmit={handleWithdrawFormSubmit}
         onSign={handleWithdrawSign}
         onBack={handleWithdrawBack}
-        formMethods={form}
+        formMethods={withdrawForm}
         type="Withdraw"
       />
     </div>

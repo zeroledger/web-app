@@ -128,7 +128,7 @@ export const useMultiStepDepositModal = (decimals: number) => {
 
             setState((prev) => ({
               ...prev,
-              metaTransactionData,
+              ...metaTransactionData,
               step: "preview" as const,
               isModalLoading: false,
             }));
@@ -175,7 +175,7 @@ export const useMultiStepDepositModal = (decimals: number) => {
 
             setState((prev) => ({
               ...prev,
-              metaTransactionData,
+              ...metaTransactionData,
               step: "preview" as const,
               isModalLoading: false,
             }));
@@ -201,11 +201,7 @@ export const useMultiStepDepositModal = (decimals: number) => {
     () =>
       setPromise(
         promise.then(async () => {
-          if (
-            !state.depositParams ||
-            !state.depositFees ||
-            !state.metaTransaction
-          ) {
+          if (!state.depositFees || !state.metaTransaction) {
             throw new Error("Error configuring meta transaction");
           }
 

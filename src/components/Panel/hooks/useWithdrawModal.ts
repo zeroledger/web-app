@@ -73,6 +73,10 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
         promise.then(() => {
           resetState();
           disableSwipe();
+          setState((prev) => ({
+            ...prev,
+            isModalOpen: true,
+          }));
         }),
       ),
     [disableSwipe, promise, resetState],
