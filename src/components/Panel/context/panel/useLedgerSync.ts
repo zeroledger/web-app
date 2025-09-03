@@ -19,7 +19,7 @@ export function useLedgerSync(ledger?: Ledger) {
     async (ledger: Ledger) => {
       resetSyncState();
       setSyncState("inProgress");
-      await ledger.start();
+      await ledger.watcher.start();
       setSyncState("done");
     },
     [resetSyncState],
@@ -36,7 +36,7 @@ export function useLedgerSync(ledger?: Ledger) {
 
     const fetchSyncStatus = async () => {
       try {
-        const { anchorBlock, currentBlock } = await ledger.syncStatus();
+        const { anchorBlock, currentBlock } = await ledger.watcher.syncStatus();
         const blocksToSync =
           currentBlock <= anchorBlock ? 0n : currentBlock - anchorBlock;
         setBlocksToSync(blocksToSync);

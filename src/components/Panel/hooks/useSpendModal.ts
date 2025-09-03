@@ -5,12 +5,29 @@ import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useSwipe } from "./useSwipe";
 import { delay } from "@src/utils/common";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
-import { type TransactionDetails } from "@src/services/ledger";
+import {
+  type SpendFeesData,
+  type TransactionDetails,
+} from "@src/services/ledger";
 import { ens } from "@src/services/Ens";
+import { type SpendParams } from "@src/utils/vault";
 
 interface SpendFormData {
   recipient: string;
   amount: string;
+}
+
+export interface SpendModalState {
+  step: "form" | "preview";
+  isModalOpen: boolean;
+  isModalLoading: boolean;
+  isModalError: boolean;
+  isModalSuccess: boolean;
+  errorMessage?: string;
+  spendFees?: SpendFeesData;
+  spendParams?: SpendParams;
+  metaTransaction?: UnsignedMetaTransaction;
+  transactionDetails?: TransactionDetails;
 }
 
 const asyncOperationPromise = Promise.resolve();
@@ -21,18 +38,6 @@ export const useTwoStepSpendModal = (
   balanceForConsolidation: bigint,
 ) => {
   const { ledger } = useContext(LedgerContext);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isModalLoading, setIsModalLoading] = useState(false);
-  const [isModalSuccess, setIsModalSuccess] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(
-    undefined,
-  );
-  const [currentStep, setCurrentStep] = useState<"form" | "preview">("form");
-  const [metaTransactionData, setMetaTransactionData] = useState<{
-    metaTransaction: UnsignedMetaTransaction;
-    coveredGas: string;
-    transactionDetails: TransactionDetails;
-  }>();
   const [promise, setPromise] = useState<Promise<void>>(asyncOperationPromise);
 
   const { disableSwipe, enableSwipe } = useSwipe();
@@ -44,64 +49,97 @@ export const useTwoStepSpendModal = (
     },
   });
 
+  const [state, setState] = useState<SpendModalState>({
+    step: "form" as const,
+    isModalOpen: false,
+    isModalLoading: false,
+    isModalError: false,
+    isModalSuccess: false,
+  });
+
+  const resetState = useCallback(() => {
+    setState({
+      step: "form" as const,
+      isModalOpen: false,
+      isModalLoading: false,
+      isModalError: false,
+      isModalSuccess: false,
+    });
+  }, []);
+
   const onModalOpen = useCallback(
     () =>
       setPromise(
         promise.then(() => {
-          setIsModalSuccess(false);
-          setIsModalLoading(false);
-          setErrorMessage(undefined);
-          setCurrentStep("form");
-          setMetaTransactionData(undefined);
+          resetState();
+          setState((prev) => ({
+            ...prev,
+            isModalOpen: true,
+          }));
           disableSwipe();
-          setIsModalOpen(true);
         }),
       ),
-    [disableSwipe, promise],
+    [disableSwipe, promise, resetState],
   );
 
   const handleBack = useCallback(
     () =>
       setPromise(
         promise.then(async () => {
-          setIsModalOpen(false);
+          setState((prev) => ({
+            ...prev,
+            isModalOpen: false,
+          }));
           await delay(500);
           form.reset();
-          setMetaTransactionData(undefined);
-          setCurrentStep("form");
+          resetState();
           enableSwipe();
         }),
       ),
-    [form, enableSwipe, promise],
+    [form, enableSwipe, promise, resetState],
   );
 
   const onConsolidationOpen = useCallback(() => {
     setPromise(
       promise.then(async () => {
         try {
+          if (!state.spendFees) {
+            throw new Error("Error getting spend fees");
+          }
           disableSwipe();
-          setIsModalSuccess(false);
-          setErrorMessage(undefined);
-          setIsModalOpen(true);
-          setIsModalLoading(true);
+          setState((prev) => ({
+            ...prev,
+            isModalSuccess: false,
+            errorMessage: undefined,
+            isModalOpen: true,
+            isModalLoading: true,
+          }));
 
           // This is a placeholder - in reality, you would call the ledger service
           // to prepare the metatransaction data
-          const metaTransactionData = await ledger!.prepareSendMetaTransaction(
-            balanceForConsolidation,
-            ownerAddress,
-            true,
-          );
+          const metaTransactionData =
+            await ledger!.transactions.prepareSendMetaTransaction(
+              balanceForConsolidation,
+              ownerAddress,
+              true,
+              state.spendFees,
+            );
 
-          setMetaTransactionData(metaTransactionData);
-          setCurrentStep("preview");
-          setIsModalLoading(false);
+          setState((prev) => ({
+            ...prev,
+            ...metaTransactionData,
+            step: "preview" as const,
+            isModalLoading: false,
+          }));
         } catch (error) {
           console.error("Failed to prepare metaTransaction:", error);
-          setErrorMessage(
-            (error as Error)?.message ?? "Failed to prepare metaTransaction",
-          );
-          setIsModalLoading(false);
+          setState((prev) => ({
+            ...prev,
+            isModalError: true,
+            isModalLoading: false,
+            errorMessage:
+              (error as Error)?.message ?? "Failed to prepare metaTransaction",
+          }));
           await delay(3000);
           handleBack();
         }
@@ -114,6 +152,7 @@ export const useTwoStepSpendModal = (
     ownerAddress,
     balanceForConsolidation,
     handleBack,
+    state,
   ]);
 
   const handleFormSubmit = useCallback(
@@ -121,90 +160,111 @@ export const useTwoStepSpendModal = (
       setPromise(
         promise.then(async () => {
           try {
-            setIsModalLoading(true);
+            if (!state.spendFees) {
+              throw new Error("Error getting spend fees");
+            }
+            setState((prev) => ({
+              ...prev,
+              isModalLoading: true,
+            }));
 
             const recipient = await ens.universalResolve(data.recipient);
 
             // This is a placeholder - in reality, you would call the ledger service
             // to prepare the metatransaction data
             const metaTransactionData =
-              await ledger!.prepareSendMetaTransaction(
+              await ledger!.transactions.prepareSendMetaTransaction(
                 parseUnits(data.amount, decimals),
                 recipient,
                 false,
+                state.spendFees,
               );
 
-            setMetaTransactionData(metaTransactionData);
-            setCurrentStep("preview");
-            setIsModalLoading(false);
+            setState((prev) => ({
+              ...prev,
+              ...metaTransactionData,
+              step: "preview" as const,
+              isModalLoading: false,
+            }));
           } catch (error) {
             console.error("Failed to prepare metaTransaction:", error);
-            setErrorMessage(
-              (error as Error)?.message ?? "Failed to prepare metaTransaction",
-            );
-            setIsModalLoading(false);
+            setState((prev) => ({
+              ...prev,
+              isModalError: true,
+              isModalLoading: false,
+              errorMessage:
+                (error as Error)?.message ??
+                "Failed to prepare metaTransaction",
+            }));
             await delay(3000);
             handleBack();
           }
         }),
       ),
-    [ledger, decimals, handleBack, promise],
+    [ledger, decimals, handleBack, promise, state],
   );
 
   const handleSign = useCallback(
     () =>
       setPromise(
         promise.then(async () => {
-          if (!metaTransactionData) return;
+          if (!state.metaTransaction || !state.spendFees) {
+            throw new Error("Error getting meta transaction");
+          }
 
           try {
-            setIsModalLoading(true);
+            setState((prev) => ({
+              ...prev,
+              isModalLoading: true,
+            }));
 
-            await ledger!.executeMetaTransaction(
-              metaTransactionData.metaTransaction,
-              metaTransactionData.coveredGas,
+            await ledger!.transactions.executeMetaTransaction(
+              state.metaTransaction,
+              state.spendFees.coveredGas.toString(),
             );
-            setIsModalSuccess(true);
+            setState((prev) => ({
+              ...prev,
+              isModalSuccess: true,
+            }));
           } catch (error) {
-            setErrorMessage("Failed to send metaTransaction");
+            setState((prev) => ({
+              ...prev,
+              errorMessage: "Failed to send metaTransaction",
+              isModalError: true,
+            }));
             console.error(error);
           } finally {
-            setIsModalLoading(false);
+            setState((prev) => ({
+              ...prev,
+              isModalLoading: false,
+            }));
             await delay(2000);
             handleBack();
           }
         }),
       ),
-    [ledger, metaTransactionData, handleBack, promise],
+    [ledger, handleBack, promise, state],
   );
 
   return useMemo(
     () => ({
-      isModalOpen,
-      isModalLoading,
-      isModalSuccess,
-      errorMessage,
-      currentStep,
+      state,
+      setState,
       form,
       onModalOpen,
       handleFormSubmit,
       handleSign,
       handleBack,
-      metaTransactionData,
       onConsolidationOpen,
     }),
     [
-      isModalOpen,
-      isModalLoading,
-      isModalSuccess,
-      errorMessage,
-      currentStep,
+      state,
+      setState,
       form,
       onModalOpen,
       handleFormSubmit,
       handleSign,
       handleBack,
-      metaTransactionData,
       onConsolidationOpen,
     ],
   );

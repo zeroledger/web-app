@@ -1,13 +1,20 @@
 import { Field, Label, Input } from "@headlessui/react";
 import clsx from "clsx";
 import { UseFormReturn } from "react-hook-form";
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
 import { getMaxFormattedValue } from "@src/utils/common";
-import { isAddress } from "viem";
+import { formatUnits, isAddress } from "viem";
 import { ens } from "@src/services/Ens";
 import { normalize } from "viem/ens";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
+import { SpendModalState } from "@src/components/Panel/hooks/useSpendModal";
+import { WithdrawModalState } from "@src/components/Panel/hooks/useWithdrawModal";
+import {
+  useSpendFees,
+  useWithdrawFees,
+} from "@src/components/Panel/hooks/useFees";
+import { LedgerContext } from "@src/context/ledger/ledger.context";
 
 const amountRegex = /^\d*\.?\d*$/;
 
@@ -20,9 +27,21 @@ interface SpendFormProps {
   formMethods: UseFormReturn<SpendFormData>;
   onEnter: (e: React.KeyboardEvent<HTMLElement>) => void;
   type: "Payment" | "Withdraw";
+  setState: React.Dispatch<
+    React.SetStateAction<SpendModalState | WithdrawModalState>
+  >;
+  withdrawAll: boolean;
+  setWithdrawAll: (withdrawAll: boolean) => void;
 }
 
-export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
+export const SpendForm = ({
+  formMethods,
+  onEnter,
+  type,
+  setState,
+  withdrawAll,
+  setWithdrawAll,
+}: SpendFormProps) => {
   const {
     register,
     formState: { errors, isSubmitting },
@@ -30,6 +49,48 @@ export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
     setValue,
   } = formMethods;
   const { privateBalance, decimals } = useContext(PanelContext);
+
+  const { ledger } = useContext(LedgerContext);
+  const {
+    data: spendFees,
+    isLoading: isSpendLoading,
+    error: isSpendError,
+  } = useSpendFees(ledger!, decimals);
+
+  const {
+    data: withdrawFeesData,
+    isLoading: isWithdrawLoading,
+    error: isWithdrawError,
+  } = useWithdrawFees(ledger!, decimals);
+
+  useEffect(() => {
+    if (isSpendError || isWithdrawError) {
+      setState((prev) => ({
+        ...prev,
+        isModalError: true,
+      }));
+    }
+    if (type === "Payment" && spendFees) {
+      setState((prev) => ({
+        ...prev,
+        spendFees,
+      }));
+    }
+    if (type === "Withdraw" && withdrawFeesData && spendFees) {
+      setState((prev) => ({
+        ...prev,
+        ...withdrawFeesData,
+        spendFees,
+      }));
+    }
+  }, [
+    isSpendError,
+    isWithdrawError,
+    setState,
+    type,
+    spendFees,
+    withdrawFeesData,
+  ]);
 
   return (
     <div className="w-full">
@@ -89,14 +150,34 @@ export const SpendForm = ({ formMethods, onEnter, type }: SpendFormProps) => {
           placeholder="0.00"
           onChange={(e) => {
             if (!amountRegex.test(e.target.value)) return;
-            setValue(
-              "amount",
-              getMaxFormattedValue(e.target.value, decimals, privateBalance),
+            const value = getMaxFormattedValue(
+              e.target.value,
+              decimals,
+              privateBalance,
             );
+            setValue("amount", value);
+            setWithdrawAll(value === formatUnits(privateBalance, decimals));
             clearErrors("amount");
           }}
           onKeyDown={onEnter}
         />
+        <div className="mt-1 text-base text-white flex items-center gap-2">
+          <div className="font-medium">{type} Fees:</div>
+          {isSpendLoading ||
+            (isWithdrawLoading && (
+              <div className="h-6 w-1/2 bg-white/10 rounded" />
+            ))}
+          {spendFees && !withdrawAll && (
+            <div className="text-base text-white">
+              {spendFees.roundedFee} USD
+            </div>
+          )}
+          {withdrawAll && withdrawFeesData && (
+            <div className="text-base text-white">
+              {withdrawFeesData.withdrawFees.roundedFee} USD
+            </div>
+          )}
+        </div>
         <div className="h-6 mt-1 text-base text-red-400">
           {errors.amount && <p>{errors.amount.message}</p>}
         </div>

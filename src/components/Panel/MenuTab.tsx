@@ -18,33 +18,24 @@ import { LANDING_URL } from "@src/common.constants";
 export default function MenuTab() {
   const { decimals, isLoading } = useContext(PanelContext);
   const {
-    isModalOpen: isDepositModalOpen,
-    isModalLoading: isDepositModalLoading,
-    isModalSuccess: isDepositModalSuccess,
-    isModalError: isDepositModalError,
-    currentStep: depositCurrentStep,
+    state: depositState,
     form: depositForm,
     onModalOpen: onDepositModalOpen,
     handleFormSubmit: handleDepositFormSubmit,
     handleParamsApprove: handleDepositParamsApprove,
     handleSign: handleDepositSign,
     handleBack: handleDepositBack,
-    depositParamsData,
-    metaTransactionData,
+    setState: setDepositState,
   } = useMultiStepDepositModal(decimals);
 
   const {
-    isModalOpen,
-    isModalLoading,
-    isModalSuccess,
-    errorMessage,
-    currentStep: withdrawCurrentStep,
+    state: withdrawState,
+    setState: setWithdrawState,
     form,
     onModalOpen: onWithdrawModalOpen,
     handleFormSubmit: handleWithdrawFormSubmit,
     handleSign: handleWithdrawSign,
     handleBack: handleWithdrawBack,
-    metaTransactionData: withdrawMetaTransactionData,
   } = useTwoStepWithdrawModal(decimals);
 
   const {
@@ -120,18 +111,13 @@ export default function MenuTab() {
       </div>
 
       <DepositModal
-        isOpen={isDepositModalOpen}
-        isLoading={isDepositModalLoading}
-        isSuccess={isDepositModalSuccess}
         onFormSubmit={handleDepositFormSubmit}
         onApprove={handleDepositParamsApprove}
         onSign={handleDepositSign}
         onBack={handleDepositBack}
-        currentStep={depositCurrentStep}
         formMethods={depositForm}
-        isError={isDepositModalError}
-        metaTransactionData={metaTransactionData}
-        depositParamsData={depositParamsData}
+        state={depositState}
+        setState={setDepositState}
       />
 
       <ConfirmModal
@@ -144,17 +130,13 @@ export default function MenuTab() {
       />
 
       <TwoStepSpendModal
-        isOpen={isModalOpen}
-        isLoading={isModalLoading}
-        isSuccess={isModalSuccess}
-        currentStep={withdrawCurrentStep}
+        state={withdrawState}
+        setState={setWithdrawState}
         onFormSubmit={handleWithdrawFormSubmit}
         onSign={handleWithdrawSign}
         onBack={handleWithdrawBack}
         formMethods={form}
-        errorMessage={errorMessage}
         type="Withdraw"
-        metaTransactionData={withdrawMetaTransactionData}
       />
     </div>
   );

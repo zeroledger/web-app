@@ -5,33 +5,32 @@ import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useSwipe } from "./useSwipe";
 import { delay } from "@src/utils/common";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
-import { type TransactionDetails } from "@src/services/ledger";
+import {
+  type DepositFeesData,
+  type TransactionDetails,
+} from "@src/services/ledger";
 import { type DepositParams } from "@src/utils/vault/types";
 
 interface DepositFormData {
   amount: string;
 }
 
+export interface DepositModalState {
+  step: "form" | "params" | "preview";
+  depositFees?: DepositFeesData;
+  depositParams?: DepositParams;
+  metaTransaction?: UnsignedMetaTransaction;
+  transactionDetails?: TransactionDetails;
+  isModalError: boolean;
+  isModalSuccess: boolean;
+  isModalLoading: boolean;
+  isModalOpen: boolean;
+}
+
 const asyncOperationPromise = Promise.resolve();
 
 export const useMultiStepDepositModal = (decimals: number) => {
   const { ledger } = useContext(LedgerContext);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isModalLoading, setIsModalLoading] = useState(false);
-  const [isModalSuccess, setIsModalSuccess] = useState(false);
-  const [isModalError, setIsModalError] = useState(false);
-  const [currentStep, setCurrentStep] = useState<"form" | "params" | "preview">(
-    "form",
-  );
-  const [depositParamsData, setDepositParamsData] = useState<{
-    depositParams: DepositParams;
-    gasToCover: bigint;
-  }>();
-  const [metaTransactionData, setMetaTransactionData] = useState<{
-    metaTransaction: UnsignedMetaTransaction;
-    coveredGas: string;
-    transactionDetails: TransactionDetails;
-  }>();
   const [promise, setPromise] = useState<Promise<void>>(asyncOperationPromise);
   const { disableSwipe, enableSwipe } = useSwipe();
 
@@ -41,36 +40,54 @@ export const useMultiStepDepositModal = (decimals: number) => {
     },
   });
 
+  const [state, setState] = useState<DepositModalState>({
+    step: "form" as const,
+    isModalOpen: false,
+    isModalLoading: false,
+    isModalError: false,
+    isModalSuccess: false,
+  });
+
+  const resetState = useCallback(() => {
+    setState({
+      step: "form" as const,
+      isModalOpen: false,
+      isModalLoading: false,
+      isModalError: false,
+      isModalSuccess: false,
+    });
+  }, []);
+
   const onModalOpen = useCallback(
     () =>
       setPromise(
         promise.then(() => {
-          setIsModalLoading(false);
-          setIsModalError(false);
-          setCurrentStep("form");
-          setDepositParamsData(undefined);
-          setMetaTransactionData(undefined);
+          resetState();
+          setState((prev) => ({
+            ...prev,
+            isModalOpen: true,
+          }));
           disableSwipe();
-          setIsModalOpen(true);
         }),
       ),
-    [disableSwipe, promise],
+    [disableSwipe, promise, resetState],
   );
 
   const handleBack = useCallback(
     () =>
       setPromise(
         promise.then(async () => {
-          setIsModalOpen(false);
+          setState((prev) => ({
+            ...prev,
+            isModalOpen: false,
+          }));
           await delay(500);
+          resetState();
           form.reset();
-          setDepositParamsData(undefined);
-          setMetaTransactionData(undefined);
-          setCurrentStep("form");
           enableSwipe();
         }),
       ),
-    [form, enableSwipe, promise],
+    [form, enableSwipe, promise, resetState],
   );
 
   const handleFormSubmit = useCallback(
@@ -78,133 +95,173 @@ export const useMultiStepDepositModal = (decimals: number) => {
       setPromise(
         promise.then(async () => {
           try {
-            setIsModalLoading(true);
+            if (!state.depositFees) {
+              throw new Error("Error getting deposit fees");
+            }
+            setState((prev) => ({
+              ...prev,
+              isModalLoading: true,
+            }));
 
-            const depositParamsData =
-              await ledger!.prepareDepositParamsForApproval(
+            const depositFees = state?.depositFees;
+
+            const depositParams =
+              await ledger!.transactions.prepareDepositParamsForApproval(
                 parseUnits(data.amount, decimals),
+                depositFees,
               );
 
-            if (depositParamsData.depositParams.approveRequired) {
-              setDepositParamsData(depositParamsData);
-              setCurrentStep("params");
-              setIsModalLoading(false);
+            if (depositParams.approveRequired) {
+              setState((prev) => ({
+                ...prev,
+                depositParams,
+                step: "params" as const,
+                isModalLoading: false,
+              }));
               return;
             }
 
             const metaTransactionData =
-              await ledger!.prepareDepositMetaTransaction(
-                depositParamsData.depositParams,
-                depositParamsData.gasToCover,
+              await ledger!.transactions.prepareDepositMetaTransaction(
+                depositParams,
               );
 
-            setMetaTransactionData(metaTransactionData);
-            setCurrentStep("preview");
-            setIsModalLoading(false);
+            setState((prev) => ({
+              ...prev,
+              metaTransactionData,
+              step: "preview" as const,
+              isModalLoading: false,
+            }));
           } catch (error) {
             console.error("Failed to prepare deposit params:", error);
-            setIsModalError(true);
-            setIsModalLoading(false);
+            setState((prev) => ({
+              ...prev,
+              isModalError: true,
+              isModalLoading: false,
+            }));
             await delay(3000);
             handleBack();
           }
         }),
       ),
-    [ledger, decimals, handleBack, promise],
+    [ledger, decimals, handleBack, promise, state],
   );
 
   const handleParamsApprove = useCallback(
     () =>
       setPromise(
         promise.then(async () => {
-          if (!depositParamsData) return;
+          if (!state.depositParams || !state.depositFees) {
+            throw new Error("Error getting deposit params");
+          }
 
           try {
-            setIsModalLoading(true);
+            setState((prev) => ({
+              ...prev,
+              isModalLoading: true,
+            }));
 
-            await ledger!.approveDeposit(depositParamsData.depositParams);
+            const { depositParams, depositFees } = state;
+
+            await ledger!.transactions.approveDeposit(
+              depositParams,
+              depositFees.depositFee,
+            );
 
             const metaTransactionData =
-              await ledger!.prepareDepositMetaTransaction(
-                depositParamsData.depositParams,
-                depositParamsData.gasToCover,
+              await ledger!.transactions.prepareDepositMetaTransaction(
+                depositParams,
               );
 
-            setMetaTransactionData(metaTransactionData);
-            setCurrentStep("preview");
-            setIsModalLoading(false);
+            setState((prev) => ({
+              ...prev,
+              metaTransactionData,
+              step: "preview" as const,
+              isModalLoading: false,
+            }));
           } catch (error) {
             console.error(
               "Failed to approve deposit or prepare meta transaction:",
               error,
             );
-            setIsModalError(true);
-            setIsModalLoading(false);
+            setState((prev) => ({
+              ...prev,
+              isModalError: true,
+              isModalLoading: false,
+            }));
             await delay(3000);
             handleBack();
           }
         }),
       ),
-    [ledger, depositParamsData, handleBack, promise],
+    [ledger, handleBack, promise, state],
   );
 
   const handleSign = useCallback(
     () =>
       setPromise(
         promise.then(async () => {
-          if (!metaTransactionData) return;
+          if (
+            !state.depositParams ||
+            !state.depositFees ||
+            !state.metaTransaction
+          ) {
+            throw new Error("Error configuring meta transaction");
+          }
 
           try {
-            setIsModalLoading(true);
+            setState((prev) => ({
+              ...prev,
+              isModalLoading: true,
+            }));
 
-            await ledger!.executeMetaTransaction(
-              metaTransactionData.metaTransaction,
-              metaTransactionData.coveredGas,
+            await ledger!.transactions.executeMetaTransaction(
+              state.metaTransaction,
+              state.depositFees.coveredGas.toString(),
             );
-            setIsModalSuccess(true);
+            setState((prev) => ({
+              ...prev,
+              isModalSuccess: true,
+            }));
           } catch (error) {
-            setIsModalError(true);
+            setState((prev) => ({
+              ...prev,
+              isModalError: true,
+            }));
             console.error(error);
           } finally {
-            setIsModalLoading(false);
+            setState((prev) => ({
+              ...prev,
+              isModalLoading: false,
+            }));
             await delay(2000);
             handleBack();
           }
         }),
       ),
-    [ledger, metaTransactionData, handleBack, promise],
+    [ledger, handleBack, promise, state],
   );
 
   return useMemo(
     () => ({
-      isModalOpen,
-      isModalLoading,
-      isModalSuccess,
-      isModalError,
-      currentStep,
       form,
       onModalOpen,
       handleFormSubmit,
       handleParamsApprove,
       handleSign,
       handleBack,
-      depositParamsData,
-      metaTransactionData,
+      state,
+      setState,
     }),
     [
-      isModalOpen,
-      isModalLoading,
-      isModalSuccess,
-      isModalError,
-      currentStep,
       form,
       onModalOpen,
       handleFormSubmit,
       handleParamsApprove,
       handleSign,
       handleBack,
-      depositParamsData,
-      metaTransactionData,
+      state,
+      setState,
     ],
   );
 };

@@ -8,53 +8,45 @@ import { UseFormReturn } from "react-hook-form";
 import { useDynamicHeight } from "@src/hooks/useDynamicHeight";
 import { SpendForm } from "./SpendForm";
 import { SigningPreview } from "@src/components/SigningPreview";
-import { type UnsignedMetaTransaction } from "@src/utils/metatx";
-import { type TransactionDetails } from "@src/services/ledger";
 import {
   prepareSigningData,
   prepareMinimalTransactionDetails,
   prepareFullTransactionDetails,
 } from "./TwoStepSpendModal.utils";
 import { SecondStepExtraContent } from "./SecondStepExtraContent";
+import { type SpendModalState } from "@src/components/Panel/hooks/useSpendModal";
+import { type WithdrawModalState } from "@src/components/Panel/hooks/useWithdrawModal";
+import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
+import { useContext } from "react";
 
 interface SpendFormData {
   recipient: string;
   amount: string;
 }
 
-interface TwoStepSpendModalProps {
-  isOpen: boolean;
-  isLoading: boolean;
-  isSuccess: boolean;
-  errorMessage?: string;
-  currentStep: "form" | "preview";
+type TwoStepSpendModalProps = {
+  state: SpendModalState | WithdrawModalState;
+  setState: React.Dispatch<
+    React.SetStateAction<SpendModalState | WithdrawModalState>
+  >;
   onFormSubmit: (data: SpendFormData) => void;
   onSign: () => void;
   onBack: () => void;
   formMethods: UseFormReturn<SpendFormData>;
   type: "Payment" | "Withdraw";
-  metaTransactionData?: {
-    metaTransaction?: UnsignedMetaTransaction;
-    coveredGas?: string;
-    transactionDetails?: TransactionDetails;
-  };
   decimals?: number;
-}
+};
 
 function TwoStepSpendModal({
-  isOpen,
-  isLoading,
-  isSuccess,
-  errorMessage,
-  currentStep,
+  state,
+  setState,
   onFormSubmit,
   onSign,
   onBack,
   formMethods,
   type,
-  metaTransactionData,
-  decimals,
 }: TwoStepSpendModalProps) {
+  const { decimals } = useContext(PanelContext);
   const { handleSubmit } = formMethods;
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const style = useDynamicHeight("h-dvh");
@@ -66,24 +58,41 @@ function TwoStepSpendModal({
     }
   };
 
+  const [withdrawAll, setWithdrawAll] = useState<boolean>(false);
+
+  const {
+    isModalOpen,
+    isModalLoading,
+    isModalSuccess,
+    errorMessage,
+    step,
+    metaTransaction,
+    transactionDetails,
+  } = state;
+
   const signingData = useMemo(
-    () => prepareSigningData(metaTransactionData?.metaTransaction),
-    [metaTransactionData?.metaTransaction],
+    () => prepareSigningData(metaTransaction),
+    [metaTransaction],
   );
 
   const fullTransactionDetails = useMemo(
-    () =>
-      prepareFullTransactionDetails(metaTransactionData?.transactionDetails),
-    [metaTransactionData?.transactionDetails],
+    () => prepareFullTransactionDetails(transactionDetails),
+    [transactionDetails],
   );
 
   const minimalTransactionDetails = useMemo(
     () =>
       prepareMinimalTransactionDetails(
-        metaTransactionData?.transactionDetails,
+        transactionDetails,
+        withdrawAll
+          ? (state as WithdrawModalState).withdrawFees?.withdrawFee
+          : (state as SpendModalState).spendFees?.spendFee,
+        withdrawAll
+          ? (state as WithdrawModalState).withdrawFees?.fee
+          : (state as SpendModalState).spendFees?.fee,
         decimals,
       ),
-    [metaTransactionData?.transactionDetails, decimals],
+    [transactionDetails, decimals, withdrawAll, state],
   );
 
   return (
@@ -91,7 +100,7 @@ function TwoStepSpendModal({
       className={clsx(
         "fixed inset-0 z-50 w-full",
         "transition-all duration-500 ease-in-out",
-        isOpen ? "opacity-100" : "opacity-0 pointer-events-none",
+        isModalOpen ? "opacity-100" : "opacity-0 pointer-events-none",
       )}
       style={style}
     >
@@ -106,7 +115,7 @@ function TwoStepSpendModal({
             "md:max-w-md md:rounded-xl bg-gray-900",
             "relative justify-center",
             "transition-all duration-500 ease-in-out",
-            isOpen
+            isModalOpen
               ? "translate-x-0 md:scale-100"
               : "translate-x-full md:translate-x-0 md:scale-95",
           )}
@@ -118,22 +127,22 @@ function TwoStepSpendModal({
               </div>
             )}
 
-            {isLoading && (
+            {isModalLoading && (
               <div className="flex-1 content-center flex justify-center animate-fade-in">
                 <Loader />
               </div>
             )}
 
-            {isSuccess && (
+            {isModalSuccess && (
               <div className="flex-1 content-center flex-col justify-center animate-fade-in">
                 <SuccessMessage message={`${type} Successful!`} />
               </div>
             )}
 
-            {!isLoading &&
-              !isSuccess &&
+            {!isModalLoading &&
+              !isModalSuccess &&
               !errorMessage &&
-              currentStep === "form" && (
+              step === "form" && (
                 <>
                   <BackButton onClick={onBack} />
                   <form
@@ -145,21 +154,24 @@ function TwoStepSpendModal({
                       formMethods={formMethods}
                       onEnter={onEnter}
                       type={type}
+                      setState={setState}
+                      withdrawAll={withdrawAll}
+                      setWithdrawAll={setWithdrawAll}
                     />
                   </form>
                 </>
               )}
 
-            {!isLoading &&
-              !isSuccess &&
+            {!isModalLoading &&
+              !isModalSuccess &&
               !errorMessage &&
-              currentStep === "preview" && (
+              step === "preview" && (
                 <>
                   <BackButton onClick={onBack} />
                   <div className="flex flex-col pt-12 pb-1">
                     <SigningPreview
-                      isSigning={isLoading}
-                      isSuccess={isSuccess}
+                      isSigning={isModalLoading}
+                      isSuccess={isModalSuccess}
                       title={`Sign & Send ${type} Meta Transaction`}
                       description={`Review the transaction details before signing. This action cannot be undone`}
                       messageData={signingData}

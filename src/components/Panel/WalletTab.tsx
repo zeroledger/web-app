@@ -29,17 +29,13 @@ export default function WalletTab() {
 
   const { showCopiedTooltip, handleCopyAddress } = useCopyAddress(address);
   const {
-    isModalOpen,
-    isModalLoading,
-    isModalSuccess,
-    errorMessage,
+    state,
+    setState,
     form,
     onModalOpen,
     handleFormSubmit,
     handleSign,
     handleBack,
-    currentStep,
-    metaTransactionData,
     onConsolidationOpen,
   } = useTwoStepSpendModal(decimals, address!, balanceForConsolidation);
 
@@ -125,17 +121,13 @@ export default function WalletTab() {
       </div>
 
       <TwoStepSpendModal
-        isOpen={isModalOpen}
-        isLoading={isModalLoading}
-        isSuccess={isModalSuccess}
-        errorMessage={errorMessage}
+        state={state}
+        setState={setState}
         onFormSubmit={handleFormSubmit}
         onSign={handleSign}
         onBack={handleBack}
         formMethods={form}
-        currentStep={currentStep}
         type="Payment"
-        metaTransactionData={metaTransactionData}
       />
     </div>
   );

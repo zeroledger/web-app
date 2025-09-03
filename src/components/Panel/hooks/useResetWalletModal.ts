@@ -15,7 +15,7 @@ export const useResetWalletModal = () => {
       logger.log("resetting wallet");
       const externalClient = await evmClients?.externalClient();
       viewAccount?.reset(externalClient!.account.address);
-      await ledger?.reset();
+      await ledger?.watcher.reset();
       window.location.reload();
     } catch (error) {
       logger.error(`Failed to reset wallet: ${error}`);

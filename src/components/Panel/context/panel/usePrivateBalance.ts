@@ -11,11 +11,17 @@ export function usePrivateBalance(
     const setter = (value: bigint) => {
       setPrivateBalance(value);
     };
-    ledger?.on(LedgerEvents.PRIVATE_BALANCE_CHANGE, setter);
-    ledger?.on(LedgerEvents.ONCHAIN_BALANCE_CHANGE, updateOnchainBalance);
+    ledger?.watcher.on(LedgerEvents.PRIVATE_BALANCE_CHANGE, setter);
+    ledger?.watcher.on(
+      LedgerEvents.ONCHAIN_BALANCE_CHANGE,
+      updateOnchainBalance,
+    );
     return () => {
-      ledger?.off(LedgerEvents.PRIVATE_BALANCE_CHANGE, setter);
-      ledger?.off(LedgerEvents.ONCHAIN_BALANCE_CHANGE, updateOnchainBalance);
+      ledger?.watcher.off(LedgerEvents.PRIVATE_BALANCE_CHANGE, setter);
+      ledger?.watcher.off(
+        LedgerEvents.ONCHAIN_BALANCE_CHANGE,
+        updateOnchainBalance,
+      );
     };
   }, [ledger, updateOnchainBalance, setPrivateBalance]);
 

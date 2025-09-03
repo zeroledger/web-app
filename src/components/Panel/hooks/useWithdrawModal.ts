@@ -5,13 +5,33 @@ import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useSwipe } from "./useSwipe";
 import { delay } from "@src/utils/common";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
-import { type TransactionDetails } from "@src/services/ledger";
+import {
+  type WithdrawFeesData,
+  type TransactionDetails,
+  type SpendFeesData,
+} from "@src/services/ledger";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
 import { ens } from "@src/services/Ens";
+import { type WithdrawParams, type CommitmentStruct } from "@src/utils/vault";
 
 interface WithdrawFormData {
   recipient: string;
   amount: string;
+}
+
+export interface WithdrawModalState {
+  step: "form" | "preview";
+  isModalOpen: boolean;
+  isModalLoading: boolean;
+  isModalError: boolean;
+  isModalSuccess: boolean;
+  errorMessage?: string;
+  withdrawFees?: WithdrawFeesData;
+  withdrawItems?: CommitmentStruct[];
+  spendFees?: SpendFeesData;
+  withdrawParams?: WithdrawParams;
+  metaTransaction?: UnsignedMetaTransaction;
+  transactionDetails?: TransactionDetails;
 }
 
 const asyncOperationPromise = Promise.resolve();
@@ -19,18 +39,6 @@ const asyncOperationPromise = Promise.resolve();
 export const useTwoStepWithdrawModal = (decimals: number) => {
   const { ledger } = useContext(LedgerContext);
   const { privateBalance } = useContext(PanelContext);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isModalLoading, setIsModalLoading] = useState(false);
-  const [isModalSuccess, setIsModalSuccess] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(
-    undefined,
-  );
-  const [currentStep, setCurrentStep] = useState<"form" | "preview">("form");
-  const [metaTransactionData, setMetaTransactionData] = useState<{
-    metaTransaction: UnsignedMetaTransaction;
-    coveredGas: string;
-    transactionDetails: TransactionDetails;
-  }>();
   const [promise, setPromise] = useState<Promise<void>>(asyncOperationPromise);
   const { disableSwipe, enableSwipe } = useSwipe();
 
@@ -41,43 +49,64 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
     },
   });
 
+  const [state, setState] = useState<WithdrawModalState>({
+    step: "form" as const,
+    isModalOpen: false,
+    isModalLoading: false,
+    isModalError: false,
+    isModalSuccess: false,
+  });
+
+  const resetState = useCallback(() => {
+    setState({
+      step: "form" as const,
+      isModalOpen: false,
+      isModalLoading: false,
+      isModalError: false,
+      isModalSuccess: false,
+    });
+  }, []);
+
   const onModalOpen = useCallback(
     () =>
       setPromise(
         promise.then(() => {
-          setIsModalSuccess(false);
-          setIsModalLoading(false);
-          setErrorMessage(undefined);
-          setCurrentStep("form");
-          setMetaTransactionData(undefined);
+          resetState();
           disableSwipe();
-          setIsModalOpen(true);
         }),
       ),
-    [disableSwipe, promise],
+    [disableSwipe, promise, resetState],
   );
 
   const handleBack = useCallback(
     () =>
       setPromise(
         promise.then(async () => {
-          setIsModalOpen(false);
+          setState((prev) => ({
+            ...prev,
+            isModalOpen: false,
+          }));
           await delay(500);
           form.reset();
-          setMetaTransactionData(undefined);
-          setCurrentStep("form");
+          resetState();
           enableSwipe();
         }),
       ),
-    [form, enableSwipe, promise],
+    [form, enableSwipe, promise, resetState],
   );
 
   const handleFormSubmit = useCallback(
     (data: WithdrawFormData) =>
       setPromise(
         promise.then(async () => {
+          if (!state.spendFees || !state.withdrawFees || !state.withdrawItems) {
+            throw new Error("Error getting fees");
+          }
           try {
-            setIsModalLoading(true);
+            setState((prev) => ({
+              ...prev,
+              isModalLoading: true,
+            }));
 
             const recipient = await ens.universalResolve(data.recipient);
 
@@ -87,85 +116,104 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
             if (amount === privateBalance) {
               // Full withdraw
               const fullWithdrawData =
-                await ledger!.prepareWithdrawMetaTransaction(recipient);
+                await ledger!.transactions.prepareWithdrawMetaTransaction(
+                  recipient,
+                  state.withdrawFees,
+                  state.withdrawItems,
+                );
               metaTransactionData = fullWithdrawData;
             } else {
               // Partial withdraw
               metaTransactionData =
-                await ledger!.preparePartialWithdrawMetaTransaction(
+                await ledger!.transactions.preparePartialWithdrawMetaTransaction(
                   amount,
                   recipient,
+                  state.spendFees,
                 );
             }
-            setMetaTransactionData(metaTransactionData);
-            setCurrentStep("preview");
-            setIsModalLoading(false);
+            setState((prev) => ({
+              ...prev,
+              ...metaTransactionData,
+              step: "preview" as const,
+              isModalLoading: false,
+            }));
           } catch (error) {
             console.error("Failed to prepare withdraw transaction:", error);
-            setErrorMessage("Failed to prepare withdraw transaction");
-            setIsModalLoading(false);
+            setState((prev) => ({
+              ...prev,
+              isModalError: true,
+              isModalLoading: false,
+              errorMessage: "Failed to prepare withdraw transaction",
+            }));
             await delay(3000);
             handleBack();
           }
         }),
       ),
-    [ledger, decimals, privateBalance, handleBack, promise],
+    [ledger, decimals, privateBalance, handleBack, promise, state],
   );
 
   const handleSign = useCallback(
     () =>
       setPromise(
         promise.then(async () => {
-          if (!metaTransactionData) return;
+          if (!state.metaTransaction || !state.withdrawFees) {
+            throw new Error("Error getting meta transaction");
+          }
 
           try {
-            setIsModalLoading(true);
+            setState((prev) => ({
+              ...prev,
+              isModalLoading: true,
+            }));
 
-            await ledger!.executeMetaTransaction(
-              metaTransactionData.metaTransaction,
-              metaTransactionData.coveredGas,
+            await ledger!.transactions.executeMetaTransaction(
+              state.metaTransaction,
+              state.withdrawFees.coveredGas.toString(),
             );
 
-            setIsModalSuccess(true);
+            setState((prev) => ({
+              ...prev,
+              isModalSuccess: true,
+            }));
           } catch (error) {
-            setErrorMessage("Failed to sign withdraw transaction");
+            setState((prev) => ({
+              ...prev,
+              errorMessage: "Failed to sign withdraw transaction",
+              isModalError: true,
+            }));
             console.error(error);
           } finally {
-            setIsModalLoading(false);
+            setState((prev) => ({
+              ...prev,
+              isModalLoading: false,
+            }));
             await delay(2000);
             handleBack();
           }
         }),
       ),
-    [ledger, metaTransactionData, handleBack, promise],
+    [ledger, handleBack, promise, state],
   );
 
   return useMemo(
     () => ({
-      isModalOpen,
-      isModalLoading,
-      isModalSuccess,
-      errorMessage,
-      currentStep,
+      state,
+      setState,
       form,
       onModalOpen,
       handleFormSubmit,
       handleSign,
       handleBack,
-      metaTransactionData,
     }),
     [
-      isModalOpen,
-      isModalLoading,
-      isModalSuccess,
-      errorMessage,
-      currentStep,
+      state,
+      setState,
       form,
       onModalOpen,
       handleFormSubmit,
       handleSign,
       handleBack,
-      metaTransactionData,
     ],
   );
 };

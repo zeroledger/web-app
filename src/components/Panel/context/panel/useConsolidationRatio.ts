@@ -11,7 +11,7 @@ export function useConsolidationRatio(ledger?: Ledger) {
     const updateConsolidationRatio = async () => {
       if (ledger) {
         try {
-          const data = await ledger.getConsolidationRatio();
+          const data = await ledger.watcher.getConsolidationRatio();
           setConsolidationParams(data);
         } catch (error) {
           console.error("Failed to get consolidation ratio:", error);
@@ -28,10 +28,10 @@ export function useConsolidationRatio(ledger?: Ledger) {
     updateConsolidationRatio();
 
     // Listen for balance changes to update consolidation ratio
-    ledger?.on(LedgerEvents.PRIVATE_BALANCE_CHANGE, setter);
+    ledger?.watcher.on(LedgerEvents.PRIVATE_BALANCE_CHANGE, setter);
 
     return () => {
-      ledger?.off(LedgerEvents.PRIVATE_BALANCE_CHANGE, setter);
+      ledger?.watcher.off(LedgerEvents.PRIVATE_BALANCE_CHANGE, setter);
     };
   }, [ledger]);
 

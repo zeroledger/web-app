@@ -1,6 +1,6 @@
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import { shortString } from "@src/utils/common";
-import { toHex, formatUnits } from "viem";
+import { toHex, formatUnits, Address } from "viem";
 import { type TransactionDetails } from "@src/services/ledger";
 
 export const prepareSigningData = (
@@ -59,9 +59,11 @@ export const formatTransactionDetailsType = (
 
 export const prepareMinimalTransactionDetails = (
   transactionDetails?: TransactionDetails,
+  protocolFee?: bigint,
+  paymasterFee?: bigint,
   decimals?: number,
 ) => {
-  if (!transactionDetails) return [];
+  if (!transactionDetails || !protocolFee || !paymasterFee) return [];
   return [
     {
       label: "Recipient",
@@ -72,16 +74,21 @@ export const prepareMinimalTransactionDetails = (
       value: `$${formatUnits(transactionDetails.value, decimals || 18)}`,
     },
     {
-      label: "Fee",
-      value: `$${formatUnits(transactionDetails.fee, decimals || 18)}`,
+      label: "Paymaster Fee",
+      value: `$${formatUnits(paymasterFee, decimals || 18)}`,
+    },
+    {
+      label: `Protocol Fee`,
+      value: `$${formatUnits(protocolFee, decimals || 18)}`,
     },
   ];
 };
 
 export const prepareFullTransactionDetails = (
   transactionDetails?: TransactionDetails,
+  paymasterAddress?: Address,
 ) => {
-  if (!transactionDetails) return [];
+  if (!transactionDetails || !paymasterAddress) return [];
   return [
     {
       label: "Type",
@@ -121,7 +128,7 @@ export const prepareFullTransactionDetails = (
     },
     {
       label: "Paymaster",
-      value: shortString(transactionDetails.paymaster),
+      value: shortString(paymasterAddress),
     },
   ];
 };

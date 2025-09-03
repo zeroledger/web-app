@@ -2,6 +2,11 @@ import { Field, Label, Input } from "@headlessui/react";
 import clsx from "clsx";
 import { UseFormReturn } from "react-hook-form";
 import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
+import { useDepositFees } from "@src/components/Panel/hooks/useFees";
+import { useContext, useEffect } from "react";
+import { LedgerContext } from "@src/context/ledger/ledger.context";
+import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
+import { DepositModalState } from "@src/components/Panel/hooks/useDepositModal";
 
 interface DepositFormData {
   amount: string;
@@ -10,15 +15,43 @@ interface DepositFormData {
 interface DepositFormProps {
   formMethods: UseFormReturn<DepositFormData>;
   onEnter: (e: React.KeyboardEvent<HTMLElement>) => void;
+  setState: React.Dispatch<React.SetStateAction<DepositModalState>>;
 }
 
-export const DepositForm = ({ formMethods, onEnter }: DepositFormProps) => {
+export const DepositForm = ({
+  formMethods,
+  onEnter,
+  setState,
+}: DepositFormProps) => {
   const {
     register,
     formState: { errors, isSubmitting },
     clearErrors,
     setValue,
   } = formMethods;
+
+  const { ledger } = useContext(LedgerContext);
+  const { decimals } = useContext(PanelContext);
+  const {
+    data: depositFees,
+    isLoading,
+    error,
+  } = useDepositFees(ledger!, decimals);
+
+  useEffect(() => {
+    if (error) {
+      setState((prev) => ({
+        ...prev,
+        isModalError: true,
+      }));
+    }
+    if (depositFees) {
+      setState((prev) => ({
+        ...prev,
+        depositFees,
+      }));
+    }
+  }, [error, depositFees, setState]);
 
   return (
     <div className="w-full">
@@ -49,12 +82,24 @@ export const DepositForm = ({ formMethods, onEnter }: DepositFormProps) => {
           }}
           onKeyDown={onEnter}
         />
+        <div className="mt-1 text-base text-white flex items-center gap-2">
+          <div className="font-medium">Deposit Fees:</div>
+          {isLoading && <div className="h-6 w-1/2 bg-white/10 rounded" />}
+          {depositFees && (
+            <div className="text-base text-white">
+              {depositFees.roundedFee} USD
+            </div>
+          )}
+        </div>
         <div className="h-6 mt-1 text-base text-red-400">
           {errors.amount && <p>{errors.amount.message}</p>}
         </div>
       </Field>
       <div className="py-4">
-        <MobileConfirmButton disabled={isSubmitting} label="Confirm Deposit" />
+        <MobileConfirmButton
+          disabled={isSubmitting || isLoading}
+          label="Confirm Deposit"
+        />
       </div>
     </div>
   );

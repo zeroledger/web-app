@@ -29,7 +29,7 @@ export default function ActivityTab({ active }: { active: boolean }) {
     setLoading(true);
 
     try {
-      const result = await ledger!.getPaginatedTransactions(10);
+      const result = await ledger!.watcher.getPaginatedTransactions(10);
       if (result) {
         setGroupedTransactions(result.transactions);
         setNextCursor(result.nextCursor);
@@ -49,7 +49,10 @@ export default function ActivityTab({ active }: { active: boolean }) {
     setLoadingMore(true);
 
     try {
-      const result = await ledger!.getPaginatedTransactions(10, nextCursor);
+      const result = await ledger!.watcher.getPaginatedTransactions(
+        10,
+        nextCursor,
+      );
       if (result) {
         setGroupedTransactions((prev) => ({
           ...prev,

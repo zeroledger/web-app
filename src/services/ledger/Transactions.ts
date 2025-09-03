@@ -22,9 +22,6 @@ export type TransactionDetails = {
   from: Address;
   to: Address;
   value: bigint;
-  protocolFee: bigint;
-  paymasterFee: bigint;
-  paymaster: Address;
   forwarder: Address;
   inputs: bigint[];
   outputs: bigint[];
@@ -161,17 +158,12 @@ export class Transactions {
           spenderAddress: this.vault,
         });
 
-        const depositParams = {
+        return {
           depositStruct,
           client,
           contract: this.vault,
           proof: proofData.calldata_proof,
           approveRequired: spendAllowance < value,
-        };
-
-        return {
-          depositParams,
-          gasToCover: feesData.coveredGas,
         };
       },
       "prepareDepositParamsForApproval",
@@ -224,11 +216,7 @@ export class Transactions {
     );
   }
 
-  prepareDepositMetaTransaction(
-    depositParams: DepositParams,
-    gasToCover: bigint,
-    depositFees: bigint,
-  ) {
+  prepareDepositMetaTransaction(depositParams: DepositParams) {
     return this.enqueue(
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
@@ -236,9 +224,7 @@ export class Transactions {
         const mainAccount = await this.mainAccount();
         const gas = await asyncVaultUtils.getDepositTxGas(depositParams);
 
-        this.logger.log(
-          `Deposit: gas without forwarding: ${gas.toString()}, coveredGas: ${gasToCover.toString()}`,
-        );
+        this.logger.log(`Deposit: gas without forwarding: ${gas.toString()}`);
 
         return {
           metaTransaction: {
@@ -257,7 +243,6 @@ export class Transactions {
               depositParams.proof,
             ),
           } as UnsignedMetaTransaction,
-          coveredGas: gasToCover.toString(),
           transactionDetails: {
             type: "deposit",
             vaultContract: this.vault,
@@ -265,9 +250,6 @@ export class Transactions {
             from: mainAccount.address,
             to: mainAccount.address,
             value: depositParams.depositStruct.amount,
-            protocolFee: depositParams.depositStruct.forwarderFee,
-            paymasterFee: depositFees,
-            paymaster: depositParams.depositStruct.forwarderFeeRecipient,
             forwarder: await this.getForwarder(),
             inputs: [],
             outputs: await Promise.all(
@@ -284,29 +266,33 @@ export class Transactions {
     );
   }
 
+  async getWithdrawAllItems() {
+    const commitments = await this.commitments.all();
+
+    const withdrawItems: CommitmentStruct[] = [];
+    commitments.forEach((c) => {
+      if (BigInt(c.value) === 0n) {
+        return;
+      }
+      withdrawItems.push({
+        amount: BigInt(c.value),
+        sValue: BigInt(c.sValue),
+      });
+    });
+
+    return withdrawItems;
+  }
+
   prepareWithdrawMetaTransaction(
     recipient: Address,
     feesData: WithdrawFeesData,
+    withdrawItems: CommitmentStruct[],
   ) {
     return this.enqueue(
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
           await this.preloadedModulesPromise;
         const mainAccount = await this.mainAccount();
-        const commitments = await this.commitments.all();
-
-        const withdrawItems: CommitmentStruct[] = [];
-        const withdrawItemIds: string[] = [];
-        commitments.forEach((c) => {
-          if (BigInt(c.value) === 0n) {
-            return;
-          }
-          withdrawItems.push({
-            amount: BigInt(c.value),
-            sValue: BigInt(c.sValue),
-          });
-          withdrawItemIds.push(c.hash);
-        });
 
         if (withdrawItems.length === 0) {
           throw new Error("No commitments found to cover the requested amount");
@@ -353,17 +339,13 @@ export class Transactions {
             deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
             data: asyncVaultUtils.getWithdrawTxData(withdrawParams),
           } as UnsignedMetaTransaction,
-          coveredGas: feesData.coveredGas.toString(),
           transactionDetails: {
+            token: withdrawParams.token,
             type: "withdraw",
             vaultContract: withdrawParams.contract,
             from: mainAccount.address,
             to: recipient,
             value: withdrawAmount - feesData.fee - feesData.withdrawFee,
-            token: withdrawParams.token,
-            protocolFee: feesData.withdrawFee,
-            paymasterFee: feesData.fee,
-            paymaster: feesData.paymasterAddress,
             forwarder: await this.getForwarder(),
             inputs: await Promise.all(
               withdrawParams.withdrawItems.map((item) =>
@@ -464,7 +446,6 @@ export class Transactions {
               proofData.calldata_proof,
             ),
           } as UnsignedMetaTransaction,
-          coveredGas: feesData.coveredGas.toString(),
           transactionDetails: {
             type: "partialWithdraw",
             vaultContract: this.vault,
@@ -472,9 +453,6 @@ export class Transactions {
             from: mainAccount.address,
             to: recipient,
             value: value - feesData.fee - feesData.spendFee,
-            protocolFee: feesData.fee,
-            paymasterFee: feesData.spendFee,
-            paymaster: feesData.paymasterAddress,
             forwarder: await this.getForwarder(),
             inputs: transactionStruct.inputsPoseidonHashes,
             outputs: transactionStruct.outputsPoseidonHashes,
@@ -579,7 +557,6 @@ export class Transactions {
               proofData.calldata_proof,
             ),
           } as UnsignedMetaTransaction,
-          coveredGas: feesData.coveredGas.toString(),
           transactionDetails: {
             type: "send",
             vaultContract: this.vault,
@@ -587,9 +564,6 @@ export class Transactions {
             from: mainAccount.address,
             to: recipient,
             value: value - feesData.fee - feesData.spendFee,
-            protocolFee: feesData.spendFee,
-            paymasterFee: feesData.fee,
-            paymaster: feesData.paymasterAddress,
             forwarder: await this.getForwarder(),
             inputs: transactionStruct.inputsPoseidonHashes,
             outputs: transactionStruct.outputsPoseidonHashes,

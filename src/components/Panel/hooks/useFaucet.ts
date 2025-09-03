@@ -13,7 +13,7 @@ export const useFaucet = () => {
     disableSwipe();
     const value = Math.ceil(Math.random() * 69 + 30).toString();
     setAmount(value);
-    await ledger!.faucet(value);
+    await ledger!.transactions.faucet(value);
     setIsFauceting(false);
     enableSwipe();
   };

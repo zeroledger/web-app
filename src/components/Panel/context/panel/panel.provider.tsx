@@ -74,7 +74,7 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
       setEvmClients(newEvmClientService);
       const [externalClient] = await Promise.all([
         newEvmClientService.externalClient(),
-        ledger?.softReset(),
+        ledger?.watcher.softReset(),
       ]);
       await viewAccount!
         .unlockViewAccount(externalClient.account.address, password!)
