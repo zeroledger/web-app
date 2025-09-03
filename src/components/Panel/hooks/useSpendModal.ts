@@ -150,7 +150,7 @@ export const useTwoStepSpendModal = (
     ownerAddress,
     balanceForConsolidation,
     handleBack,
-    state,
+    decimals,
   ]);
 
   const handleFormSubmit = useCallback(
