@@ -1,7 +1,7 @@
 import { Field, Label, Input } from "@headlessui/react";
 import clsx from "clsx";
 import { UseFormReturn } from "react-hook-form";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
 import { getMaxFormattedValue } from "@src/utils/common";
 import { formatUnits, isAddress } from "viem";
@@ -15,6 +15,7 @@ import {
   useWithdrawFees,
 } from "@src/components/Panel/hooks/useFees";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
+import { QRScannerModal } from "./QRScannerModal";
 
 const amountRegex = /^\d*\.?\d*$/;
 
@@ -49,6 +50,7 @@ export const SpendForm = ({
     setValue,
   } = formMethods;
   const { privateBalance, decimals } = useContext(PanelContext);
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
 
   const { ledger } = useContext(LedgerContext);
   const {
@@ -64,6 +66,29 @@ export const SpendForm = ({
   } = useWithdrawFees(ledger!, decimals);
 
   const isFeesLoading = isSpendLoading || isWithdrawLoading;
+
+  const handleQRCodeDetected = (data: string) => {
+    // Extract address from QR code data
+    // QR codes might contain just the address or a full URL
+    let address = data;
+
+    // If it's a URL, try to extract the address from it
+    if (data.includes("ethereum:")) {
+      const match = data.match(/ethereum:([a-fA-F0-9x]+)/);
+      if (match) {
+        address = match[1];
+      }
+    } else if (data.includes("/address/")) {
+      const match = data.match(/\/address\/([a-fA-F0-9x]+)/);
+      if (match) {
+        address = match[1];
+      }
+    }
+
+    // Set the address in the form
+    setValue("recipient", address);
+    clearErrors("recipient");
+  };
 
   useEffect(() => {
     if (isSpendError || isWithdrawError) {
@@ -101,33 +126,61 @@ export const SpendForm = ({
         <Label className="text-base/6 font-medium text-white">
           Recipient address
         </Label>
-        <Input
-          className={clsx(
-            "mt-1 block w-full rounded-lg border-none bg-white/5 py-2.5 px-3 text-base text-white leading-7",
-            "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25",
-            errors.recipient && "border-red-400",
-          )}
-          {...register("recipient", {
-            required: "Recipient address is required",
-            validate: async (value) => {
-              if (value.startsWith("0x")) {
-                return isAddress(value) || "Invalid address";
-              }
-              const ensAddress = await ens.client.getEnsAddress({
-                name: normalize(value),
-              });
-              return (
-                (!!ensAddress && isAddress(ensAddress)) || "Invalid ENS name"
-              );
-            },
-          })}
-          placeholder="ens.eth or 0x00..."
-          onChange={(e) => {
-            setValue("recipient", e.target.value);
-            clearErrors("recipient");
-          }}
-          onKeyDown={onEnter}
-        />
+        <div className="relative">
+          <Input
+            className={clsx(
+              "mt-1 block w-full rounded-lg border-none bg-white/5 py-2.5 px-3 pr-12 text-base text-white leading-7",
+              "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25",
+              errors.recipient && "border-red-400",
+            )}
+            {...register("recipient", {
+              required: "Recipient address is required",
+              validate: async (value) => {
+                if (value.startsWith("0x")) {
+                  return isAddress(value) || "Invalid address";
+                }
+                const ensAddress = await ens.client.getEnsAddress({
+                  name: normalize(value),
+                });
+                return (
+                  (!!ensAddress && isAddress(ensAddress)) || "Invalid ENS name"
+                );
+              },
+            })}
+            placeholder="ens.eth or 0x00..."
+            onChange={(e) => {
+              setValue("recipient", e.target.value);
+              clearErrors("recipient");
+            }}
+            onKeyDown={onEnter}
+          />
+          <button
+            type="button"
+            onClick={() => setIsQRScannerOpen(true)}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+            title="Scan QR code"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+            </svg>
+          </button>
+        </div>
         <div className="h-6 mt-1 text-base text-red-400">
           {errors.recipient && <p>{errors.recipient.message}</p>}
         </div>
@@ -189,6 +242,13 @@ export const SpendForm = ({
       <div className="py-4">
         <MobileConfirmButton disabled={isSubmitting} label={`Review ${type}`} />
       </div>
+
+      {/* QR Scanner Modal */}
+      <QRScannerModal
+        isOpen={isQRScannerOpen}
+        onClose={() => setIsQRScannerOpen(false)}
+        onQRCodeDetected={handleQRCodeDetected}
+      />
     </div>
   );
 };
