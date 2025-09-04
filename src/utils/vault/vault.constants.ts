@@ -1,8 +1,8 @@
 export const AVERAGE_ERC_20_TRANSFER_COST = 65_000n;
-export const FORWARDER_EXECUTION_COST = 35_000n;
+export const FORWARDER_EXECUTION_COST = 40_000n;
 export const PROOF_VERIFICATION_GAS_COST = 400_000n;
 export const INPUT_REMOVAL_GAS_COST = 7_000n;
 export const OUTPUT_RECORD_GAS_COST = 17_000n;
 export const GAS_LIMIT_NOMINATOR = 35n;
 export const GAS_LIMIT_DENOMINATOR = 10n;
-export const DEPOSIT_GAS_COST = 460_000n;
+export const DEPOSIT_GAS_COST = 550_000n;

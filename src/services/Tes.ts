@@ -204,6 +204,7 @@ export class Tes {
       const { data } = await this.axios.get<{
         gasPrice: string;
         paymasterAddress: Address;
+        sponsoredVaultMethods: ("deposit" | "withdraw" | "spend")[];
       }>(`${this.tesUrl}/paymaster/quote/${token}`, {
         headers: {
           "x-custom-tes-csrf": this.csrf,
@@ -214,6 +215,7 @@ export class Tes {
       return {
         gasPrice: BigInt(data.gasPrice),
         paymasterAddress: data.paymasterAddress,
+        sponsoredVaultMethods: data.sponsoredVaultMethods,
       };
     }, backoffOptions);
   }

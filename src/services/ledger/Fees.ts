@@ -1,4 +1,4 @@
-import { Address, parseUnits } from "viem";
+import { Address, formatUnits, parseUnits } from "viem";
 import { Logger } from "@src/utils/logger";
 import { type Tes } from "@src/services/Tes";
 import { EvmClients } from "@src/services/Clients";
@@ -84,6 +84,7 @@ export class Fees {
         decimals,
         depositFee,
         asyncVaultUtils.depositGasSponsoredLimit(),
+        "deposit",
       );
 
     return {
@@ -106,6 +107,7 @@ export class Fees {
         decimals,
         withdrawFee,
         asyncVaultUtils.withdrawGasSponsoredLimit(withdrawingItemsAmount),
+        "withdraw",
       );
     return {
       coveredGas,
@@ -125,6 +127,7 @@ export class Fees {
         decimals,
         spendFee,
         asyncVaultUtils.spendGasSponsoredLimit(1, 3, 2),
+        "spend",
       );
     return {
       coveredGas,
@@ -139,21 +142,32 @@ export class Fees {
     decimals: number,
     protocolFees: bigint,
     gasToCover: bigint,
+    method: "deposit" | "withdraw" | "spend",
   ) {
-    const { gasPrice, paymasterAddress } = await this.tesService.quote(
-      this.token,
-      (await this.evmClients.externalClient()).account.address,
-    );
+    const { gasPrice, paymasterAddress, sponsoredVaultMethods } =
+      await this.tesService.quote(
+        this.token,
+        (await this.evmClients.externalClient()).account.address,
+      );
 
-    const draftFee = gasToCover * gasPrice;
-    const roundedFee = roundToCents(draftFee + protocolFees, decimals);
-    const fee = parseUnits(roundedFee, decimals) - protocolFees;
+    if (!sponsoredVaultMethods.includes(method)) {
+      const draftFee = gasToCover * gasPrice;
+      const roundedFee = roundToCents(draftFee + protocolFees, decimals);
+      const fee = parseUnits(roundedFee, decimals) - protocolFees;
 
-    return {
-      coveredGas: fee / gasPrice,
-      fee,
-      paymasterAddress,
-      roundedFee,
-    };
+      return {
+        coveredGas: fee / gasPrice,
+        fee,
+        paymasterAddress,
+        roundedFee,
+      };
+    } else {
+      return {
+        coveredGas: gasToCover,
+        fee: 0n,
+        paymasterAddress,
+        roundedFee: formatUnits(protocolFees, decimals),
+      };
+    }
   }
 }

@@ -1,8 +1,10 @@
 import { primaryButtonStyle } from "../Button";
 import { TwoStepSpendModal } from "@src/components/Modals/TwoStepSpendModal";
+import { ReceiveModal } from "@src/components/Modals/ReceiveModal";
 import { formatBalance } from "@src/utils/common";
 import { useTwoStepSpendModal } from "./hooks/useSpendModal";
-import { useCopyAddress } from "./hooks/useCopyAddress";
+import { useReceiveModal } from "./hooks/useReceiveModal";
+import { useCopyAddress } from "@src/components/Modals/ReceiveModal";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useContext } from "react";
 import { Avatar } from "../EnsProfile/Avatar";
@@ -38,14 +40,29 @@ export default function WalletTab() {
     handleBack,
     onConsolidationOpen,
   } = useTwoStepSpendModal(decimals, address!, balanceForConsolidation);
+  const { isReceiveModalOpen, onReceiveModalOpen, onReceiveModalClose } =
+    useReceiveModal();
 
   return (
-    <div className="flex flex-col items-center justify-center h-full px-4 pt-4">
+    <div className="flex flex-col items-center gap-4 justify-center h-full px-4 pt-4">
       <a
         href={`${SCAN_URL[targetChain.id]}/address/${address}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="hover:cursor-pointer"
+        className="flex flex-col items-center gap-4 relative hover:cursor-pointer"
+        onClick={(e) => {
+          // Allow the link to work, but also show copy tooltip on click
+          e.preventDefault();
+          handleCopyAddress();
+          // Open the link after a short delay to show the copy feedback
+          setTimeout(() => {
+            window.open(
+              `${SCAN_URL[targetChain.id]}/address/${address}`,
+              "_blank",
+              "noopener,noreferrer",
+            );
+          }, 100);
+        }}
       >
         {!isEnsLoading && (
           <Avatar
@@ -57,11 +74,6 @@ export default function WalletTab() {
         {isEnsLoading && (
           <div className="bg-gray-700 h-15 w-15 rounded-lg animate-pulse" />
         )}
-      </a>
-      <div
-        className="flex items-center gap-2 relative my-4 hover:cursor-pointer"
-        onClick={handleCopyAddress}
-      >
         {!isEnsLoading && address && (
           <Name
             className={clsx("text-center", {
@@ -83,11 +95,11 @@ export default function WalletTab() {
             Address copied!
           </div>
         )}
-      </div>
+      </a>
       {error && <div className="text-white">{error.message}</div>}
       {isLoading && (
         <>
-          <div className="h-12 animate-pulse flex items-center justify-center text-lg">
+          <div className="h-10 animate-pulse flex items-center justify-center text-lg">
             {blocksToSync && blocksToSync > 0n
               ? `Syncing ${blocksToSync.toString()} blocks...`
               : ""}
@@ -95,10 +107,10 @@ export default function WalletTab() {
         </>
       )}
       {!isLoading && !error && (
-        <div className="text-4xl h-12 font-extrabold text-white">{`$${formatBalance(privateBalance, decimals)}`}</div>
+        <div className="text-4xl h-10 font-extrabold text-white">{`$${formatBalance(privateBalance, decimals)}`}</div>
       )}
       {!isLoading && !error && consolidationRatio < 1 && (
-        <div className="text-sm text-yellow-100/70 text-center mt-2 px-4">
+        <div className="text-sm text-yellow-100/70 text-center px-4">
           To spend more than {Math.round(consolidationRatio * 100)}% of account
           balance you need first{" "}
           <button
@@ -110,13 +122,20 @@ export default function WalletTab() {
           your commitments.
         </div>
       )}
-      <div className="flex gap-6 mt-8">
+      <div className="flex gap-6 mt-2">
         <button
           onClick={onModalOpen}
           className={`${primaryButtonStyle} w-32 h-12 text-lg flex items-center justify-center rounded-xl`}
           disabled={isLoading}
         >
           Send
+        </button>
+        <button
+          onClick={onReceiveModalOpen}
+          className={`${primaryButtonStyle} w-32 h-12 text-lg flex items-center justify-center rounded-xl`}
+          disabled={isLoading}
+        >
+          Receive
         </button>
       </div>
 
@@ -129,6 +148,8 @@ export default function WalletTab() {
         formMethods={form}
         type="Payment"
       />
+
+      <ReceiveModal isOpen={isReceiveModalOpen} onClose={onReceiveModalClose} />
     </div>
   );
 }
