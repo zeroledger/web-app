@@ -4,6 +4,7 @@ import { usePrivyWalletAdapter } from "@src/context/ledger/usePrivyWalletAdapter
 import { useEnsProfile } from "@src/context/ledger/useEnsProfile";
 import { useCopyAddress, useCopyEns } from ".";
 import { shortString } from "@src/utils/common";
+import { QRCodeDisplay } from "./QRCodeDisplay";
 
 interface ReceiveModalProps {
   isOpen: boolean;
@@ -55,14 +56,9 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
                 </p>
               </div>
 
-              {/* QR Code Placeholder */}
+              {/* QR Code */}
               <div className="flex justify-center mb-8">
-                <div className="w-48 h-48 bg-gray-700 rounded-lg border-2 border-dashed border-gray-500 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-gray-400 text-sm mb-2">QR Code</div>
-                    <div className="text-gray-500 text-xs">Coming Soon</div>
-                  </div>
-                </div>
+                <QRCodeDisplay value={wallet?.address || ""} size={192} />
               </div>
 
               {/* User Profile Section */}
