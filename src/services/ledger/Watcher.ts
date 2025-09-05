@@ -1,4 +1,4 @@
-import { Address } from "viem";
+import { Address, keccak256 } from "viem";
 import { EventEmitter } from "node:events";
 import debounce from "debounce";
 import { Logger } from "@src/utils/logger";
@@ -23,6 +23,7 @@ import { compareEvents, EventLike } from "@src/utils/events";
 import { AxiosInstance } from "axios";
 import { LedgerEvents } from "./events";
 import { shortString } from "@src/utils/common";
+import { v4 as uuidv4 } from "uuid";
 
 // Dynamic imports for heavy dependencies
 const loadHeavyDependencies = async () => {
@@ -59,6 +60,7 @@ export class Watcher extends EventEmitter {
     asyncProtocolManagerUtils: typeof import("@src/utils/protocolManager");
   }>;
   private _unwatchVault?: () => void;
+  private classId = keccak256(`0x${uuidv4()}`).slice(0, 8);
   constructor(
     private readonly viewAccount: ViewAccount,
     private readonly evmClients: EvmClients,
@@ -81,12 +83,12 @@ export class Watcher extends EventEmitter {
       () =>
         this.enqueue(
           () => this.handleEventsBatch({ updateBlockNumber: true }),
-          "handleEventsBatch",
+          `handleEventsBatch`,
           80_000,
         ),
       1000,
     );
-    this.logger.log(`LedgerService created with token ${this.token}`);
+    this.logger.log(`Created with token ${this.token}`);
   }
 
   async mainAccount() {
@@ -119,7 +121,7 @@ export class Watcher extends EventEmitter {
     const [err, result] = await this.queue.schedule(
       Watcher.name,
       fn,
-      correlationId,
+      `${correlationId}-${this.classId}`,
       timeout,
     );
     if (err) {

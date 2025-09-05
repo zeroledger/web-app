@@ -6,7 +6,7 @@ import { Logger } from "@src/utils/logger";
 const logger = new Logger("useResetWalletModal");
 
 export const useResetWalletModal = () => {
-  const { ledger, viewAccount, evmClients } = useContext(LedgerContext);
+  const { ledger, viewAccount, evmClients, wallet } = useContext(LedgerContext);
   const [isResetWalletModalOpen, setIsResetWalletModalOpen] = useState(false);
   const { disableSwipe, enableSwipe } = useSwipe();
 
@@ -16,11 +16,12 @@ export const useResetWalletModal = () => {
       const externalClient = await evmClients?.externalClient();
       viewAccount?.reset(externalClient!.account.address);
       await ledger?.watcher.reset();
+      wallet?.disconnect();
       window.location.reload();
     } catch (error) {
       logger.error(`Failed to reset wallet: ${error}`);
     }
-  }, [ledger, viewAccount, evmClients]);
+  }, [ledger, viewAccount, evmClients, wallet]);
 
   const onResetWalletModalOpen = () => {
     setIsResetWalletModalOpen(true);

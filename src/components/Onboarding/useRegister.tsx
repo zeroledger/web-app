@@ -1,4 +1,4 @@
-import { useCallback, useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useNavigate } from "react-router-dom";
 import {
@@ -23,33 +23,45 @@ export const useRegister = () => {
     targetChain,
     wallet,
     viewAccount,
+    ledger,
   } = useContext(LedgerContext);
 
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<Error>();
+  const [pendingPassword, setPendingPassword] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
-  const open = useCallback(
-    async (password: string) => {
+  // Trigger registration when password is set
+  const open = (password: string) => {
+    setPendingPassword(password);
+  };
+
+  // Run registration logic when password is pending
+  useEffect(() => {
+    const runRegistration = async () => {
+      if (!pendingPassword || !wallet || !targetChain) {
+        return;
+      }
       try {
         setIsConnecting(true);
-        setPassword(password);
+        setPassword(pendingPassword);
+
         const newEvmClientService = new EvmClients(
           WS_RPC[targetChain.id],
           RPC[targetChain.id],
           pollingInterval[targetChain.id],
           targetChain,
-          wallet!,
+          wallet,
         );
         setEvmClients(newEvmClientService);
 
         const externalClient = await newEvmClientService.externalClient();
 
         const newLedger = await initialize(
-          wallet!,
+          wallet,
           viewAccount!,
-          newEvmClientService!,
+          newEvmClientService,
           APP_PREFIX_KEY,
           TES_URL,
           VAULT_ADDRESS,
@@ -57,19 +69,20 @@ export const useRegister = () => {
           FAUCET_URL,
         );
         setLedger(newLedger);
+
         if (
           viewAccount!.hasEncryptedViewAccount(externalClient.account.address)
         ) {
           await viewAccount!.unlockViewAccount(
             externalClient.account.address,
-            password,
+            pendingPassword,
           );
           setAuthorized(true);
           navigate("/panel/wallet");
         } else {
           viewAccount!.prepareViewAccount(
             externalClient.account.address,
-            password,
+            pendingPassword,
           );
           setAuthorized(false);
           navigate("/authorization");
@@ -85,20 +98,23 @@ export const useRegister = () => {
         }
       } finally {
         setIsConnecting(false);
+        setPendingPassword(null); // Clear pending password
       }
-    },
-    [
-      setPassword,
-      setEvmClients,
-      setLedger,
-      setAuthorized,
-      setError,
-      targetChain,
-      wallet,
-      viewAccount,
-      navigate,
-    ],
-  );
+    };
+
+    runRegistration();
+  }, [
+    pendingPassword,
+    wallet,
+    targetChain,
+    setPassword,
+    setEvmClients,
+    setLedger,
+    setAuthorized,
+    viewAccount,
+    navigate,
+    ledger,
+  ]);
 
   return { open, isConnecting, error, setError };
 };

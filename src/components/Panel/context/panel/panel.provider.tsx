@@ -112,6 +112,9 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
     if (ledger) {
       syncLedger(ledger);
     }
+    return () => {
+      ledger?.watcher.softReset();
+    };
   }, [ledger, syncLedger]);
 
   useEffect(() => {
