@@ -14,14 +14,15 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
   onQRCodeDetected,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const { isScanning, error, startScanning, stopScanning } = useQRScanner();
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && videoRef.current) {
       startScanning((data) => {
         onQRCodeDetected(data);
         onClose();
-      });
+      }, videoRef.current);
     } else {
       stopScanning();
     }
@@ -108,27 +109,51 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
                   muted
                 />
 
-                {/* Scanning overlay */}
-                <div className="absolute inset-0 pointer-events-none">
-                  {/* Corner brackets */}
-                  <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-white rounded-tl-lg" />
-                  <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-white rounded-tr-lg" />
-                  <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-white rounded-bl-lg" />
-                  <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-white rounded-br-lg" />
+                {/* Visible canvas overlay for scanning area */}
+                <canvas
+                  ref={canvasRef}
+                  className="absolute inset-0 w-full h-full pointer-events-none"
+                  style={{
+                    background: "transparent",
+                    border: "2px solid rgba(255, 255, 255, 0.3)",
+                    borderRadius: "0.5rem",
+                  }}
+                />
 
-                  {/* Center scanning line */}
-                  <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white/50">
-                    <div className="h-full w-1/3 bg-white animate-pulse mx-auto" />
+                {/* Scanning overlay with better visual feedback */}
+                <div className="absolute inset-0 pointer-events-none">
+                  {/* Corner brackets with animation */}
+                  <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-green-400 rounded-tl-lg animate-pulse" />
+                  <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-green-400 rounded-tr-lg animate-pulse" />
+                  <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-green-400 rounded-bl-lg animate-pulse" />
+                  <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-green-400 rounded-br-lg animate-pulse" />
+
+                  {/* Scanning area highlight */}
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-dashed border-white/50 rounded-lg" />
+
+                  {/* Center scanning line with better animation */}
+                  <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-green-400 to-transparent">
+                    <div className="h-full w-1/3 bg-green-400 animate-pulse mx-auto shadow-lg shadow-green-400/50" />
+                  </div>
+
+                  {/* Corner dots for better targeting */}
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-ping" />
                   </div>
                 </div>
 
-                {/* Instructions */}
+                {/* Instructions with better styling */}
                 <div className="absolute bottom-4 left-4 right-4 text-center">
-                  <div className="bg-black/50 backdrop-blur-sm rounded-lg p-3">
-                    <div className="text-white text-sm">
+                  <div className="bg-black/70 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                    <div className="text-white text-sm font-medium">
                       {isScanning
-                        ? "Point camera at QR code"
+                        ? "Position QR code within the frame"
                         : "Starting camera..."}
+                    </div>
+                    <div className="text-green-400 text-xs mt-1">
+                      {isScanning
+                        ? "Keep steady for best results"
+                        : "Please wait..."}
                     </div>
                   </div>
                 </div>
@@ -139,7 +164,9 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({
           {/* Footer */}
           <div className="p-4 border-t border-gray-700">
             <div className="text-center text-gray-400 text-sm">
-              Position the QR code within the frame to scan
+              {isScanning
+                ? "Align QR code with the green frame for automatic scanning"
+                : "Camera will start automatically when ready"}
             </div>
           </div>
         </div>

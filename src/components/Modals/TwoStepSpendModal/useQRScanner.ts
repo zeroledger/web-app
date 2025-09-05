@@ -5,18 +5,43 @@ export const useQRScanner = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   const stopScanning = useCallback(() => {
     setIsScanning(false);
     setError(null);
+
+    // Cancel animation frame
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    // Stop camera stream
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
+
+    // Clear video element
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+      videoRef.current = null;
+    }
+
+    // Clear canvas
+    if (canvasRef.current) {
+      canvasRef.current = null;
+    }
   }, []);
 
   const startScanning = useCallback(
-    async (onQRCodeDetected: (data: string) => void) => {
+    async (
+      onQRCodeDetected: (data: string) => void,
+      videoElement?: HTMLVideoElement,
+    ) => {
       try {
         setError(null);
         setIsScanning(true);
@@ -33,28 +58,40 @@ export const useQRScanner = () => {
 
         streamRef.current = stream;
 
-        // Create a video element to display the camera feed
-        const video = document.createElement("video");
+        // Use provided video element or create one
+        const video = videoElement || document.createElement("video");
         video.srcObject = stream;
         video.play();
+        videoRef.current = video;
 
         // Create a canvas to capture frames
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
+        canvasRef.current = canvas;
 
         if (!context) {
           throw new Error("Canvas context not available");
         }
 
         // Set canvas size to match video
-        video.addEventListener("loadedmetadata", () => {
+        const setupCanvas = () => {
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
-        });
+        };
+
+        if (video.readyState >= video.HAVE_METADATA) {
+          setupCanvas();
+        } else {
+          video.addEventListener("loadedmetadata", setupCanvas);
+        }
 
         // Function to scan for QR codes
         const scanFrame = () => {
-          if (video.readyState === video.HAVE_ENOUGH_DATA && isScanning) {
+          if (!isScanning || !video || !context) {
+            return;
+          }
+
+          if (video.readyState === video.HAVE_ENOUGH_DATA) {
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             const imageData = context.getImageData(
               0,
@@ -71,7 +108,7 @@ export const useQRScanner = () => {
             );
 
             if (code) {
-              // QR code detected!
+              // QR code detected! Stop scanning and call callback
               onQRCodeDetected(code.data);
               stopScanning();
               return;
@@ -79,12 +116,12 @@ export const useQRScanner = () => {
           }
 
           if (isScanning) {
-            requestAnimationFrame(scanFrame);
+            animationFrameRef.current = requestAnimationFrame(scanFrame);
           }
         };
 
         // Start scanning
-        requestAnimationFrame(scanFrame);
+        animationFrameRef.current = requestAnimationFrame(scanFrame);
 
         return {
           video,
