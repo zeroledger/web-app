@@ -11,6 +11,7 @@ import { formatUnits } from "viem";
 import { shortString } from "@src/utils/common";
 import { UseFormReturn } from "react-hook-form";
 import { useContext } from "react";
+import { useDynamicHeight } from "@src/hooks/useDynamicHeight";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
 import { type DepositModalState } from "@src/components/Panel/hooks/useDepositModal";
 
@@ -39,8 +40,9 @@ export default function DepositModal({
 }: DepositModalProps) {
   const { handleSubmit } = formMethods;
   const { decimals } = useContext(PanelContext);
+  const style = useDynamicHeight("h-dvh");
 
-  const onEnter = (e: React.KeyboardEvent<HTMLElement>) => {
+  const onFormEnter = (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(onFormSubmit)();
@@ -57,6 +59,36 @@ export default function DepositModal({
     isModalOpen,
     step,
   } = state;
+
+  const shouldShowParams =
+    step === "params" &&
+    !isModalSuccess &&
+    !isModalLoading &&
+    !isModalError &&
+    isModalOpen;
+  const shouldShowPreview =
+    step === "preview" &&
+    !isModalSuccess &&
+    !isModalLoading &&
+    !isModalError &&
+    isModalOpen;
+  const shouldShowForm =
+    step === "form" &&
+    !isModalSuccess &&
+    !isModalLoading &&
+    !isModalError &&
+    isModalOpen;
+  const handleModalKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+
+      if (shouldShowParams) {
+        onApprove();
+      } else if (shouldShowPreview) {
+        onSign();
+      }
+    }
+  };
 
   const depositTransactionDetails =
     transactionDetails && depositFees
@@ -113,68 +145,60 @@ export default function DepositModal({
   return (
     <div
       className={clsx(
-        "fixed inset-0 z-50 w-full h-dhv",
+        "fixed inset-0 z-50 w-full",
         "transition-all duration-500 ease-in-out",
         isModalOpen ? "opacity-100" : "opacity-0 pointer-events-none",
       )}
+      style={style}
     >
       {/* Overlay */}
       <div className="fixed inset-0 bg-gray-900 backdrop-blur-sm" />
 
       {/* Modal Content */}
-      <div className="fixed inset-0 flex items-center justify-center">
+      <div className="fixed inset-0 flex items-center justify-center overflow-y-auto">
         <div
           className={clsx(
-            "flex flex-col w-full h-full px-6 md:w-[50%]",
+            "flex flex-col w-full h-full md:w-[50%]",
             "md:max-w-md md:rounded-xl bg-gray-900",
-            "overflow-hidden",
+            "relative justify-center",
             "transition-all duration-500 ease-in-out",
             isModalOpen
               ? "translate-x-0 md:scale-100"
               : "translate-x-full md:translate-x-0 md:scale-95",
           )}
+          onKeyDown={handleModalKeyDown}
+          tabIndex={0}
         >
-          {isModalError && (
-            <div className="flex-1 content-center flex-col justify-center py-5 animate-fade-in">
-              <ErrorMessage />
-            </div>
-          )}
-          {isModalLoading && (
-            <div className="flex-1 content-center mx-auto py-5 animate-fade-in">
-              <Loader />
-            </div>
-          )}
-          {isModalSuccess && (
-            <div className="flex-1 content-center flex-col justify-center py-5 animate-fade-in">
-              <SuccessMessage message="Deposit Successful!" />
-            </div>
-          )}
-          {!isModalLoading &&
-            !isModalSuccess &&
-            !isModalError &&
-            isModalOpen &&
-            state.step === "form" && (
-              <div className="flex-1 content-center py-5">
+          <div className="px-6 py-5 h-full flex-col content-center">
+            {isModalError && (
+              <div className="flex-1 content-center flex-col justify-center animate-fade-in">
+                <ErrorMessage />
+              </div>
+            )}
+            {isModalLoading && (
+              <div className="flex-1 content-center flex justify-center animate-fade-in">
+                <Loader />
+              </div>
+            )}
+            {isModalSuccess && (
+              <div className="flex-1 content-center flex-col justify-center animate-fade-in">
+                <SuccessMessage message="Deposit Successful!" />
+              </div>
+            )}
+            {shouldShowForm && (
+              <>
                 <BackButton onClick={onBack} />
                 <form
                   onSubmit={handleSubmit(onFormSubmit)}
-                  onKeyDown={onEnter}
+                  onKeyDown={onFormEnter}
                   className="flex pt-20"
                 >
-                  <DepositForm
-                    formMethods={formMethods}
-                    onEnter={onEnter}
-                    setState={setState}
-                  />
+                  <DepositForm formMethods={formMethods} setState={setState} />
                 </form>
-              </div>
+              </>
             )}
-          {!isModalLoading &&
-            !isModalSuccess &&
-            !isModalError &&
-            isModalOpen &&
-            state.step === "params" && (
-              <div className="flex-1 content-center py-5">
+            {shouldShowParams && (
+              <>
                 <BackButton onClick={onBack} />
                 <div className="flex flex-col pt-20">
                   <div className="text-center mb-6">
@@ -223,16 +247,12 @@ export default function DepositModal({
                     </Button>
                   </div>
                 </div>
-              </div>
+              </>
             )}
-          {!isModalLoading &&
-            !isModalSuccess &&
-            !isModalError &&
-            isModalOpen &&
-            step === "preview" && (
-              <div className="flex-1 content-center py-5">
+            {shouldShowPreview && (
+              <>
                 <BackButton onClick={onBack} />
-                <div className="flex flex-col pt-20">
+                <div className="flex flex-col pt-12 pb-1">
                   <SigningPreview
                     isSigning={isModalLoading}
                     isSuccess={isModalSuccess}
@@ -244,8 +264,9 @@ export default function DepositModal({
                     successText="Deposit Successful!"
                   />
                 </div>
-              </div>
+              </>
             )}
+          </div>
         </div>
       </div>
     </div>

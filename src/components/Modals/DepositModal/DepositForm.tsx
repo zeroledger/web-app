@@ -14,15 +14,10 @@ interface DepositFormData {
 
 interface DepositFormProps {
   formMethods: UseFormReturn<DepositFormData>;
-  onEnter: (e: React.KeyboardEvent<HTMLElement>) => void;
   setState: React.Dispatch<React.SetStateAction<DepositModalState>>;
 }
 
-export const DepositForm = ({
-  formMethods,
-  onEnter,
-  setState,
-}: DepositFormProps) => {
+export const DepositForm = ({ formMethods, setState }: DepositFormProps) => {
   const {
     register,
     formState: { errors, isSubmitting },
@@ -82,7 +77,6 @@ export const DepositForm = ({
             setValue("amount", e.target.value);
             clearErrors("amount");
           }}
-          onKeyDown={onEnter}
         />
         <div className="mt-1 text-base text-white flex gap-2 justify-end">
           {isLoading && (

@@ -223,7 +223,10 @@ export const SpendForm = ({
         </div>
       </Field>
       <div className="py-4">
-        <MobileConfirmButton disabled={isSubmitting} label={`Review ${type}`} />
+        <MobileConfirmButton
+          disabled={isSubmitting || isFeesLoading}
+          label={`Review ${type}`}
+        />
       </div>
 
       {/* QR Scanner Modal */}

@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { BackButton } from "@src/components/Buttons/BackButton";
 import { usePrivyWalletAdapter } from "@src/context/ledger/usePrivyWalletAdapter";
 import { useEnsProfile } from "@src/context/ledger/useEnsProfile";
+import { useDynamicHeight } from "@src/hooks/useDynamicHeight";
 import { useCopyAddress, useCopyEns } from ".";
 import { shortString } from "@src/utils/common";
 import { QRCodeDisplay } from "./QRCodeDisplay";
@@ -19,32 +20,34 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
   const { showCopiedTooltip: showEnsCopied, handleCopyEns } = useCopyEns(
     ensProfile?.name,
   );
+  const style = useDynamicHeight("h-dvh");
 
   return (
     <div
       className={clsx(
-        "fixed inset-0 z-50 w-full h-dvh",
+        "fixed inset-0 z-50 w-full",
         "transition-all duration-500 ease-in-out",
         isOpen ? "opacity-100" : "opacity-0 pointer-events-none",
       )}
+      style={style}
     >
       {/* Overlay */}
       <div className="fixed inset-0 bg-gray-900 backdrop-blur-sm" />
 
       {/* Modal Content */}
-      <div className="fixed inset-0 flex items-center justify-center">
+      <div className="fixed inset-0 flex items-center justify-center overflow-y-auto">
         <div
           className={clsx(
-            "flex flex-col w-full h-full px-6 md:w-[50%]",
+            "flex flex-col w-full h-full md:w-[50%]",
             "md:max-w-md md:rounded-xl bg-gray-900",
-            "overflow-hidden",
+            "relative justify-center",
             "transition-all duration-500 ease-in-out",
             isOpen
               ? "translate-x-0 md:scale-100"
               : "translate-x-full md:translate-x-0 md:scale-95",
           )}
         >
-          <div className="flex-1 content-center py-5">
+          <div className="px-6 py-5 h-full flex-col content-center">
             <BackButton onClick={onClose} />
             <div className="flex flex-col pt-20">
               <div className="text-center mb-8">
@@ -95,7 +98,7 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
                         </svg>
                       </button>
                       {showEnsCopied && (
-                        <div className="absolute -top-8 right-0 bg-green-600 text-white text-xs px-2 py-1 rounded">
+                        <div className="absolute -top-8 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded">
                           Copied!
                         </div>
                       )}
@@ -136,7 +139,7 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
                       </svg>
                     </button>
                     {showAddressCopied && (
-                      <div className="absolute -top-8 right-0 bg-green-600 text-white text-xs px-2 py-1 rounded">
+                      <div className="absolute -top-8 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded">
                         Copied!
                       </div>
                     )}
