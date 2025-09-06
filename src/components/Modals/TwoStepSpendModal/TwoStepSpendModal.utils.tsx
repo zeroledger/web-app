@@ -63,7 +63,12 @@ export const prepareMinimalTransactionDetails = (
   paymasterFee?: bigint,
   decimals?: number,
 ) => {
-  if (!transactionDetails || !protocolFee || !paymasterFee) return [];
+  if (
+    !transactionDetails ||
+    protocolFee === undefined ||
+    paymasterFee === undefined
+  )
+    return [];
   return [
     {
       label: "Recipient",

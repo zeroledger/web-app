@@ -18,6 +18,17 @@ export const FORWARDER_ABI = [
   {
     inputs: [
       {
+        internalType: "string",
+        name: "reason",
+        type: "string",
+      },
+    ],
+    name: "DeprecatedMethod",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
         internalType: "address",
         name: "implementation",
         type: "address",
@@ -508,7 +519,7 @@ export const FORWARDER_ABI = [
           },
         ],
         internalType: "struct ERC2771ForwarderUpgradeable.ForwardRequestData",
-        name: "request",
+        name: "",
         type: "tuple",
       },
     ],
@@ -520,7 +531,7 @@ export const FORWARDER_ABI = [
         type: "bool",
       },
     ],
-    stateMutability: "view",
+    stateMutability: "pure",
     type: "function",
   },
 ] as const;

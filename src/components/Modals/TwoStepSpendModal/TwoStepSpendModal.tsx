@@ -99,6 +99,8 @@ function TwoStepSpendModal({
     [transactionDetails, decimals, withdrawAll, state],
   );
 
+  console.log(minimalTransactionDetails);
+
   return (
     <div
       className={clsx(
