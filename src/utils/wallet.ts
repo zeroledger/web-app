@@ -1,17 +1,10 @@
-import { ConnectedWallet } from "@privy-io/react-auth";
-import { WALLETS_SKIP_SECOND_STEP } from "@src/common.constants";
+import { useSettings } from "@src/hooks/useSettings";
 
 /**
- * Checks if a wallet should skip the second step (preview) and go directly to signing
- * @param wallet - The connected wallet
- * @returns true if the wallet should skip the second step, false otherwise
+ * Hook to check if the user has disabled transaction preview
+ * @returns true if preview should be skipped, false otherwise
  */
-export const shouldSkipSecondStep = (
-  wallet: ConnectedWallet | undefined,
-): boolean => {
-  if (!wallet) {
-    return false;
-  }
-
-  return WALLETS_SKIP_SECOND_STEP.includes(wallet.walletClientType);
+export const useShouldSkipPreview = (): boolean => {
+  const { settings } = useSettings();
+  return !settings.showTransactionPreview;
 };

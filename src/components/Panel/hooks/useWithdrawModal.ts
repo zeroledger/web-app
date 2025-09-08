@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { parseUnits } from "viem";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { delay } from "@src/utils/common";
-import { shouldSkipSecondStep } from "@src/utils/wallet";
+import { useShouldSkipPreview } from "@src/utils/wallet";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import {
   type WithdrawFeesData,
@@ -37,7 +37,8 @@ export interface WithdrawModalState {
 const asyncOperationPromise = Promise.resolve();
 
 export const useTwoStepWithdrawModal = (decimals: number) => {
-  const { ledger, wallet } = useContext(LedgerContext);
+  const { ledger } = useContext(LedgerContext);
+  const shouldSkipPreview = useShouldSkipPreview();
   const { privateBalance } = useContext(PanelContext);
   const [promise, setPromise] = useState<Promise<void>>(asyncOperationPromise);
 
@@ -136,8 +137,8 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
                   state.spendFees,
                 );
             }
-            // Check if wallet should skip second step
-            const skipSecondStep = shouldSkipSecondStep(wallet);
+            // Check if user has disabled preview
+            const skipSecondStep = shouldSkipPreview;
 
             if (skipSecondStep) {
               // Skip preview step and go directly to signing
@@ -176,7 +177,15 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
           }
         }),
       ),
-    [ledger, wallet, decimals, privateBalance, handleBack, promise, state],
+    [
+      ledger,
+      shouldSkipPreview,
+      decimals,
+      privateBalance,
+      handleBack,
+      promise,
+      state,
+    ],
   );
 
   const handleSign = useCallback(

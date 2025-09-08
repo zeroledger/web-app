@@ -15,6 +15,12 @@ const LedgerProvider = lazy(() =>
   })),
 );
 
+const SettingsProvider = lazy(() =>
+  import("@src/context/settings.provider").then((module) => ({
+    default: module.SettingsProvider,
+  })),
+);
+
 const Notification = lazy(() =>
   import("@src/components/Notification").then((module) => ({
     default: module.Notification,
@@ -30,13 +36,17 @@ function App() {
     <LoadingScreen>
       <PrivyContextProvider>
         <LoadingScreen>
-          <LedgerProvider>
+          <SettingsProvider>
             <LoadingScreen>
-              <RouterProvider router={router} />
-              <Notification />
-              <SwitchChainModal />
+              <LedgerProvider>
+                <LoadingScreen>
+                  <RouterProvider router={router} />
+                  <Notification />
+                  <SwitchChainModal />
+                </LoadingScreen>
+              </LedgerProvider>
             </LoadingScreen>
-          </LedgerProvider>
+          </SettingsProvider>
         </LoadingScreen>
       </PrivyContextProvider>
     </LoadingScreen>
