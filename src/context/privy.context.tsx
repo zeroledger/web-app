@@ -19,7 +19,6 @@ const config = {
     accentColor: "#6A6FF5" as `#${string}`,
     showWalletLoginFirst: false,
     walletList: [
-      "detected_ethereum_wallets",
       "metamask",
       "base_account",
       "safe",
@@ -27,8 +26,6 @@ const config = {
       "uniswap",
       "rainbow",
       "phantom",
-      "okx_wallet",
-      "wallet_connect",
     ] as WalletListEntry[],
   },
   embeddedWallets: {
