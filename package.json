@@ -34,6 +34,7 @@
     "@headlessui/react": "^2.2.7",
     "@heroicons/react": "^2.2.0",
     "@privy-io/react-auth": "^2.24.0",
+    "@solana/spl-token": "^0.4.14",
     "@tailwindcss/vite": "^4.1.12",
     "@types/qrcode": "^1.5.5",
     "@zeroledger/vycrypt": "^0.0.1-betta",
@@ -57,7 +58,8 @@
     "swr": "^2.3.6",
     "tailwindcss": "^4.1.12",
     "typewriter-effect": "^2.22.0",
-    "viem": "^2.36.0"
+    "viem": "^2.36.0",
+    "vite-plugin-mkcert": "^1.17.8"
   },
   "devDependencies": {
     "@types/circomlibjs": "^0.1.6",

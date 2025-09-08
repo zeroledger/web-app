@@ -87,8 +87,8 @@ export default function RegisterForm() {
             {...register("password", {
               required: "Password is required",
               minLength: {
-                value: 3,
-                message: "Password must be at least 3 characters long",
+                value: 4,
+                message: "Password must be at least 4 characters long",
               },
             })}
             disabled={disabled}

@@ -91,7 +91,7 @@ export const useRegister = () => {
         const err = e as Error;
         const isInvalidPassword = err.message === "aes/gcm: invalid ghash tag";
         if (isInvalidPassword) {
-          setError(new Error("Unexpected error"));
+          setError(new Error("Invalid password"));
         } else {
           console.error(err);
           setError(err);

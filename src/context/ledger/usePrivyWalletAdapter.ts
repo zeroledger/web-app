@@ -1,11 +1,12 @@
 import { usePrevious } from "@src/hooks/usePrevious";
-import { useWallets } from "@privy-io/react-auth";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { Chain } from "viem";
 import { useEffect, useState } from "react";
 import { SUPPORTED_CHAINS } from "@src/common.constants";
 
 export function usePrivyWalletAdapter() {
   const { wallets } = useWallets();
+  const { logout } = usePrivy();
   const [targetChain, setTargetChain] = useState<Chain>(SUPPORTED_CHAINS[0]);
 
   const wallet = wallets[0];
@@ -37,5 +38,6 @@ export function usePrivyWalletAdapter() {
     chainSupported,
     targetChain,
     setTargetChain,
+    logout,
   };
 }

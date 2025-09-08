@@ -4,6 +4,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import tailwindcss from "@tailwindcss/vite";
 import { visualizer } from "rollup-plugin-visualizer";
+import mkcert from "vite-plugin-mkcert";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -18,6 +19,7 @@ export default defineConfig({
       },
     }),
     tailwindcss(),
+    mkcert(),
     visualizer({
       filename: "dist/stats.html",
       open: false,

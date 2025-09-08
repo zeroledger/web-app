@@ -5,29 +5,41 @@ import {
 } from "@privy-io/react-auth";
 import { baseSepolia } from "viem/chains";
 import { ReactNode } from "react";
-import { PRIVY_APP_ID } from "@src/common.constants";
+import { PRIVY_APP_ID, PRIVY_CLIENT_ID } from "@src/common.constants";
 
 interface PrivyContextProviderProps {
   children: ReactNode;
 }
 
 const config = {
-  loginMethods: ["wallet"] as LoginModalOptions["loginMethods"],
+  loginMethods: ["email", "wallet"] as LoginModalOptions["loginMethods"],
   appearance: {
     walletChainType: "ethereum-only" as const,
     theme: "#101828" as `#${string}`,
     accentColor: "#6A6FF5" as `#${string}`,
-    showWalletLoginFirst: true,
+    showWalletLoginFirst: false,
     walletList: [
       "detected_ethereum_wallets",
       "metamask",
-      "coinbase_wallet",
       "base_account",
-      "rainbow",
-      "uniswap",
       "safe",
+      "coinbase_wallet",
+      "uniswap",
+      "rainbow",
+      "phantom",
+      "okx_wallet",
       "wallet_connect",
     ] as WalletListEntry[],
+  },
+  embeddedWallets: {
+    requireUserPasswordOnCreate: false,
+    showWalletUIs: true,
+    ethereum: {
+      createOnLogin: "users-without-wallets",
+    },
+  } as const,
+  mfa: {
+    noPromptOnMfaRequired: false,
   },
   supportedChains: [baseSepolia],
   defaultChain: baseSepolia,
@@ -37,7 +49,11 @@ export const PrivyContextProvider = ({
   children,
 }: PrivyContextProviderProps) => {
   return (
-    <PrivyProvider appId={PRIVY_APP_ID} config={config}>
+    <PrivyProvider
+      appId={PRIVY_APP_ID}
+      clientId={PRIVY_CLIENT_ID}
+      config={config}
+    >
       {children}
     </PrivyProvider>
   );

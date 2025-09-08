@@ -30,6 +30,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
     chainSupported,
     isWalletNetworkChanged,
     isWalletAddressChanged,
+    logout,
   } = usePrivyWalletAdapter();
 
   const {
@@ -90,6 +91,8 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       isEnsLoading,
       // Reset
       reset,
+      // Logout
+      logout,
     }),
     [
       ledger,
@@ -114,6 +117,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       reset,
       ensProfile,
       isEnsLoading,
+      logout,
     ],
   );
 
@@ -121,12 +125,3 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
     <LedgerContext.Provider value={value}>{children}</LedgerContext.Provider>
   );
 };
-
-/**
- * connect -> pass -> auth -> page: page should check this and do navigation (done)
- * connect -> pass -> page: page should check this and do navigation (done)
- * auth -> change wallet -> pass -> auth: auth page should reset password and redirect to pass page (done)
- * page -> change wallet to not authorized -> pass -> auth -> page: page should check this and do navigation
- * page -> change wallet to auth with different pass -> pass -> auth -> page: page should check this and do navigation
- * page -> change wallet to auth with same pass -> page: page should check this and do navigation
- */

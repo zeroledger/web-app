@@ -41,6 +41,8 @@ export const LedgerContext = createContext<{
   isEnsLoading: boolean;
   // Reset
   reset: () => void;
+  // Logout
+  logout: () => Promise<void>;
 }>({
   // Ledger
   ledger: undefined,
@@ -74,4 +76,6 @@ export const LedgerContext = createContext<{
   isEnsLoading: false,
   // Reset
   reset: () => {},
+  // Logout
+  logout: () => Promise.resolve(),
 });
