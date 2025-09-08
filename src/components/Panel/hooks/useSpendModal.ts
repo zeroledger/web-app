@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { Address, parseUnits } from "viem";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { delay } from "@src/utils/common";
-import { useShouldSkipPreview } from "@src/utils/wallet";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import {
   type SpendFeesData,
@@ -11,6 +10,7 @@ import {
 } from "@src/services/ledger";
 import { ens } from "@src/services/Ens";
 import { type SpendParams } from "@src/utils/vault";
+import { useSettings } from "@src/hooks/useSettings";
 
 interface SpendFormData {
   recipient: string;
@@ -38,7 +38,8 @@ export const useTwoStepSpendModal = (
   balanceForConsolidation: bigint,
 ) => {
   const { ledger } = useContext(LedgerContext);
-  const shouldSkipPreview = useShouldSkipPreview();
+  const { settings } = useSettings();
+  const skipSecondStep = !settings.showTransactionPreview;
   const [promise, setPromise] = useState<Promise<void>>(asyncOperationPromise);
 
   const form = useForm<SpendFormData>({
@@ -118,9 +119,6 @@ export const useTwoStepSpendModal = (
               spendFees,
             );
 
-          // Check if user has disabled preview
-          const skipSecondStep = shouldSkipPreview;
-
           if (skipSecondStep) {
             // Skip preview step and go directly to signing
             await ledger!.transactions.executeMetaTransaction(
@@ -162,7 +160,7 @@ export const useTwoStepSpendModal = (
   }, [
     promise,
     ledger,
-    shouldSkipPreview,
+    skipSecondStep,
     ownerAddress,
     balanceForConsolidation,
     handleBack,
@@ -193,9 +191,6 @@ export const useTwoStepSpendModal = (
                 false,
                 state.spendFees,
               );
-
-            // Check if user has disabled preview
-            const skipSecondStep = shouldSkipPreview;
 
             if (skipSecondStep) {
               // Skip preview step and go directly to signing
@@ -234,7 +229,7 @@ export const useTwoStepSpendModal = (
           }
         }),
       ),
-    [ledger, shouldSkipPreview, decimals, handleBack, promise, state],
+    [ledger, skipSecondStep, decimals, handleBack, promise, state],
   );
 
   const handleSign = useCallback(
