@@ -2,7 +2,6 @@ import { useState, useContext, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { Address, parseUnits } from "viem";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
-import { useSwipe } from "./useSwipe";
 import { delay } from "@src/utils/common";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import {
@@ -40,8 +39,6 @@ export const useTwoStepSpendModal = (
   const { ledger } = useContext(LedgerContext);
   const [promise, setPromise] = useState<Promise<void>>(asyncOperationPromise);
 
-  const { disableSwipe, enableSwipe } = useSwipe();
-
   const form = useForm<SpendFormData>({
     defaultValues: {
       recipient: "",
@@ -76,10 +73,9 @@ export const useTwoStepSpendModal = (
             ...prev,
             isModalOpen: true,
           }));
-          disableSwipe();
         }),
       ),
-    [disableSwipe, promise, resetState],
+    [promise, resetState],
   );
 
   const handleBack = useCallback(
@@ -93,17 +89,15 @@ export const useTwoStepSpendModal = (
           await delay(500);
           form.reset();
           resetState();
-          enableSwipe();
         }),
       ),
-    [form, enableSwipe, promise, resetState],
+    [form, promise, resetState],
   );
 
   const onConsolidationOpen = useCallback(() => {
     setPromise(
       promise.then(async () => {
         try {
-          disableSwipe();
           setState((prev) => ({
             ...prev,
             isModalSuccess: false,
@@ -145,7 +139,6 @@ export const useTwoStepSpendModal = (
     );
   }, [
     promise,
-    disableSwipe,
     ledger,
     ownerAddress,
     balanceForConsolidation,

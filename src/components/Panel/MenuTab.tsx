@@ -1,19 +1,17 @@
 import { DepositModal } from "@src/components/Modals/DepositModal";
-import { ConfirmModal } from "@src/components/Modals/ConfirmModal";
+import { MoreModal } from "@src/components/Modals/MoreModal";
 import { ArrowIcon } from "@src/components/svg/ArrowIcon";
-import { QuestionIcon } from "@src/components/svg/QuestionIcon";
-import { TrashIcon } from "@src/components/svg/TrashIcon";
 import { FaucetIcon } from "@src/components/svg/FaucetIcon";
+import ThreeDots from "@src/components/svg/ThreeDots";
 import { Loader } from "@src/components/Loader";
 
-import { useResetWalletModal } from "./hooks/useResetWalletModal";
 import { useFaucet } from "./hooks/useFaucet";
 import { useContext } from "react";
 import { TwoStepSpendModal } from "@src/components/Modals/TwoStepSpendModal";
 import { useTwoStepWithdrawModal } from "./hooks/useWithdrawModal";
 import { useMultiStepDepositModal } from "./hooks/useDepositModal";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
-import { LANDING_URL } from "@src/common.constants";
+import { useModal } from "@src/hooks/useModal";
 
 export default function MenuTab() {
   const { decimals, isLoading } = useContext(PanelContext);
@@ -39,11 +37,10 @@ export default function MenuTab() {
   } = useTwoStepWithdrawModal(decimals);
 
   const {
-    isResetWalletModalOpen,
-    onResetWalletModalOpen,
-    onResetWalletModalClose,
-    handleResetWallet,
-  } = useResetWalletModal();
+    isOpen: isMoreModalOpen,
+    openModal: onMoreModalOpen,
+    closeModal: onMoreModalClose,
+  } = useModal();
 
   const { isFauceting, handleFaucet, amount } = useFaucet();
 
@@ -83,23 +80,6 @@ export default function MenuTab() {
           Deposit
           <ArrowIcon />
         </button>
-        <a
-          href={`${LANDING_URL}/#faq`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={buttonStyle}
-        >
-          F.A.Q
-          <QuestionIcon className="w-6 h-6" />
-        </a>
-        <button
-          className={`${buttonStyle} ${disabledButtonStyle}`}
-          onClick={onResetWalletModalOpen}
-          disabled={isFauceting || isLoading}
-        >
-          Reset Wallet
-          <TrashIcon />
-        </button>
         <button
           className={`${buttonStyle} ${disabledButtonStyle}`}
           onClick={handleFaucet}
@@ -107,6 +87,14 @@ export default function MenuTab() {
         >
           Faucet
           <FaucetIcon className="mr-1" />
+        </button>
+        <button
+          className={`${buttonStyle} ${disabledButtonStyle}`}
+          onClick={onMoreModalOpen}
+          disabled={isFauceting || isLoading}
+        >
+          More
+          <ThreeDots className="w-8 h-8" />
         </button>
       </div>
 
@@ -120,15 +108,6 @@ export default function MenuTab() {
         setState={setDepositState}
       />
 
-      <ConfirmModal
-        isOpen={isResetWalletModalOpen}
-        onConfirm={handleResetWallet}
-        onCancel={onResetWalletModalClose}
-        title="Confirm Wallet Reset"
-        description="This will permanently delete all your wallet data. This action cannot be undone."
-        buttonText="Reset Wallet"
-      />
-
       <TwoStepSpendModal
         state={withdrawState}
         setState={setWithdrawState}
@@ -137,6 +116,13 @@ export default function MenuTab() {
         onBack={handleWithdrawBack}
         formMethods={withdrawForm}
         type="Withdraw"
+      />
+
+      <MoreModal
+        isOpen={isMoreModalOpen}
+        onClose={onMoreModalClose}
+        isFauceting={isFauceting}
+        isLoading={isLoading}
       />
     </div>
   );

@@ -4,7 +4,7 @@ interface QuestionIconProps {
 
 export const QuestionIcon = ({ className = "" }: QuestionIconProps) => (
   <svg
-    className={`w-8 h-8 ml-4 ${className}`}
+    className={`ml-4 ${className}`}
     fill="none"
     stroke="currentColor"
     strokeWidth={2}

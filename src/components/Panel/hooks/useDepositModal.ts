@@ -2,7 +2,6 @@ import { useState, useContext, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { parseUnits } from "viem";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
-import { useSwipe } from "./useSwipe";
 import { delay } from "@src/utils/common";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import {
@@ -32,7 +31,6 @@ const asyncOperationPromise = Promise.resolve();
 export const useMultiStepDepositModal = (decimals: number) => {
   const { ledger } = useContext(LedgerContext);
   const [promise, setPromise] = useState<Promise<void>>(asyncOperationPromise);
-  const { disableSwipe, enableSwipe } = useSwipe();
 
   const form = useForm<DepositFormData>({
     defaultValues: {
@@ -67,10 +65,9 @@ export const useMultiStepDepositModal = (decimals: number) => {
             ...prev,
             isModalOpen: true,
           }));
-          disableSwipe();
         }),
       ),
-    [disableSwipe, promise, resetState],
+    [promise, resetState],
   );
 
   const handleBack = useCallback(
@@ -84,10 +81,9 @@ export const useMultiStepDepositModal = (decimals: number) => {
           await delay(500);
           resetState();
           form.reset();
-          enableSwipe();
         }),
       ),
-    [form, enableSwipe, promise, resetState],
+    [form, promise, resetState],
   );
 
   const handleFormSubmit = useCallback(

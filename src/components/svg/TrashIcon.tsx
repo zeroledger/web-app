@@ -4,7 +4,7 @@ interface TrashIconProps {
 
 export const TrashIcon = ({ className = "" }: TrashIconProps) => (
   <svg
-    className={`w-8 h-8 ml-4 ${className}`}
+    className={`ml-4 ${className}`}
     fill="none"
     stroke="currentColor"
     strokeWidth={2}
