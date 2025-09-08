@@ -48,3 +48,11 @@ export const SCAN_URL: { [prop: number]: string } = {
 export const pollingInterval: { [prop: number]: number } = {
   [baseSepolia.id]: 10000,
 };
+
+// Wallet types that should skip the second step (preview) and go directly to signing
+export const WALLETS_SKIP_SECOND_STEP: string[] = [
+  "privy", // Embedded wallets
+  // Add other wallet types here as needed
+  // "metamask", // Example: if you want MetaMask to skip second step
+  // "walletconnect", // Example: if you want WalletConnect to skip second step
+];

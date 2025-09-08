@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { Address, parseUnits } from "viem";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { delay } from "@src/utils/common";
+import { shouldSkipSecondStep } from "@src/utils/wallet";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import {
   type SpendFeesData,
@@ -36,7 +37,7 @@ export const useTwoStepSpendModal = (
   ownerAddress: Address,
   balanceForConsolidation: bigint,
 ) => {
-  const { ledger } = useContext(LedgerContext);
+  const { ledger, wallet } = useContext(LedgerContext);
   const [promise, setPromise] = useState<Promise<void>>(asyncOperationPromise);
 
   const form = useForm<SpendFormData>({
@@ -116,13 +117,33 @@ export const useTwoStepSpendModal = (
               spendFees,
             );
 
-          setState((prev) => ({
-            ...prev,
-            ...metaTransactionData,
-            spendFees,
-            step: "preview" as const,
-            isModalLoading: false,
-          }));
+          // Check if wallet should skip second step
+          const skipSecondStep = shouldSkipSecondStep(wallet);
+
+          if (skipSecondStep) {
+            // Skip preview step and go directly to signing
+            await ledger!.transactions.executeMetaTransaction(
+              metaTransactionData.metaTransaction!,
+              spendFees.coveredGas.toString(),
+            );
+            setState((prev) => ({
+              ...prev,
+              spendFees,
+              isModalSuccess: true,
+              isModalLoading: false,
+            }));
+            await delay(1000);
+            handleBack();
+          } else {
+            // Go to preview step as usual
+            setState((prev) => ({
+              ...prev,
+              ...metaTransactionData,
+              spendFees,
+              step: "preview" as const,
+              isModalLoading: false,
+            }));
+          }
         } catch (error) {
           console.error("Failed to prepare metaTransaction:", error);
           setState((prev) => ({
@@ -140,6 +161,7 @@ export const useTwoStepSpendModal = (
   }, [
     promise,
     ledger,
+    wallet,
     ownerAddress,
     balanceForConsolidation,
     handleBack,
@@ -171,12 +193,31 @@ export const useTwoStepSpendModal = (
                 state.spendFees,
               );
 
-            setState((prev) => ({
-              ...prev,
-              ...metaTransactionData,
-              step: "preview" as const,
-              isModalLoading: false,
-            }));
+            // Check if wallet should skip second step
+            const skipSecondStep = shouldSkipSecondStep(wallet);
+
+            if (skipSecondStep) {
+              // Skip preview step and go directly to signing
+              await ledger!.transactions.executeMetaTransaction(
+                metaTransactionData.metaTransaction!,
+                state.spendFees.coveredGas.toString(),
+              );
+              setState((prev) => ({
+                ...prev,
+                isModalSuccess: true,
+                isModalLoading: false,
+              }));
+              await delay(1000);
+              handleBack();
+            } else {
+              // Go to preview step as usual
+              setState((prev) => ({
+                ...prev,
+                ...metaTransactionData,
+                step: "preview" as const,
+                isModalLoading: false,
+              }));
+            }
           } catch (error) {
             console.error("Failed to prepare metaTransaction:", error);
             setState((prev) => ({
@@ -192,7 +233,7 @@ export const useTwoStepSpendModal = (
           }
         }),
       ),
-    [ledger, decimals, handleBack, promise, state],
+    [ledger, wallet, decimals, handleBack, promise, state],
   );
 
   const handleSign = useCallback(
