@@ -1,6 +1,6 @@
 import Commitments from "@src/services/ledger/Commitments";
 import { LedgerRecordDto } from "@src/services/ledger/ledger.dto";
-import { createMockDataSource } from "@test/utils/mockDataSource";
+import { createMockDataSource } from "@test/mocks/mockDataSource";
 import { zeroAddress } from "viem";
 
 describe("Commitments", () => {

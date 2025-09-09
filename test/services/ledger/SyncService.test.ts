@@ -1,5 +1,5 @@
 import SyncService from "@src/services/ledger/SyncService";
-import { createMockDataSource } from "@test/utils/mockDataSource";
+import { createMockDataSource } from "@test/mocks/mockDataSource";
 import { zeroAddress } from "viem";
 
 describe("SyncService", () => {
