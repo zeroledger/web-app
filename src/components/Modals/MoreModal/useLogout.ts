@@ -9,7 +9,6 @@ export const useLogout = () => {
     try {
       await logout();
     } catch (error) {
-      console.log("error");
       catchService.catch(error as Error);
     }
   }, [logout]);

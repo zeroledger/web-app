@@ -9,8 +9,6 @@ export function usePrivyWalletAdapter() {
   const { logout } = usePrivy();
   const [targetChain, setTargetChain] = useState<Chain>(SUPPORTED_CHAINS[0]);
 
-  console.log(wallets);
-
   const wallet = wallets[0];
 
   const prevWallet = usePrevious(wallet);

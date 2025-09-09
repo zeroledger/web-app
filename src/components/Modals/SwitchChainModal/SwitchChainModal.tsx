@@ -8,8 +8,6 @@ export default function SwitchChainModal() {
   const { isSwitchChainModalOpen, targetChain, evmClients } =
     useContext(LedgerContext);
 
-  console.log("isSwitchChainModalOpen", isSwitchChainModalOpen);
-
   const handleSwitchChain = async () => {
     try {
       const externalClient = await evmClients?.externalClient();
