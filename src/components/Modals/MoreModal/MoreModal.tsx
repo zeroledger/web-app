@@ -117,14 +117,16 @@ export default function MoreModal({
                     <TrashIcon className="w-6 h-6" />
                   </button>
 
-                  <button
-                    className="w-full h-14 text-xl flex items-center justify-between text-white/80 hover:text-white/90 font-semibold focus:outline-none transition hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={handleLogout}
-                    disabled={isFauceting || isLoading}
-                  >
-                    Logout
-                    <LogoutIcon className="w-6 h-6" />
-                  </button>
+                  {isEmbeddedWallet && (
+                    <button
+                      className="w-full h-14 text-xl flex items-center justify-between text-white/80 hover:text-white/90 font-semibold focus:outline-none transition hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={handleLogout}
+                      disabled={isFauceting || isLoading}
+                    >
+                      Logout
+                      <LogoutIcon className="w-6 h-6" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

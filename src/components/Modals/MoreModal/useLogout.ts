@@ -3,18 +3,16 @@ import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { catchService } from "@src/services/core/catch.service";
 
 export const useLogout = () => {
-  const { logout, wallet } = useContext(LedgerContext);
+  const { logout } = useContext(LedgerContext);
 
   const handleLogout = useCallback(async () => {
     try {
-      if (wallet?.walletClientType !== "privy") {
-        await logout();
-      }
-      wallet?.disconnect();
+      await logout();
     } catch (error) {
+      console.log("error");
       catchService.catch(error as Error);
     }
-  }, [logout, wallet]);
+  }, [logout]);
 
   return {
     handleLogout,
