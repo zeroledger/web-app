@@ -10,6 +10,7 @@ import { useLogout } from "./useLogout";
 import { useBackupPrivateKey } from "./useBackupPrivateKey";
 import { ConfirmModal } from "@src/components/Modals/ConfirmModal";
 import { useSettings } from "@src/hooks/useSettings";
+import { menuButtonStyle } from "@src/components/Button";
 
 interface MoreModalProps {
   isOpen: boolean;
@@ -40,6 +41,9 @@ export default function MoreModal({
       showTransactionPreview: !settings.showTransactionPreview,
     });
   };
+
+  const buttonStyle = `${menuButtonStyle} w-full h-14 text-xl`;
+
   return (
     <div
       className={clsx(
@@ -73,13 +77,13 @@ export default function MoreModal({
                     href={`${LANDING_URL}/#faq`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full h-14 text-xl flex items-center justify-between text-white/80 hover:text-white/90 font-semibold focus:outline-none transition hover:cursor-pointer"
+                    className={buttonStyle}
                   >
                     F.A.Q
                     <QuestionIcon className="w-6 h-6" />
                   </a>
 
-                  <label className="w-full h-14 text-xl flex items-center justify-between text-white/80 hover:text-white/90 font-semibold transition hover:cursor-pointer">
+                  <label className={buttonStyle}>
                     <div className="flex flex-col">
                       <span>Transaction Preview</span>
                       <span className="text-sm text-white/60 font-normal">
@@ -99,7 +103,7 @@ export default function MoreModal({
 
                   {isEmbeddedWallet && (
                     <button
-                      className="w-full h-14 text-xl flex items-center justify-between text-white/80 hover:text-white/90 font-semibold focus:outline-none transition hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      className={buttonStyle}
                       onClick={handleBackupPrivateKey}
                       disabled={isFauceting || isLoading}
                     >
@@ -109,7 +113,7 @@ export default function MoreModal({
                   )}
 
                   <button
-                    className="w-full h-14 text-xl flex items-center justify-between text-white/80 hover:text-white/90 font-semibold focus:outline-none transition hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={buttonStyle}
                     onClick={onResetWalletModalOpen}
                     disabled={isFauceting || isLoading}
                   >
@@ -119,7 +123,7 @@ export default function MoreModal({
 
                   {isEmbeddedWallet && (
                     <button
-                      className="w-full h-14 text-xl flex items-center justify-between text-white/80 hover:text-white/90 font-semibold focus:outline-none transition hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      className={buttonStyle}
                       onClick={handleLogout}
                       disabled={isFauceting || isLoading}
                     >

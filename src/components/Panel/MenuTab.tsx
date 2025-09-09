@@ -12,6 +12,7 @@ import { useTwoStepWithdrawModal } from "./hooks/useWithdrawModal";
 import { useMultiStepDepositModal } from "./hooks/useDepositModal";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
 import { useModal } from "@src/hooks/useModal";
+import { menuButtonStyle } from "@src/components/Button";
 
 export default function MenuTab() {
   const { decimals, isLoading } = useContext(PanelContext);
@@ -44,12 +45,7 @@ export default function MenuTab() {
 
   const { isFauceting, handleFaucet, amount } = useFaucet();
 
-  const buttonStyle =
-    "w-full h-14 text-2xl flex items-center justify-between pl-6 pr-6 bg-transparent text-white/80 hover:text-white/90 font-semibold focus:outline-none transition hover:cursor-pointer";
-
-  const disabledButtonStyle = isFauceting
-    ? "opacity-50 cursor-not-allowed"
-    : "";
+  const buttonStyle = `${menuButtonStyle} w-full h-14 text-2xl`;
 
   return (
     <div className="flex flex-col h-full">
@@ -63,9 +59,9 @@ export default function MenuTab() {
           </div>
         )}
       </div>
-      <div className="flex flex-col w-full mt-auto">
+      <div className="flex flex-col w-full mt-auto px-6">
         <button
-          className={`${buttonStyle} ${disabledButtonStyle}`}
+          className={buttonStyle}
           onClick={onWithdrawModalOpen}
           disabled={isFauceting || isLoading}
         >
@@ -74,14 +70,14 @@ export default function MenuTab() {
         </button>
         <button
           onClick={onDepositModalOpen}
-          className={`${buttonStyle} ${disabledButtonStyle}`}
+          className={buttonStyle}
           disabled={isFauceting || isLoading}
         >
           Deposit
           <ArrowIcon />
         </button>
         <button
-          className={`${buttonStyle} ${disabledButtonStyle}`}
+          className={buttonStyle}
           onClick={handleFaucet}
           disabled={isFauceting || isLoading}
         >
@@ -89,7 +85,7 @@ export default function MenuTab() {
           <FaucetIcon className="mr-1" />
         </button>
         <button
-          className={`${buttonStyle} ${disabledButtonStyle}`}
+          className={buttonStyle}
           onClick={onMoreModalOpen}
           disabled={isFauceting || isLoading}
         >
