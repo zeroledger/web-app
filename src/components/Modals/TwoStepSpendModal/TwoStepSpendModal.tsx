@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { useMemo, useState } from "react";
 import { Loader } from "@src/components/Loader";
 import { BackButton } from "@src/components/Buttons/BackButton";
@@ -18,6 +17,7 @@ import { type SpendModalState } from "@src/components/Panel/hooks/useSpendModal"
 import { type WithdrawModalState } from "@src/components/Panel/hooks/useWithdrawModal";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
 import { useContext } from "react";
+import { BaseModal } from "@src/components/Modals/BaseModal";
 
 interface SpendFormData {
   recipient: string;
@@ -100,106 +100,88 @@ function TwoStepSpendModal({
   );
 
   return (
-    <div
-      className={clsx(
-        "fixed inset-0 z-50 w-full",
-        "transition-all duration-500 ease-in-out",
-        isModalOpen ? "opacity-100" : "opacity-0 pointer-events-none",
-      )}
+    <BaseModal
+      isOpen={isModalOpen}
+      onClose={onBack}
+      closeOnEscape={true}
+      closeOnOverlayClick={false}
+      contentClassName="relative justify-center overflow-y-auto"
       style={style}
     >
-      {/* Overlay */}
-      <div className="fixed inset-0 bg-gray-900 backdrop-blur-sm" />
-
-      {/* Modal Content */}
-      <div className="fixed inset-0 flex items-center justify-center overflow-y-auto">
-        <div
-          className={clsx(
-            "flex flex-col w-full h-full md:w-[50%]",
-            "md:max-w-md md:rounded-xl bg-gray-900",
-            "relative justify-center",
-            "transition-all duration-500 ease-in-out",
-            isModalOpen
-              ? "translate-x-0 md:scale-100"
-              : "translate-x-full md:translate-x-0 md:scale-95",
-          )}
-        >
-          <div className="px-6 py-5 h-full flex-col content-center">
-            {errorMessage && (
-              <div className="flex-1 content-center flex-col justify-center animate-fade-in">
-                <ErrorMessage message={errorMessage} />
-              </div>
-            )}
-
-            {isModalLoading && (
-              <div className="flex-1 content-center flex justify-center animate-fade-in">
-                <Loader />
-              </div>
-            )}
-
-            {isModalSuccess && (
-              <div className="flex-1 content-center flex-col justify-center animate-fade-in">
-                <SuccessMessage message={`${type} Successful!`} />
-              </div>
-            )}
-
-            {!isModalLoading &&
-              !isModalSuccess &&
-              !errorMessage &&
-              isModalOpen &&
-              step === "form" && (
-                <>
-                  <BackButton onClick={onBack} />
-                  <form
-                    onSubmit={handleSubmit(onFormSubmit)}
-                    onKeyDown={onEnter}
-                    className="flex pt-20"
-                  >
-                    <SpendForm
-                      formMethods={formMethods}
-                      onEnter={onEnter}
-                      type={type}
-                      setState={setState}
-                      withdrawAll={withdrawAll}
-                      setWithdrawAll={setWithdrawAll}
-                    />
-                  </form>
-                </>
-              )}
-
-            {!isModalLoading &&
-              !isModalSuccess &&
-              !errorMessage &&
-              isModalOpen &&
-              step === "preview" && (
-                <>
-                  <BackButton onClick={onBack} />
-                  <div className="flex flex-col pt-12 pb-1">
-                    <SigningPreview
-                      isSigning={isModalLoading}
-                      isSuccess={isModalSuccess}
-                      title={`Sign & Send ${type} Meta Transaction`}
-                      description={`Review the transaction details before signing. This action cannot be undone`}
-                      messageData={signingData}
-                      onSign={onSign}
-                      buttonText={`Sign & Send`}
-                      successText={`${type} Successful!`}
-                      extraContent={
-                        <SecondStepExtraContent
-                          isDetailsOpen={isDetailsOpen}
-                          setIsDetailsOpen={setIsDetailsOpen}
-                          fullTransactionDetails={fullTransactionDetails}
-                          minimalTransactionDetails={minimalTransactionDetails}
-                        />
-                      }
-                    />
-                  </div>
-                </>
-              )}
+      <div className="px-6 py-5 h-full flex-col content-center">
+        {errorMessage && (
+          <div className="flex-1 content-center flex-col justify-center animate-fade-in">
+            <ErrorMessage message={errorMessage} />
           </div>
-        </div>
+        )}
+
+        {isModalLoading && (
+          <div className="flex-1 content-center flex justify-center animate-fade-in">
+            <Loader />
+          </div>
+        )}
+
+        {isModalSuccess && (
+          <div className="flex-1 content-center flex-col justify-center animate-fade-in">
+            <SuccessMessage message={`${type} Successful!`} />
+          </div>
+        )}
+
+        {!isModalLoading &&
+          !isModalSuccess &&
+          !errorMessage &&
+          isModalOpen &&
+          step === "form" && (
+            <>
+              <BackButton onClick={onBack} />
+              <form
+                onSubmit={handleSubmit(onFormSubmit)}
+                onKeyDown={onEnter}
+                className="flex pt-20"
+              >
+                <SpendForm
+                  formMethods={formMethods}
+                  onEnter={onEnter}
+                  type={type}
+                  setState={setState}
+                  withdrawAll={withdrawAll}
+                  setWithdrawAll={setWithdrawAll}
+                />
+              </form>
+            </>
+          )}
+
+        {!isModalLoading &&
+          !isModalSuccess &&
+          !errorMessage &&
+          isModalOpen &&
+          step === "preview" && (
+            <>
+              <BackButton onClick={onBack} />
+              <div className="flex flex-col pt-12 pb-1">
+                <SigningPreview
+                  isSigning={isModalLoading}
+                  isSuccess={isModalSuccess}
+                  title={`Sign & Send ${type} Meta Transaction`}
+                  description={`Review the transaction details before signing. This action cannot be undone`}
+                  messageData={signingData}
+                  onSign={onSign}
+                  buttonText={`Sign & Send`}
+                  successText={`${type} Successful!`}
+                  extraContent={
+                    <SecondStepExtraContent
+                      isDetailsOpen={isDetailsOpen}
+                      setIsDetailsOpen={setIsDetailsOpen}
+                      fullTransactionDetails={fullTransactionDetails}
+                      minimalTransactionDetails={minimalTransactionDetails}
+                    />
+                  }
+                />
+              </div>
+            </>
+          )}
       </div>
-    </div>
+    </BaseModal>
   );
 }
 

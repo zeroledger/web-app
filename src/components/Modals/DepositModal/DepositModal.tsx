@@ -14,6 +14,7 @@ import { useContext } from "react";
 import { useDynamicHeight } from "@src/hooks/useDynamicHeight";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
 import { type DepositModalState } from "@src/components/Panel/hooks/useDepositModal";
+import { BaseModal } from "@src/components/Modals/BaseModal";
 
 interface DepositFormData {
   amount: string;
@@ -78,17 +79,6 @@ export default function DepositModal({
     !isModalLoading &&
     !isModalError &&
     isModalOpen;
-  const handleModalKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-
-      if (shouldShowParams) {
-        onApprove();
-      } else if (shouldShowPreview) {
-        onSign();
-      }
-    }
-  };
 
   const depositTransactionDetails =
     transactionDetails && depositFees
@@ -143,132 +133,119 @@ export default function DepositModal({
       : [];
 
   return (
-    <div
-      className={clsx(
-        "fixed inset-0 z-50 w-full",
-        "transition-all duration-500 ease-in-out",
-        isModalOpen ? "opacity-100" : "opacity-0 pointer-events-none",
-      )}
+    <BaseModal
+      isOpen={isModalOpen}
+      onClose={onBack}
+      closeOnEscape={true}
+      closeOnOverlayClick={false}
+      onEnterKey={() => {
+        if (shouldShowParams) {
+          onApprove();
+        } else if (shouldShowPreview) {
+          onSign();
+        }
+      }}
+      contentClassName="relative justify-center overflow-y-auto"
       style={style}
     >
-      {/* Overlay */}
-      <div className="fixed inset-0 bg-gray-900 backdrop-blur-sm" />
-
-      {/* Modal Content */}
-      <div className="fixed inset-0 flex items-center justify-center overflow-y-auto">
-        <div
-          className={clsx(
-            "flex flex-col w-full h-full md:w-[50%]",
-            "md:max-w-md md:rounded-xl bg-gray-900",
-            "relative justify-center",
-            "transition-all duration-500 ease-in-out",
-            isModalOpen
-              ? "translate-x-0 md:scale-100"
-              : "translate-x-full md:translate-x-0 md:scale-95",
-          )}
-          onKeyDown={handleModalKeyDown}
-          tabIndex={0}
-        >
-          <div className="px-6 py-5 h-full flex-col content-center">
-            {isModalError && (
-              <div className="flex-1 content-center flex-col justify-center animate-fade-in">
-                <ErrorMessage />
-              </div>
-            )}
-            {isModalLoading && (
-              <div className="flex-1 content-center flex justify-center animate-fade-in">
-                <Loader />
-              </div>
-            )}
-            {isModalSuccess && (
-              <div className="flex-1 content-center flex-col justify-center animate-fade-in">
-                <SuccessMessage message="Deposit Successful!" />
-              </div>
-            )}
-            {shouldShowForm && (
-              <>
-                <BackButton onClick={onBack} />
-                <form
-                  onSubmit={handleSubmit(onFormSubmit)}
-                  onKeyDown={onFormEnter}
-                  className="flex pt-20"
-                >
-                  <DepositForm formMethods={formMethods} setState={setState} />
-                </form>
-              </>
-            )}
-            {shouldShowParams && (
-              <>
-                <BackButton onClick={onBack} />
-                <div className="flex flex-col pt-20">
-                  <div className="text-center mb-6">
-                    <h1 className="text-2xl font-bold text-white mb-2">
-                      Review Deposit
-                    </h1>
-                    <p className="text-gray-400 text-sm">
-                      Review the deposit parameters before proceeding
-                    </p>
-                  </div>
-
-                  <div className="bg-gray-700 rounded-lg p-4 border border-gray-600 mb-6">
-                    <h3 className="text-white font-semibold mb-3">
-                      Deposit Parameters
-                    </h3>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Vault Address:</span>
-                        <span className="text-white font-mono">
-                          {shortString(depositParams?.contract)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Amount:</span>
-                        <span className="text-white font-mono">
-                          {depositParams && depositFees
-                            ? formatUnits(
-                                depositParams.depositStruct.amount +
-                                  depositFees.fee +
-                                  depositFees.depositFee,
-                                decimals,
-                              )
-                            : "0"}{" "}
-                          USD
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-center">
-                    <Button
-                      className={clsx(primaryButtonStyle, "w-full")}
-                      onClick={onApprove}
-                    >
-                      Approve Deposit
-                    </Button>
-                  </div>
-                </div>
-              </>
-            )}
-            {shouldShowPreview && (
-              <>
-                <BackButton onClick={onBack} />
-                <div className="flex flex-col pt-12 pb-1">
-                  <SigningPreview
-                    isSigning={isModalLoading}
-                    isSuccess={isModalSuccess}
-                    title="Sign Deposit Transaction"
-                    description="Review and sign the deposit transaction"
-                    messageData={depositTransactionDetails}
-                    onSign={onSign}
-                    buttonText="Sign & Deposit"
-                    successText="Deposit Successful!"
-                  />
-                </div>
-              </>
-            )}
+      <div className="px-6 py-5 h-full flex-col content-center">
+        {isModalError && (
+          <div className="flex-1 content-center flex-col justify-center animate-fade-in">
+            <ErrorMessage />
           </div>
-        </div>
+        )}
+        {isModalLoading && (
+          <div className="flex-1 content-center flex justify-center animate-fade-in">
+            <Loader />
+          </div>
+        )}
+        {isModalSuccess && (
+          <div className="flex-1 content-center flex-col justify-center animate-fade-in">
+            <SuccessMessage message="Deposit Successful!" />
+          </div>
+        )}
+        {shouldShowForm && (
+          <>
+            <BackButton onClick={onBack} />
+            <form
+              onSubmit={handleSubmit(onFormSubmit)}
+              onKeyDown={onFormEnter}
+              className="flex pt-20"
+            >
+              <DepositForm formMethods={formMethods} setState={setState} />
+            </form>
+          </>
+        )}
+        {shouldShowParams && (
+          <>
+            <BackButton onClick={onBack} />
+            <div className="flex flex-col pt-20">
+              <div className="text-center mb-6">
+                <h1 className="text-2xl font-bold text-white mb-2">
+                  Review Deposit
+                </h1>
+                <p className="text-gray-400 text-sm">
+                  Review the deposit parameters before proceeding
+                </p>
+              </div>
+
+              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600 mb-6">
+                <h3 className="text-white font-semibold mb-3">
+                  Deposit Parameters
+                </h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Vault Address:</span>
+                    <span className="text-white font-mono">
+                      {shortString(depositParams?.contract)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Amount:</span>
+                    <span className="text-white font-mono">
+                      {depositParams && depositFees
+                        ? formatUnits(
+                            depositParams.depositStruct.amount +
+                              depositFees.fee +
+                              depositFees.depositFee,
+                            decimals,
+                          )
+                        : "0"}{" "}
+                      USD
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <Button
+                  className={clsx(primaryButtonStyle, "w-full")}
+                  onClick={onApprove}
+                >
+                  Approve Deposit
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+        {shouldShowPreview && (
+          <>
+            <BackButton onClick={onBack} />
+            <div className="flex flex-col pt-12 pb-1">
+              <SigningPreview
+                isSigning={isModalLoading}
+                isSuccess={isModalSuccess}
+                title="Sign Deposit Transaction"
+                description="Review and sign the deposit transaction"
+                messageData={depositTransactionDetails}
+                onSign={onSign}
+                buttonText="Sign & Deposit"
+                successText="Deposit Successful!"
+              />
+            </div>
+          </>
+        )}
       </div>
-    </div>
+    </BaseModal>
   );
 }

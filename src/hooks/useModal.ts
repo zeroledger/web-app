@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
+import { useModalBehavior } from "./useModalBehavior";
 
-export const useModal = () => {
+export const useModal = (options?: Parameters<typeof useModalBehavior>[2]) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const openModal = useCallback(() => {
@@ -11,9 +12,12 @@ export const useModal = () => {
     setIsOpen(false);
   }, []);
 
+  const modalBehavior = useModalBehavior(isOpen, setIsOpen, options);
+
   return {
     isOpen,
     openModal,
     closeModal,
+    ...modalBehavior,
   };
 };

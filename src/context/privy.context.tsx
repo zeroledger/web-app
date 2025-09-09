@@ -3,9 +3,12 @@ import {
   PrivyProvider,
   WalletListEntry,
 } from "@privy-io/react-auth";
-import { baseSepolia } from "viem/chains";
 import { ReactNode } from "react";
-import { PRIVY_APP_ID, PRIVY_CLIENT_ID } from "@src/common.constants";
+import {
+  PRIVY_APP_ID,
+  PRIVY_CLIENT_ID,
+  SUPPORTED_CHAINS,
+} from "@src/common.constants";
 
 interface PrivyContextProviderProps {
   children: ReactNode;
@@ -38,8 +41,8 @@ const config = {
   mfa: {
     noPromptOnMfaRequired: false,
   },
-  supportedChains: [baseSepolia],
-  defaultChain: baseSepolia,
+  supportedChains: SUPPORTED_CHAINS,
+  defaultChain: SUPPORTED_CHAINS[0],
 };
 
 export const PrivyContextProvider = ({
