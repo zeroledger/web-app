@@ -9,10 +9,12 @@ const defaultBaseMultiStepModalState = {
   isModalSuccess: false,
 };
 
+export type MultiStepModalState = typeof defaultBaseMultiStepModalState;
+
 export const useMultiStepModal = <
   TConfig extends {
     defaultValues: FieldValues;
-    defaultState: { step: string };
+    defaultState: { step: string } & MultiStepModalState;
   },
 >(
   config: TConfig,
@@ -25,9 +27,7 @@ export const useMultiStepModal = <
     >,
   });
 
-  const [state, setState] = useState<
-    TConfig["defaultState"] & typeof defaultBaseMultiStepModalState
-  >({
+  const [state, setState] = useState<TConfig["defaultState"]>({
     ...config.defaultState,
     ...defaultBaseMultiStepModalState,
   });

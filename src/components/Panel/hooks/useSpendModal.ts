@@ -10,14 +10,17 @@ import {
 import { ens } from "@src/services/Ens";
 import { type SpendParams } from "@src/utils/vault";
 import { useSettings } from "@src/hooks/useSettings";
-import { useMultiStepModal } from "@src/hooks/useMultiStepModal";
+import {
+  useMultiStepModal,
+  type MultiStepModalState,
+} from "@src/hooks/useMultiStepModal";
 
 interface SpendFormData {
   recipient: string;
   amount: string;
 }
 
-export interface SpendModalState {
+export interface SpendModalState extends MultiStepModalState {
   step: "form" | "preview";
   errorMessage?: string;
   spendFees?: SpendFeesData;

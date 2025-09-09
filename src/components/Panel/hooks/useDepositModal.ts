@@ -8,13 +8,16 @@ import {
   type TransactionDetails,
 } from "@src/services/ledger";
 import { type DepositParams } from "@src/utils/vault/types";
-import { useMultiStepModal } from "@src/hooks/useMultiStepModal";
+import {
+  useMultiStepModal,
+  type MultiStepModalState,
+} from "@src/hooks/useMultiStepModal";
 
 interface DepositFormData {
   amount: string;
 }
 
-export interface DepositModalState {
+export interface DepositModalState extends MultiStepModalState {
   step: "form" | "params" | "preview";
   depositFees?: DepositFeesData;
   depositParams?: DepositParams;

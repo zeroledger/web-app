@@ -12,14 +12,17 @@ import { PanelContext } from "@src/components/Panel/context/panel/panel.context"
 import { ens } from "@src/services/Ens";
 import { type WithdrawParams, type CommitmentStruct } from "@src/utils/vault";
 import { useSettings } from "@src/hooks/useSettings";
-import { useMultiStepModal } from "@src/hooks/useMultiStepModal";
+import {
+  useMultiStepModal,
+  type MultiStepModalState,
+} from "@src/hooks/useMultiStepModal";
 
 interface WithdrawFormData {
   recipient: string;
   amount: string;
 }
 
-export interface WithdrawModalState {
+export interface WithdrawModalState extends MultiStepModalState {
   step: "form" | "preview";
   errorMessage?: string;
   withdrawFees?: WithdrawFeesData;
