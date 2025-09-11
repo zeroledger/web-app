@@ -62,23 +62,11 @@ export default function DepositModal({
   } = state;
 
   const shouldShowParams =
-    step === "params" &&
-    !isModalSuccess &&
-    !isModalLoading &&
-    !isModalError &&
-    isModalOpen;
+    step === "params" && !isModalSuccess && !isModalLoading && !isModalError;
   const shouldShowPreview =
-    step === "preview" &&
-    !isModalSuccess &&
-    !isModalLoading &&
-    !isModalError &&
-    isModalOpen;
+    step === "preview" && !isModalSuccess && !isModalLoading && !isModalError;
   const shouldShowForm =
-    step === "form" &&
-    !isModalSuccess &&
-    !isModalLoading &&
-    !isModalError &&
-    isModalOpen;
+    step === "form" && !isModalSuccess && !isModalLoading && !isModalError;
 
   const depositTransactionDetails =
     transactionDetails && depositFees
@@ -164,86 +152,84 @@ export default function DepositModal({
             <SuccessMessage message="Deposit Successful!" />
           </div>
         )}
+        {!isModalError && !isModalLoading && !isModalSuccess && (
+          <BackButton onClick={onBack} />
+        )}
         {shouldShowForm && (
-          <>
-            <BackButton onClick={onBack} />
-            <form
-              onSubmit={handleSubmit(onFormSubmit)}
-              onKeyDown={onFormEnter}
-              className="flex pt-20"
-            >
-              <DepositForm formMethods={formMethods} setState={setState} />
-            </form>
-          </>
+          <form
+            onSubmit={handleSubmit(onFormSubmit)}
+            onKeyDown={onFormEnter}
+            className="flex pt-20"
+          >
+            <DepositForm
+              formMethods={formMethods}
+              setState={setState}
+              isModalOpen={isModalOpen}
+            />
+          </form>
         )}
         {shouldShowParams && (
-          <>
-            <BackButton onClick={onBack} />
-            <div className="flex flex-col pt-20">
-              <div className="text-center mb-6">
-                <h1 className="text-2xl font-bold text-white mb-2">
-                  Review Deposit
-                </h1>
-                <p className="text-gray-400 text-sm">
-                  Review the deposit parameters before proceeding
-                </p>
-              </div>
+          <div className="flex flex-col pt-20">
+            <div className="text-center mb-6">
+              <h1 className="text-2xl font-bold text-white mb-2">
+                Review Deposit
+              </h1>
+              <p className="text-gray-400 text-sm">
+                Review the deposit parameters before proceeding
+              </p>
+            </div>
 
-              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600 mb-6">
-                <h3 className="text-white font-semibold mb-3">
-                  Deposit Parameters
-                </h3>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Vault Address:</span>
-                    <span className="text-white font-mono">
-                      {shortString(depositParams?.contract)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Amount:</span>
-                    <span className="text-white font-mono">
-                      {depositParams && depositFees
-                        ? formatUnits(
-                            depositParams.depositStruct.amount +
-                              depositFees.fee +
-                              depositFees.depositFee,
-                            decimals,
-                          )
-                        : "0"}{" "}
-                      USD
-                    </span>
-                  </div>
+            <div className="bg-gray-700 rounded-lg p-4 border border-gray-600 mb-6">
+              <h3 className="text-white font-semibold mb-3">
+                Deposit Parameters
+              </h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Vault Address:</span>
+                  <span className="text-white font-mono">
+                    {shortString(depositParams?.contract)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Amount:</span>
+                  <span className="text-white font-mono">
+                    {depositParams && depositFees
+                      ? formatUnits(
+                          depositParams.depositStruct.amount +
+                            depositFees.fee +
+                            depositFees.depositFee,
+                          decimals,
+                        )
+                      : "0"}{" "}
+                    USD
+                  </span>
                 </div>
               </div>
-
-              <div className="flex justify-center">
-                <Button
-                  className={clsx(primaryButtonStyle, "w-full")}
-                  onClick={onApprove}
-                >
-                  Approve Deposit
-                </Button>
-              </div>
             </div>
-          </>
+
+            <div className="flex justify-center">
+              <Button
+                className={clsx(primaryButtonStyle, "w-full")}
+                onClick={onApprove}
+              >
+                Approve Deposit
+              </Button>
+            </div>
+          </div>
         )}
         {shouldShowPreview && (
-          <>
-            <BackButton onClick={onBack} />
-            <div className="flex flex-col pt-12 pb-1">
-              <SigningPreview
-                isSigning={isModalLoading}
-                isSuccess={isModalSuccess}
-                title="Sign Deposit Transaction"
-                description="Review and sign the deposit transaction"
-                messageData={depositTransactionDetails}
-                onSign={onSign}
-                buttonText="Sign & Deposit"
-                successText="Deposit Successful!"
-              />
-            </div>
-          </>
+          <div className="flex flex-col pt-12 pb-1">
+            <SigningPreview
+              isSigning={isModalLoading}
+              isSuccess={isModalSuccess}
+              title="Sign Deposit Transaction"
+              description="Review and sign the deposit transaction"
+              messageData={depositTransactionDetails}
+              onSign={onSign}
+              buttonText="Sign & Deposit"
+              successText="Deposit Successful!"
+            />
+          </div>
         )}
       </div>
     </BaseModal>

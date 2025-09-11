@@ -99,6 +99,12 @@ function TwoStepSpendModal({
     [transactionDetails, decimals, withdrawAll, state],
   );
 
+  const shouldShowForm =
+    step === "form" && !isModalSuccess && !isModalLoading && !errorMessage;
+
+  const shouldShowPreview =
+    step === "preview" && !isModalSuccess && !isModalLoading && !errorMessage;
+
   return (
     <BaseModal
       isOpen={isModalOpen}
@@ -126,60 +132,49 @@ function TwoStepSpendModal({
             <SuccessMessage message={`${type} Successful!`} />
           </div>
         )}
+        {!isModalLoading && !isModalSuccess && !errorMessage && (
+          <BackButton onClick={onBack} />
+        )}
+        {shouldShowForm && (
+          <form
+            onSubmit={handleSubmit(onFormSubmit)}
+            onKeyDown={onEnter}
+            className="flex pt-20"
+          >
+            <SpendForm
+              formMethods={formMethods}
+              onEnter={onEnter}
+              type={type}
+              setState={setState}
+              withdrawAll={withdrawAll}
+              setWithdrawAll={setWithdrawAll}
+              isModalOpen={isModalOpen}
+            />
+          </form>
+        )}
 
-        {!isModalLoading &&
-          !isModalSuccess &&
-          !errorMessage &&
-          isModalOpen &&
-          step === "form" && (
-            <>
-              <BackButton onClick={onBack} />
-              <form
-                onSubmit={handleSubmit(onFormSubmit)}
-                onKeyDown={onEnter}
-                className="flex pt-20"
-              >
-                <SpendForm
-                  formMethods={formMethods}
-                  onEnter={onEnter}
-                  type={type}
-                  setState={setState}
-                  withdrawAll={withdrawAll}
-                  setWithdrawAll={setWithdrawAll}
+        {shouldShowPreview && (
+          <div className="flex flex-col pt-12 pb-1">
+            <SigningPreview
+              isSigning={isModalLoading}
+              isSuccess={isModalSuccess}
+              title={`Sign & Send ${type} Meta Transaction`}
+              description={`Review the transaction details before signing. This action cannot be undone`}
+              messageData={signingData}
+              onSign={onSign}
+              buttonText={`Sign & Send`}
+              successText={`${type} Successful!`}
+              extraContent={
+                <SecondStepExtraContent
+                  isDetailsOpen={isDetailsOpen}
+                  setIsDetailsOpen={setIsDetailsOpen}
+                  fullTransactionDetails={fullTransactionDetails}
+                  minimalTransactionDetails={minimalTransactionDetails}
                 />
-              </form>
-            </>
-          )}
-
-        {!isModalLoading &&
-          !isModalSuccess &&
-          !errorMessage &&
-          isModalOpen &&
-          step === "preview" && (
-            <>
-              <BackButton onClick={onBack} />
-              <div className="flex flex-col pt-12 pb-1">
-                <SigningPreview
-                  isSigning={isModalLoading}
-                  isSuccess={isModalSuccess}
-                  title={`Sign & Send ${type} Meta Transaction`}
-                  description={`Review the transaction details before signing. This action cannot be undone`}
-                  messageData={signingData}
-                  onSign={onSign}
-                  buttonText={`Sign & Send`}
-                  successText={`${type} Successful!`}
-                  extraContent={
-                    <SecondStepExtraContent
-                      isDetailsOpen={isDetailsOpen}
-                      setIsDetailsOpen={setIsDetailsOpen}
-                      fullTransactionDetails={fullTransactionDetails}
-                      minimalTransactionDetails={minimalTransactionDetails}
-                    />
-                  }
-                />
-              </div>
-            </>
-          )}
+              }
+            />
+          </div>
+        )}
       </div>
     </BaseModal>
   );

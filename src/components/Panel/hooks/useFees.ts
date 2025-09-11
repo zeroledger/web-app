@@ -23,14 +23,35 @@ const withdrawFeesFetcher = async ([ledger, decimals]: [
   };
 };
 
-export function useDepositFees(ledger: Ledger, decimals: number) {
-  return useSWR([ledger, decimals, "depositFees"], depositFeesFetcher);
+export function useDepositFees(
+  ledger: Ledger,
+  decimals: number,
+  doFetch: boolean,
+) {
+  return useSWR(
+    [ledger, decimals, doFetch, "depositFees"],
+    doFetch ? depositFeesFetcher : null,
+  );
 }
 
-export function useSpendFees(ledger: Ledger, decimals: number) {
-  return useSWR([ledger, decimals, "spendFees"], spendFeesFetcher);
+export function useSpendFees(
+  ledger: Ledger,
+  decimals: number,
+  doFetch: boolean,
+) {
+  return useSWR(
+    [ledger, decimals, doFetch, "spendFees"],
+    doFetch ? spendFeesFetcher : null,
+  );
 }
 
-export function useWithdrawFees(ledger: Ledger, decimals: number) {
-  return useSWR([ledger, decimals, "withdrawFees"], withdrawFeesFetcher);
+export function useWithdrawFees(
+  ledger: Ledger,
+  decimals: number,
+  doFetch: boolean,
+) {
+  return useSWR(
+    [ledger, decimals, doFetch, "withdrawFees"],
+    doFetch ? withdrawFeesFetcher : null,
+  );
 }

@@ -34,6 +34,7 @@ interface SpendFormProps {
   >;
   withdrawAll: boolean;
   setWithdrawAll: (withdrawAll: boolean) => void;
+  isModalOpen: boolean;
 }
 
 export const SpendForm = ({
@@ -43,6 +44,7 @@ export const SpendForm = ({
   setState,
   withdrawAll,
   setWithdrawAll,
+  isModalOpen,
 }: SpendFormProps) => {
   const {
     register,
@@ -58,13 +60,13 @@ export const SpendForm = ({
     data: spendFees,
     isLoading: isSpendLoading,
     error: isSpendError,
-  } = useSpendFees(ledger!, decimals);
+  } = useSpendFees(ledger!, decimals, isModalOpen);
 
   const {
     data: withdrawFeesData,
     isLoading: isWithdrawLoading,
     error: isWithdrawError,
-  } = useWithdrawFees(ledger!, decimals);
+  } = useWithdrawFees(ledger!, decimals, isModalOpen);
 
   const isFeesLoading = isSpendLoading || isWithdrawLoading;
 
@@ -203,7 +205,7 @@ export const SpendForm = ({
           }}
           onKeyDown={onEnter}
         />
-        <div className="mt-1 text-sm text-white/80 flex items-center gap-2 justify-end">
+        <div className="mt-1 text-sm text-white/80 flex items-center gap-2 justify-end min-h-5">
           {isFeesLoading && (
             <div className="animate-pulse h-5 w-1/2 bg-white/10 rounded" />
           )}

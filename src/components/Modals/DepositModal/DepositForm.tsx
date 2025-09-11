@@ -15,9 +15,14 @@ interface DepositFormData {
 interface DepositFormProps {
   formMethods: UseFormReturn<DepositFormData>;
   setState: React.Dispatch<React.SetStateAction<DepositModalState>>;
+  isModalOpen: boolean;
 }
 
-export const DepositForm = ({ formMethods, setState }: DepositFormProps) => {
+export const DepositForm = ({
+  formMethods,
+  setState,
+  isModalOpen,
+}: DepositFormProps) => {
   const {
     register,
     formState: { errors, isSubmitting },
@@ -31,7 +36,7 @@ export const DepositForm = ({ formMethods, setState }: DepositFormProps) => {
     data: depositFees,
     isLoading,
     error,
-  } = useDepositFees(ledger!, decimals);
+  } = useDepositFees(ledger!, decimals, isModalOpen);
 
   useEffect(() => {
     if (error) {
@@ -78,7 +83,7 @@ export const DepositForm = ({ formMethods, setState }: DepositFormProps) => {
             clearErrors("amount");
           }}
         />
-        <div className="mt-1 text-base text-white flex gap-2 justify-end">
+        <div className="mt-1 text-base text-white flex gap-2 justify-end min-h-5">
           {isLoading && (
             <div className="animate-pulse h-5 w-1/3 bg-white/10 rounded" />
           )}
