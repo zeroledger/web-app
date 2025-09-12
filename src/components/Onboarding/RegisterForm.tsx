@@ -79,9 +79,11 @@ export default function RegisterForm() {
             Data encrypted locally with your password
           </Description>
           <Input
+            type="password"
             className={clsx(
-              "mt-1 min-w-84 block rounded-lg border-none bg-white/5 py-2.5 px-3 text-base text-white leading-7",
+              "mt-1 min-w-84 block rounded-lg border-none bg-white/5 py-2.5 px-3 text-white",
               "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25",
+              "text-lg tracking-wider leading-none",
               errors.password && "border-red-400",
             )}
             {...register("password", {
@@ -96,7 +98,15 @@ export default function RegisterForm() {
             onKeyDown={onEnter}
           />
         </Field>
-        <div className="h-6 text-base/6 mt-1 text-red-400">
+        <div
+          className={clsx(
+            "text-base/6 mt-1 text-red-400 transition-all duration-500 ease-in-out",
+            {
+              "opacity-0 h-0": !errors.password && !error,
+              "opacity-100 h-6": errors.password || error,
+            },
+          )}
+        >
           {errors.password && (
             <p className="error-message">
               {typeof errors.password.message === "string" &&
