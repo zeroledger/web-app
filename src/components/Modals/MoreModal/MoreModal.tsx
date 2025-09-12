@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { BackButton } from "@src/components/Buttons/BackButton";
 import { QuestionIcon } from "@src/components/svg/QuestionIcon";
+import { TelegramIcon } from "@src/components/svg/TelegramIcon";
 import { TrashIcon } from "@src/components/svg/TrashIcon";
 import LogoutIcon from "@src/components/svg/LogoutIcon";
 import BackupIcon from "@src/components/svg/BackupIcon";
@@ -83,12 +84,19 @@ export default function MoreModal({
                     <QuestionIcon className="w-6 h-6" />
                   </a>
 
+                  <a
+                    href="https://t.me/+fCgwViQAehY0NTEy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={buttonStyle}
+                  >
+                    Join telegram group chat
+                    <TelegramIcon className="w-6 h-6" />
+                  </a>
+
                   <label className={buttonStyle}>
                     <div className="flex flex-col">
-                      <span>Transaction Preview</span>
-                      <span className="text-sm text-white/60 font-normal">
-                        Show details before signing
-                      </span>
+                      <span>Show details before signing</span>
                     </div>
                     <div className="relative inline-flex items-center">
                       <input
