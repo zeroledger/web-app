@@ -100,7 +100,7 @@ export default function RegisterForm() {
         </Field>
         <div
           className={clsx(
-            "text-base/6 mt-1 text-red-400 transition-all duration-500 ease-in-out",
+            "text-base/6 mt-1 text-red-400 transition-all duration-200 ease-in-out",
             {
               "opacity-0 h-0": !errors.password && !error,
               "opacity-100 h-6": errors.password || error,
