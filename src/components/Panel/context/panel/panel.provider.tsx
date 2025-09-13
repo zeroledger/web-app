@@ -118,11 +118,7 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
   }, [ledger, syncLedger]);
 
   useEffect(() => {
-    if (!isWalletChanged) {
-      return;
-    }
-    if (!wallet) {
-      reset();
+    if (!isWalletChanged || !wallet) {
       return;
     }
     const unregisteredAccount = !viewAccount!.hasEncryptedViewAccount(

@@ -33,8 +33,8 @@ export default function MoreModal({
     handleResetWallet,
   } = useResetWalletModal();
 
-  const { handleLogout } = useLogout();
   const { handleBackupPrivateKey, isEmbeddedWallet } = useBackupPrivateKey();
+  const { handleLogout } = useLogout();
   const { settings, updateSettings } = useSettings();
 
   const handlePreviewToggle = () => {
@@ -129,16 +129,14 @@ export default function MoreModal({
                     <TrashIcon className="w-6 h-6" />
                   </button>
 
-                  {isEmbeddedWallet && (
-                    <button
-                      className={buttonStyle}
-                      onClick={handleLogout}
-                      disabled={isFauceting || isLoading}
-                    >
-                      Logout
-                      <LogoutIcon className="w-6 h-6" />
-                    </button>
-                  )}
+                  <button
+                    className={buttonStyle}
+                    onClick={handleLogout}
+                    disabled={isFauceting || isLoading}
+                  >
+                    Logout
+                    <LogoutIcon className="w-6 h-6" />
+                  </button>
                 </div>
               </div>
             </div>
