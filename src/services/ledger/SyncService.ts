@@ -11,7 +11,7 @@ export const SyncEntityKey = (address: Address) => ({
 export default class SyncService {
   constructor(
     public readonly dataSource: DataSource,
-    readonly address: Address,
+    public readonly address: Address,
   ) {
     this._store = this.dataSource.getEntityLevel(SyncEntityKey(address));
   }

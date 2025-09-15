@@ -84,6 +84,13 @@ export const useRegister = () => {
             externalClient.account.address,
             pendingPassword,
           );
+          const isViewAccountValid =
+            await newLedger.tesService.validateViewAccount(
+              externalClient.account.address,
+            );
+          if (!isViewAccountValid) {
+            throw new Error("Invalid password");
+          }
           setAuthorized(false);
           navigate("/authorization");
         }

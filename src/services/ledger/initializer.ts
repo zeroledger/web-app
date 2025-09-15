@@ -85,5 +85,6 @@ export const initialize = async (
       commitments,
       tesService,
     ),
+    tesService,
   };
 };
