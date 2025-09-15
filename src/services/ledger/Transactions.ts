@@ -8,7 +8,10 @@ import {
   type CommitmentStruct,
   type DepositParams,
 } from "@src/utils/vault/types";
-import { type UnsignedMetaTransaction } from "@src/utils/metatx";
+import {
+  type SignedMetaTransaction,
+  type UnsignedMetaTransaction,
+} from "@src/utils/metatx";
 import { catchService } from "@src/services/core/catch.service";
 import { type Tes } from "@src/services/Tes";
 import type Commitments from "./Commitments";
@@ -191,26 +194,61 @@ export class Transactions {
     );
   }
 
-  executeMetaTransaction(
+  signMetaTransaction(metaTransaction: UnsignedMetaTransaction) {
+    return this.enqueue(
+      async () => {
+        const { asyncMetaTxUtils } = await this.preloadedModulesPromise;
+        return await asyncMetaTxUtils.createSignedMetaTx(
+          metaTransaction,
+          await this.getForwarder(),
+          await this.evmClients.externalClient(),
+        );
+      },
+      "signMetaTransaction",
+      30_000,
+      true,
+    );
+  }
+
+  executeMetaTransactions(
+    metaTransactions: SignedMetaTransaction[],
+    coveredGas: string,
+  ) {
+    return this.enqueue(
+      async () => {
+        const mainAccount = await this.mainAccount();
+        return await this.tesService.executeMetaTransactions(
+          metaTransactions,
+          coveredGas,
+          mainAccount.address,
+        );
+      },
+      "executeMetaTransaction",
+      50_000,
+      true,
+    );
+  }
+
+  signAndExecuteMetaTransaction(
     metaTransaction: UnsignedMetaTransaction,
     coveredGas: string,
   ) {
     return this.enqueue(
       async () => {
         const { asyncMetaTxUtils } = await this.preloadedModulesPromise;
-        const mainAccount = await this.mainAccount();
         const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
           metaTransaction,
           await this.getForwarder(),
           await this.evmClients.externalClient(),
         );
-        return await this.tesService.executeMetaTransaction(
-          signedMetaTransaction,
+        const mainAccount = await this.mainAccount();
+        return await this.tesService.executeMetaTransactions(
+          [signedMetaTransaction],
           coveredGas,
           mainAccount.address,
         );
       },
-      "executeMetaTransaction",
+      "signAndExecuteMetaTransaction",
       80_000,
       true,
     );

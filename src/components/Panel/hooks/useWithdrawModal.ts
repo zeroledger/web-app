@@ -100,7 +100,7 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
 
           if (skipSecondStep) {
             // Skip preview step and go directly to signing
-            await ledger!.transactions.executeMetaTransaction(
+            await ledger!.transactions.signAndExecuteMetaTransaction(
               metaTransactionData.metaTransaction!,
               metaTransactionData.transactionDetails?.type === "withdraw"
                 ? state.withdrawFees!.coveredGas.toString()
@@ -165,7 +165,7 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
             isModalLoading: true,
           }));
 
-          await ledger!.transactions.executeMetaTransaction(
+          await ledger!.transactions.signAndExecuteMetaTransaction(
             state.metaTransaction,
             state.transactionDetails.type === "withdraw"
               ? state.withdrawFees.coveredGas.toString()

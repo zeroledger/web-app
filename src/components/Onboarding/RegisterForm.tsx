@@ -73,6 +73,15 @@ export default function RegisterForm() {
         onKeyDown={onEnter}
         className="mt-5"
       >
+        <Field className="flex items-center gap-4">
+          <Input
+            hidden
+            type="text"
+            autoComplete="username"
+            value={ensProfile?.name ?? wallet!.address}
+            readOnly
+          />
+        </Field>
         <Field>
           <Label className="text-base/6 font-medium text-white">Password</Label>
           <Description className="text-sm/6 text-white/50">
@@ -96,6 +105,7 @@ export default function RegisterForm() {
             disabled={disabled}
             onChange={onPasswordChange}
             onKeyDown={onEnter}
+            autoComplete="new-password"
           />
         </Field>
         <div

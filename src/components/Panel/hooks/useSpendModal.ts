@@ -80,7 +80,7 @@ export const useTwoStepSpendModal = (
 
           if (skipSecondStep) {
             // Skip preview step and go directly to signing
-            await ledger!.transactions.executeMetaTransaction(
+            await ledger!.transactions.signAndExecuteMetaTransaction(
               metaTransactionData.metaTransaction!,
               spendFees.coveredGas.toString(),
             );
@@ -155,7 +155,7 @@ export const useTwoStepSpendModal = (
 
           if (skipSecondStep) {
             // Skip preview step and go directly to signing
-            await ledger!.transactions.executeMetaTransaction(
+            await ledger!.transactions.signAndExecuteMetaTransaction(
               metaTransactionData.metaTransaction!,
               state.spendFees.coveredGas.toString(),
             );
@@ -213,7 +213,7 @@ export const useTwoStepSpendModal = (
             isModalLoading: true,
           }));
 
-          await ledger!.transactions.executeMetaTransaction(
+          await ledger!.transactions.signAndExecuteMetaTransaction(
             state.metaTransaction,
             state.spendFees.coveredGas.toString(),
           );

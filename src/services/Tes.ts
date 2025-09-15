@@ -220,8 +220,8 @@ export class Tes {
     }, backoffOptions);
   }
 
-  async executeMetaTransaction(
-    metatx: SignedMetaTransaction,
+  async executeMetaTransactions(
+    metatxs: SignedMetaTransaction[],
     coveredGas: string,
     mainAccountAddress: Address,
   ) {
@@ -229,7 +229,7 @@ export class Tes {
     await this.axios.post(
       `${this.tesUrl}/paymaster/execute`,
       {
-        metatx,
+        metatxs,
         coveredGas,
       },
       {

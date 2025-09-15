@@ -162,7 +162,7 @@ export const useMultiStepDepositModal = (decimals: number) => {
             isModalLoading: true,
           }));
 
-          await ledger!.transactions.executeMetaTransaction(
+          await ledger!.transactions.signAndExecuteMetaTransaction(
             state.metaTransaction,
             state.depositFees.coveredGas.toString(),
           );
