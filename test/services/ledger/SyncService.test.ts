@@ -2,6 +2,16 @@ import SyncService from "@src/services/ledger/SyncService";
 import { createMockDataSource } from "@test/mocks/mockDataSource";
 import { zeroAddress } from "viem";
 
+vi.mock("@src/utils/logger", () => ({
+  Logger: vi.fn().mockImplementation(() => ({
+    log: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  })),
+}));
+
 describe("SyncService", () => {
   let syncService: SyncService;
   let mockDataSource: ReturnType<typeof createMockDataSource>;
