@@ -3,6 +3,7 @@ import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useContext } from "react";
 import { type HistoryRecordDto } from "@src/services/ledger";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
+import { useSettings } from "@src/hooks/useSettings";
 import TransactionSkeleton from "./TransactionSkeleton";
 import TransactionGroup from "./TransactionGroup";
 
@@ -23,13 +24,18 @@ export default function ActivityTab({ active }: { active: boolean }) {
   const [nextCursor, setNextCursor] = useState<string | undefined>();
   const { ledger, targetChain } = useContext(LedgerContext);
   const { decimals, isLoading } = useContext(PanelContext);
+  const { settings } = useSettings();
 
   // Load initial transactions
   const loadInitialTransactions = useCallback(async () => {
     setLoading(true);
 
     try {
-      const result = await ledger!.watcher.getPaginatedTransactions(10);
+      const result = await ledger!.watcher.getPaginatedTransactions(
+        10,
+        undefined,
+        settings.hideDecoyTransactions,
+      );
       if (result) {
         setGroupedTransactions(result.transactions);
         setNextCursor(result.nextCursor);
@@ -40,7 +46,7 @@ export default function ActivityTab({ active }: { active: boolean }) {
     } finally {
       setLoading(false);
     }
-  }, [ledger]);
+  }, [ledger, settings.hideDecoyTransactions]);
 
   // Load more transactions
   const loadMoreTransactions = async () => {
@@ -52,6 +58,7 @@ export default function ActivityTab({ active }: { active: boolean }) {
       const result = await ledger!.watcher.getPaginatedTransactions(
         10,
         nextCursor,
+        settings.hideDecoyTransactions,
       );
       if (result) {
         setGroupedTransactions((prev) => ({

@@ -276,6 +276,7 @@ export class Watcher extends EventEmitter {
   async getPaginatedTransactions(
     limit: number,
     cursor?: string,
+    hideDecoyTransactions?: boolean,
   ): Promise<{
     transactions: Record<
       string,
@@ -290,9 +291,28 @@ export class Watcher extends EventEmitter {
         string,
         { incomings: HistoryRecordDto[]; outgoings: HistoryRecordDto[] }
       >;
+      let previousTxHash: string | undefined;
       await this.commitmentsHistory.eachRevert((historyRecord, { prevId }) => {
         const txHash = historyRecord.transactionHash || "unknown";
         nextCursor = prevId;
+
+        if (
+          hideDecoyTransactions &&
+          previousTxHash &&
+          previousTxHash !== txHash
+        ) {
+          const prevTx = transactions[previousTxHash];
+          const isDecoyTransaction =
+            prevTx.incomings.length === 1 &&
+            prevTx.outgoings.length === 0 &&
+            BigInt(prevTx.incomings[0].record.value) === 0n;
+
+          if (isDecoyTransaction) {
+            // Remove the decoy transaction and reduce the count
+            delete transactions[previousTxHash];
+            amount -= 1;
+          }
+        }
 
         if (!transactions[txHash]) {
           amount += 1;
@@ -311,6 +331,8 @@ export class Watcher extends EventEmitter {
         } else if (historyRecord.status === "spend") {
           transactions[txHash].outgoings.push(historyRecord);
         }
+
+        previousTxHash = txHash;
         return false;
       }, cursor);
 
