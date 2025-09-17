@@ -27,23 +27,14 @@ import { v4 as uuidv4 } from "uuid";
 
 // Dynamic imports for heavy dependencies
 const loadHeavyDependencies = async () => {
-  const [
-    asyncVaultUtils,
-    asyncMetaTxUtils,
-    { Tes },
-    asyncProtocolManagerUtils,
-  ] = await Promise.all([
+  const [asyncVaultUtils, { Tes }] = await Promise.all([
     import("@src/utils/vault"),
-    import("@src/utils/metatx"),
     import("@src/services/Tes"),
-    import("@src/utils/protocolManager"),
   ]);
 
   return {
     asyncVaultUtils,
-    asyncMetaTxUtils,
     Tes,
-    asyncProtocolManagerUtils,
   };
 };
 
@@ -55,9 +46,7 @@ export class Watcher extends EventEmitter {
   private updateBothBalancesDebounced: ReturnType<typeof debounce>;
   private preloadedModulesPromise: Promise<{
     asyncVaultUtils: typeof import("@src/utils/vault");
-    asyncMetaTxUtils: typeof import("@src/utils/metatx");
     Tes: typeof import("@src/services/Tes").Tes;
-    asyncProtocolManagerUtils: typeof import("@src/utils/protocolManager");
   }>;
   private _unwatchVault?: () => void;
   private classId = keccak256(`0x${uuidv4()}`).slice(0, 8);
@@ -140,7 +129,7 @@ export class Watcher extends EventEmitter {
     this.safeEmit(LedgerEvents.ONCHAIN_BALANCE_CHANGE);
   }
 
-  private async handleEventsBatch({
+  async handleEventsBatch({
     updateBlockNumber = false,
   }: { updateBlockNumber?: boolean } = {}) {
     const events = this.eventsCache.splice(0);
