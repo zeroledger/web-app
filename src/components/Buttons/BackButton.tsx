@@ -5,7 +5,7 @@ interface BackButtonProps {
 export const BackButton = ({ onClick }: BackButtonProps) => (
   <button
     onClick={onClick}
-    className="p-2 text-white/60 hover:text-white transition-colors hover:cursor-pointer"
+    className="py-2 text-white/60 hover:text-white transition-colors hover:cursor-pointer"
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"

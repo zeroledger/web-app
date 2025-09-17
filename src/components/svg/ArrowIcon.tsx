@@ -19,7 +19,7 @@ export default function ArrowIcon({
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
-        d="M5 19L19 5M5 5h14v14"
+        d="M6 18L18 6M6 6h12v12"
       />
     </svg>
   );
