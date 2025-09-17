@@ -1,10 +1,12 @@
 import clsx from "clsx";
 import { BackButton } from "@src/components/Buttons/BackButton";
-import { QuestionIcon } from "@src/components/svg/QuestionIcon";
-import { TelegramIcon } from "@src/components/svg/TelegramIcon";
-import { TrashIcon } from "@src/components/svg/TrashIcon";
-import LogoutIcon from "@src/components/svg/LogoutIcon";
-import BackupIcon from "@src/components/svg/BackupIcon";
+import {
+  QuestionIcon,
+  TelegramIcon,
+  TrashIcon,
+  LogoutIcon,
+  BackupIcon,
+} from "@src/components/svg";
 import { LANDING_URL } from "@src/common.constants";
 import { useResetWalletModal } from "./useResetWalletModal";
 import { useLogout } from "./useLogout";

@@ -16,7 +16,7 @@ import {
 } from "@src/components/Panel/hooks/useFees";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { QRScannerModal } from "./QRScannerModal";
-import { CameraIcon } from "@src/components/svg/CameraIcon";
+import { CameraIcon } from "@src/components/svg";
 
 const amountRegex = /^\d*\.?\d*$/;
 

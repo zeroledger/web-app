@@ -4,9 +4,7 @@ interface CameraIconProps {
   className?: string;
 }
 
-export const CameraIcon: React.FC<CameraIconProps> = ({
-  className = "w-5 h-5",
-}) => {
+export default function CameraIcon({ className = "w-5 h-5" }: CameraIconProps) {
   return (
     <svg
       className={className}
@@ -28,4 +26,4 @@ export const CameraIcon: React.FC<CameraIconProps> = ({
       />
     </svg>
   );
-};
+}

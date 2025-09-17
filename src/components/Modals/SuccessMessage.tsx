@@ -1,4 +1,4 @@
-import CheckCircleIcon from "@src/components/svg/CheckCircleIcon";
+import { CheckCircleIcon } from "@src/components/svg";
 
 export const SuccessMessage = ({ message }: { message: string }) => (
   <div className="flex-1 flex flex-col items-center justify-center gap-4 animate-fade-in">

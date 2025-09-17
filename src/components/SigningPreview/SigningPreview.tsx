@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { Button } from "@src/components/Button";
 import { primaryButtonStyle } from "@src/components/Button";
-import { WalletIcon } from "@src/components/svg/WalletIcon";
+import { WalletIcon } from "@src/components/svg";
 import { ReactNode } from "react";
 
 export interface SigningData {

@@ -1,8 +1,9 @@
 import { DepositModal } from "@src/components/Modals/DepositModal";
 import { MoreModal } from "@src/components/Modals/MoreModal";
-import { ArrowIcon } from "@src/components/svg/ArrowIcon";
-import { FaucetIcon } from "@src/components/svg/FaucetIcon";
-import ThreeDots from "@src/components/svg/ThreeDots";
+import { PointsModal } from "@src/components/Modals/PointsModal";
+import { HiOutlineSparkles, HiDotsHorizontal } from "react-icons/hi";
+import { ArrowIcon } from "@src/components/svg";
+import { TbDroplet } from "react-icons/tb";
 import { Loader } from "@src/components/Loader";
 
 import { useFaucet } from "./hooks/useFaucet";
@@ -43,6 +44,12 @@ export default function MenuTab() {
     closeModal: onMoreModalClose,
   } = useModal();
 
+  const {
+    isOpen: isPointsModalOpen,
+    openModal: onPointsModalOpen,
+    closeModal: onPointsModalClose,
+  } = useModal();
+
   const { isFauceting, handleFaucet, amount } = useFaucet();
 
   const buttonStyle = `${menuButtonStyle} w-full h-14 text-2xl`;
@@ -66,7 +73,7 @@ export default function MenuTab() {
           disabled={isFauceting || isLoading}
         >
           Withdraw
-          <ArrowIcon rotate={90} />
+          <ArrowIcon rotate={90} className="w-6 h-6" />
         </button>
         <button
           onClick={onDepositModalOpen}
@@ -74,7 +81,7 @@ export default function MenuTab() {
           disabled={isFauceting || isLoading}
         >
           Deposit
-          <ArrowIcon />
+          <ArrowIcon className="w-6 h-6" />
         </button>
         <button
           className={buttonStyle}
@@ -82,7 +89,15 @@ export default function MenuTab() {
           disabled={isFauceting || isLoading}
         >
           Faucet
-          <FaucetIcon className="mr-1" />
+          <TbDroplet />
+        </button>
+        <button
+          className={buttonStyle}
+          onClick={onPointsModalOpen}
+          disabled={isFauceting || isLoading}
+        >
+          Points
+          <HiOutlineSparkles />
         </button>
         <button
           className={buttonStyle}
@@ -90,7 +105,7 @@ export default function MenuTab() {
           disabled={isFauceting || isLoading}
         >
           More
-          <ThreeDots className="w-8 h-8" />
+          <HiDotsHorizontal />
         </button>
       </div>
 
@@ -120,6 +135,8 @@ export default function MenuTab() {
         isFauceting={isFauceting}
         isLoading={isLoading}
       />
+
+      <PointsModal isOpen={isPointsModalOpen} onClose={onPointsModalClose} />
     </div>
   );
 }
