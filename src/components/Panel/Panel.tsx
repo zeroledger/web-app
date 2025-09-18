@@ -124,7 +124,7 @@ function PanelContent() {
                 `
                 flex-1 rounded-none
                 px-3 py-5
-                text-base md:text-lg xl:text-xl font-semibold
+                text-base md:text-lg font-semibold
                 focus:not-data-focus:outline-none hover:cursor-pointer
                 data-focus:outline data-focus:outline-white
                 transition

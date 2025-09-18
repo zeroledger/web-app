@@ -125,14 +125,14 @@ export default function WalletTab() {
       <div className="flex gap-6 mt-2">
         <button
           onClick={onModalOpen}
-          className={`${primaryButtonStyle} w-32 h-12 text-lg flex items-center justify-center rounded-xl`}
+          className={`${primaryButtonStyle} text-lg flex items-center justify-center rounded-xl`}
           disabled={isLoading}
         >
           Send
         </button>
         <button
           onClick={onReceiveModalOpen}
-          className={`${primaryButtonStyle} w-32 h-12 text-lg flex items-center justify-center rounded-xl`}
+          className={`${primaryButtonStyle} text-lg flex items-center justify-center rounded-xl`}
           disabled={isLoading}
         >
           Receive
