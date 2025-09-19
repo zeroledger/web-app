@@ -102,10 +102,11 @@ export class Tes {
   async validateViewAccount(mainAccountAddress: Address) {
     const { data } = await this.axios.get<{
       isValid: boolean;
+      registered: boolean;
     }>(
       `${this.tesUrl}/challenge/validate/?owner=${mainAccountAddress}&view=${this.viewAccount.getViewAccount()!.address}`,
     );
-    return data.isValid;
+    return data.isValid || !data.registered;
   }
 
   getTrustedEncryptionToken(mainAccountAddress: Address) {

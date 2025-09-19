@@ -18,9 +18,17 @@ export default function RegisterForm() {
     clearErrors,
   } = useForm<{ password: string }>();
 
-  const { wallet, ensProfile, isEnsLoading } = useContext(LedgerContext);
+  const { wallet, ensProfile, isEnsLoading, viewAccount } =
+    useContext(LedgerContext);
 
   const { open, isConnecting, error, setError } = useRegister();
+
+  const isLogin = viewAccount?.hasEncryptedViewAccount(
+    wallet!.address as Address,
+  );
+
+  const buttonText = isLogin ? "Open" : "Set";
+  const buttonLoading = isLogin ? "Opening" : "Setting";
 
   const onSubmit = useCallback(
     (data: { password: string }) => {
@@ -83,7 +91,9 @@ export default function RegisterForm() {
           />
         </Field>
         <Field>
-          <Label className="text-base/6 font-medium text-white">Password</Label>
+          <Label className="text-base/6 font-medium text-white">
+            {isLogin ? "Password" : "Set Password"}
+          </Label>
           <Description className="text-sm/6 text-white/50">
             Data encrypted locally with your password
           </Description>
@@ -143,7 +153,7 @@ export default function RegisterForm() {
                 />
               </svg>
             )}
-            {isConnecting ? "Opening" : "Open"}
+            {isConnecting ? buttonLoading : buttonText}
           </Button>
         </div>
       </form>

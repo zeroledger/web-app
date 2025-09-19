@@ -140,6 +140,7 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
     wallet,
     reset,
     chainSupported,
+    isConnecting,
   ]);
 
   const value = useMemo(

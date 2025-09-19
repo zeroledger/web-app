@@ -109,7 +109,9 @@ export const useRegister = () => {
       }
     };
 
-    runRegistration();
+    if (!isConnecting) {
+      runRegistration();
+    }
   }, [
     pendingPassword,
     wallet,
@@ -121,6 +123,7 @@ export const useRegister = () => {
     viewAccount,
     navigate,
     ledger,
+    isConnecting,
   ]);
 
   return { open, isConnecting, error, setError };
