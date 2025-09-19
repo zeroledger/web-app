@@ -20,7 +20,7 @@ export const FAUCET_URL: Address = import.meta.env.VITE_FAUCET_URL;
 
 export const TES_URL: Address = import.meta.env.VITE_TES_URL;
 
-export const LANDING_URL = import.meta.env.VITE_LANDING_URL;
+export const DOCS_URL = import.meta.env.VITE_DOCS_URL;
 
 export const PRIVY_APP_ID: string = import.meta.env.VITE_PRIVY_APP_ID;
 

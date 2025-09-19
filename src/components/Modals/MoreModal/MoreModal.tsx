@@ -6,7 +6,7 @@ import {
   LogoutIcon,
   BackupIcon,
 } from "@src/components/svg";
-import { LANDING_URL } from "@src/common.constants";
+import { DOCS_URL } from "@src/common.constants";
 import { useResetWalletModal } from "./useResetWalletModal";
 import { useLogout } from "./useLogout";
 import { useBackupPrivateKey } from "./useBackupPrivateKey";
@@ -61,7 +61,7 @@ export default function MoreModal({
           <div className="flex-1 flex flex-col justify-start">
             <div className="flex flex-col w-full space-y-2">
               <a
-                href={`${LANDING_URL}/#faq`}
+                href={`${DOCS_URL}/faq`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={buttonStyle}
