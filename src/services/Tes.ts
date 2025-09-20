@@ -174,7 +174,7 @@ export class Tes {
           }[];
           syncedBlock: string;
         }>(
-          `${this.tesUrl}/indexer?owner=${mainAccountAddress}&token=${token}&fromBlock=${fromBlock}&toBlock=${toBlock}`,
+          `${this.tesUrl}/sync?owner=${mainAccountAddress}&token=${token}&fromBlock=${fromBlock}&toBlock=${toBlock}`,
           {
             headers: {
               "x-custom-tes-csrf": this.csrf,
