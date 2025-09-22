@@ -10,7 +10,7 @@ import { primaryButtonStyle } from "@src/components/styles/Button.styles";
 import { formatUnits } from "viem";
 import { shortString } from "@src/utils/common";
 import { type UseFormReturn } from "react-hook-form";
-import { useContext } from "react";
+import { useCallback, useContext } from "react";
 import { useDynamicHeight } from "@src/hooks/useDynamicHeight";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
 import {
@@ -119,19 +119,21 @@ export default function DepositModal({
         ]
       : [];
 
+  const onEnterKey = useCallback(() => {
+    if (shouldShowParams) {
+      onApprove();
+    } else if (shouldShowPreview) {
+      onSign();
+    }
+  }, [shouldShowParams, shouldShowPreview, onApprove, onSign]);
+
   return (
     <BaseModal
       isOpen={isModalOpen}
       onClose={onBack}
       closeOnEscape={true}
       closeOnOverlayClick={false}
-      onEnterKey={() => {
-        if (shouldShowParams) {
-          onApprove();
-        } else if (shouldShowPreview) {
-          onSign();
-        }
-      }}
+      onEnterKey={onEnterKey}
       contentClassName="relative justify-center overflow-y-auto"
       style={style}
     >

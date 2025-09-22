@@ -49,15 +49,12 @@ export const PointsForm = ({
   return (
     <div className="w-full">
       <div className="text-center mb-6">
-        <div className="text-lg text-white mb-2">Unlock Your Points</div>
-        <div className="text-gray-300 mb-6">
-          Enter your invite code to unlock your points
-        </div>
+        <div className="text-lg text-white mb-2">Join Points Program</div>
       </div>
 
       <div className="space-y-4">
         <Field>
-          <Label className="text-sm font-medium text-white sr-only">
+          <Label className="text-base/6 font-medium text-white">
             Invite Code
           </Label>
           <Input
@@ -69,7 +66,7 @@ export const PointsForm = ({
               },
             })}
             type="text"
-            placeholder="Enter invite code"
+            placeholder="XXXXXX"
             onChange={onCodeChange}
             onKeyDown={onEnter}
             className={primaryInputStyle}
@@ -88,7 +85,7 @@ export const PointsForm = ({
         </Field>
         <MobileConfirmButton
           disabled={isSubmitting || unlocking}
-          label="Join Points Program"
+          label="Join"
         />
 
         {/* Information Section */}
@@ -101,7 +98,7 @@ export const PointsForm = ({
               className={linkButtonStyle}
             >
               <HiOutlineExternalLink className="w-4 h-4" />
-              Learn More About Points Program
+              Learn more about Zeroledger Betta Testing Points Program
             </a>
           </div>
         </div>

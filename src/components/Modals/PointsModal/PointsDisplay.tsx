@@ -155,7 +155,7 @@ export const PointsDisplay = ({ data }: PointsDisplayProps) => {
             className={linkButtonStyle}
           >
             <HiOutlineExternalLink className="w-4 h-4" />
-            Learn More About Points Program
+            Learn more about Zeroledger Betta Testing Points Program
           </a>
         </div>
       </div>
