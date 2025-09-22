@@ -30,13 +30,6 @@ export default function PointsModal({
   const style = useDynamicHeight("h-dvh");
   const { handleSubmit } = formMethods;
 
-  const onEnter = (e: React.KeyboardEvent<HTMLElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(onFormSubmit)();
-    }
-  };
-
   const {
     isModalOpen,
     isModalLoading,
@@ -57,7 +50,6 @@ export default function PointsModal({
     <BaseModal
       isOpen={isModalOpen}
       onClose={handleBack}
-      closeOnEscape={true}
       closeOnOverlayClick={false}
       contentClassName="relative justify-center overflow-y-auto"
       style={style}
@@ -86,14 +78,9 @@ export default function PointsModal({
         )}
 
         {shouldShowUnlockForm && (
-          <form
-            onSubmit={handleSubmit(onFormSubmit)}
-            onKeyDown={onEnter}
-            className="flex pt-20"
-          >
+          <form onSubmit={handleSubmit(onFormSubmit)} className="flex pt-20">
             <PointsForm
               formMethods={formMethods}
-              onEnter={onEnter}
               setState={setState}
               unlocking={!!isUnlocking}
               unlockError={errorMessage}

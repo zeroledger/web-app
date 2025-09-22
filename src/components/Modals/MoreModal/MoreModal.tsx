@@ -14,6 +14,7 @@ import { ConfirmModal } from "@src/components/Modals/ConfirmModal";
 import { useSettings } from "@src/hooks/useSettings";
 import { menuButtonStyle } from "@src/components/styles/Button.styles";
 import { BaseModal } from "../BaseModal";
+import { useDynamicHeight } from "@src/hooks/useDynamicHeight";
 
 interface MoreModalProps {
   isOpen: boolean;
@@ -53,8 +54,15 @@ export default function MoreModal({
 
   const buttonStyle = `${menuButtonStyle} w-full h-14 text-xl`;
 
+  const style = useDynamicHeight("h-dvh");
+
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose}>
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      closeOnOverlayClick={false}
+      style={style}
+    >
       <div className="flex-1 content-center py-5 px-6">
         <BackButton onClick={onClose} />
         <div className="flex flex-col h-full pt-20">

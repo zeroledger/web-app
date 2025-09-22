@@ -15,14 +15,12 @@ interface InviteCodeForm {
 interface PointsFormProps {
   formMethods: UseFormReturn<InviteCodeForm>;
   setState: React.Dispatch<React.SetStateAction<PointsModalState>>;
-  onEnter: (e: React.KeyboardEvent<HTMLElement>) => void;
   unlocking: boolean;
   unlockError?: string;
 }
 
 export const PointsForm = ({
   formMethods,
-  onEnter,
   setState,
   unlocking,
   unlockError,
@@ -68,7 +66,6 @@ export const PointsForm = ({
             type="text"
             placeholder="XXXXXX"
             onChange={onCodeChange}
-            onKeyDown={onEnter}
             className={primaryInputStyle}
           />
           <div

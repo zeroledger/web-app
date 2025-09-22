@@ -38,13 +38,6 @@ export default function RegisterForm() {
     [open],
   );
 
-  const onEnter = (e: React.KeyboardEvent<HTMLElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(onSubmit)();
-    }
-  };
-
   const onPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue("password", e.target.value);
     clearErrors("password");
@@ -77,11 +70,7 @@ export default function RegisterForm() {
           </>
         )}
       </div>
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        onKeyDown={onEnter}
-        className="mt-5"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-5">
         <Field className="flex items-center gap-4">
           <Input
             hidden
@@ -113,7 +102,6 @@ export default function RegisterForm() {
             })}
             disabled={disabled}
             onChange={onPasswordChange}
-            onKeyDown={onEnter}
             autoComplete="new-password"
           />
         </Field>

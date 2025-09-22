@@ -23,9 +23,7 @@ export default function ConfirmModal({
     <BaseModal
       isOpen={isOpen}
       onClose={onCancel}
-      closeOnEscape={true}
       closeOnOverlayClick={false}
-      onEnterKey={onConfirm}
       contentClassName="px-6"
     >
       <div className="flex-1 content-center py-5">

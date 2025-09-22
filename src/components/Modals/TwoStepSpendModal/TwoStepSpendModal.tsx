@@ -51,13 +51,6 @@ function TwoStepSpendModal({
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const style = useDynamicHeight("h-dvh");
 
-  const onEnter = (e: React.KeyboardEvent<HTMLElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(onFormSubmit)();
-    }
-  };
-
   const [withdrawAll, setWithdrawAll] = useState<boolean>(false);
 
   const {
@@ -109,7 +102,6 @@ function TwoStepSpendModal({
     <BaseModal
       isOpen={isModalOpen}
       onClose={onBack}
-      closeOnEscape={true}
       closeOnOverlayClick={false}
       contentClassName="relative justify-center overflow-y-auto"
       style={style}
@@ -139,7 +131,6 @@ function TwoStepSpendModal({
           <form onSubmit={handleSubmit(onFormSubmit)} className="flex pt-20">
             <SpendForm
               formMethods={formMethods}
-              onEnter={onEnter}
               type={type}
               setState={setState}
               withdrawAll={withdrawAll}

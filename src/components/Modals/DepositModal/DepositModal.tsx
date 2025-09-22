@@ -42,20 +42,6 @@ export default function DepositModal({
   const { decimals } = useContext(PanelContext);
   const style = useDynamicHeight("h-dvh");
 
-  const onFormEnter = (e: React.KeyboardEvent<HTMLElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(onFormSubmit)();
-    }
-  };
-
-  const onApproveEnter = (e: React.KeyboardEvent<HTMLElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      onApprove();
-    }
-  };
-
   const {
     depositParams,
     transactionDetails,
@@ -130,7 +116,6 @@ export default function DepositModal({
     <BaseModal
       isOpen={isModalOpen}
       onClose={onBack}
-      closeOnEscape={true}
       closeOnOverlayClick={false}
       contentClassName="relative justify-center overflow-y-auto"
       style={style}
@@ -155,11 +140,7 @@ export default function DepositModal({
           <BackButton onClick={onBack} />
         )}
         {shouldShowForm && (
-          <form
-            onSubmit={handleSubmit(onFormSubmit)}
-            onKeyDown={onFormEnter}
-            className="flex pt-20"
-          >
+          <form onSubmit={handleSubmit(onFormSubmit)} className="flex pt-20">
             <DepositForm
               formMethods={formMethods}
               setState={setState}
@@ -210,7 +191,6 @@ export default function DepositModal({
               <Button
                 className={clsx(primaryButtonStyle, "w-full")}
                 onClick={onApprove}
-                onKeyDown={onApproveEnter}
               >
                 Approve Deposit
               </Button>

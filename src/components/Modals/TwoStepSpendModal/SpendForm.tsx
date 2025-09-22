@@ -28,7 +28,6 @@ interface SpendFormData {
 
 interface SpendFormProps {
   formMethods: UseFormReturn<SpendFormData>;
-  onEnter: (e: React.KeyboardEvent<HTMLElement>) => void;
   type: "Payment" | "Withdraw";
   setState: React.Dispatch<
     React.SetStateAction<SpendModalState | WithdrawModalState>
@@ -40,7 +39,6 @@ interface SpendFormProps {
 
 export const SpendForm = ({
   formMethods,
-  onEnter,
   type,
   setState,
   withdrawAll,
@@ -152,7 +150,6 @@ export const SpendForm = ({
               setValue("recipient", e.target.value);
               clearErrors("recipient");
             }}
-            onKeyDown={onEnter}
           />
           <button
             type="button"
@@ -204,7 +201,6 @@ export const SpendForm = ({
             );
             clearErrors("amount");
           }}
-          onKeyDown={onEnter}
         />
         <div className="mt-1 text-sm text-white/80 flex items-center gap-2 justify-end min-h-5">
           {isFeesLoading && (
