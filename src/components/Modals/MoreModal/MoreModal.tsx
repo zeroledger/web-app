@@ -15,6 +15,7 @@ import { useSettings } from "@src/hooks/useSettings";
 import { menuButtonStyle } from "@src/components/styles/Button.styles";
 import { BaseModal } from "../BaseModal";
 import { useDynamicHeight } from "@src/hooks/useDynamicHeight";
+import debounce from "debounce";
 
 interface MoreModalProps {
   isOpen: boolean;
@@ -40,17 +41,17 @@ export default function MoreModal({
   const { handleLogout } = useLogout();
   const { settings, updateSettings } = useSettings();
 
-  const handlePreviewToggle = () => {
+  const handlePreviewToggle = debounce(() => {
     updateSettings({
       showTransactionPreview: !settings.showTransactionPreview,
     });
-  };
+  }, 50);
 
-  const handleHideDecoyToggle = () => {
+  const handleHideDecoyToggle = debounce(() => {
     updateSettings({
       hideDecoyTransactions: !settings.hideDecoyTransactions,
     });
-  };
+  }, 50);
 
   const buttonStyle = `${menuButtonStyle} w-full h-14 text-xl`;
 

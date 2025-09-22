@@ -1,4 +1,4 @@
-import { useContext, useMemo, useCallback } from "react";
+import { useContext } from "react";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { delay } from "@src/utils/common";
 import {
@@ -7,6 +7,7 @@ import {
 } from "@src/hooks/useMultiStepModal";
 import { type Address } from "viem";
 import { type Tes } from "@src/services/Tes";
+import debounce from "debounce";
 
 export interface InviteCodeForm {
   inviteCode: string;
@@ -41,7 +42,7 @@ export const usePointsModal = () => {
     },
   });
 
-  const onModalOpenWithLoadPoints = useCallback(() => {
+  const onModalOpenWithLoadPoints = debounce(() => {
     onModalOpen();
     setPromise(async () => {
       try {
@@ -80,9 +81,9 @@ export const usePointsModal = () => {
         }));
       }
     });
-  }, [onModalOpen, setPromise, setState, handleBack, ledger, wallet]);
+  }, 50);
 
-  const handleFormSubmit = useCallback(
+  const handleFormSubmit = debounce(
     (data: InviteCodeForm) =>
       setPromise(async () => {
         await promise;
@@ -134,25 +135,15 @@ export const usePointsModal = () => {
           }));
         }
       }),
-    [ledger, wallet, promise, setPromise, setState, handleBack],
+    50,
   );
 
-  return useMemo(
-    () => ({
-      form,
-      onModalOpen: onModalOpenWithLoadPoints,
-      handleFormSubmit,
-      handleBack,
-      state,
-      setState,
-    }),
-    [
-      form,
-      onModalOpenWithLoadPoints,
-      handleFormSubmit,
-      handleBack,
-      state,
-      setState,
-    ],
-  );
+  return {
+    form,
+    onModalOpen: onModalOpenWithLoadPoints,
+    handleFormSubmit,
+    handleBack,
+    state,
+    setState,
+  };
 };

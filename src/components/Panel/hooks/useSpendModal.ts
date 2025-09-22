@@ -1,4 +1,4 @@
-import { useContext, useMemo, useCallback } from "react";
+import { useContext } from "react";
 import { Address, parseUnits } from "viem";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { delay } from "@src/utils/common";
@@ -14,6 +14,7 @@ import {
   useMultiStepModal,
   type MultiStepModalState,
 } from "@src/hooks/useMultiStepModal";
+import debounce from "debounce";
 
 interface SpendFormData {
   recipient: string;
@@ -56,7 +57,7 @@ export const useTwoStepSpendModal = (
     },
   });
 
-  const onConsolidationOpen = useCallback(() => {
+  const onConsolidationOpen = debounce(() => {
     setPromise(
       promise.then(async () => {
         try {
@@ -116,19 +117,9 @@ export const useTwoStepSpendModal = (
         }
       }),
     );
-  }, [
-    promise,
-    ledger,
-    skipSecondStep,
-    ownerAddress,
-    balanceForConsolidation,
-    handleBack,
-    decimals,
-    setState,
-    setPromise,
-  ]);
+  }, 50);
 
-  const handleFormSubmit = useCallback(
+  const handleFormSubmit = debounce(
     (data: SpendFormData) =>
       setPromise(async () => {
         await promise;
@@ -188,19 +179,10 @@ export const useTwoStepSpendModal = (
           handleBack();
         }
       }),
-    [
-      ledger,
-      skipSecondStep,
-      decimals,
-      handleBack,
-      promise,
-      state,
-      setPromise,
-      setState,
-    ],
+    50,
   );
 
-  const handleSign = useCallback(
+  const handleSign = debounce(
     () =>
       setPromise(async () => {
         await promise;
@@ -237,29 +219,17 @@ export const useTwoStepSpendModal = (
           handleBack();
         }
       }),
-    [ledger, handleBack, promise, state, setPromise, setState],
+    50,
   );
 
-  return useMemo(
-    () => ({
-      state,
-      setState,
-      form,
-      onModalOpen,
-      handleFormSubmit,
-      handleSign,
-      handleBack,
-      onConsolidationOpen,
-    }),
-    [
-      state,
-      setState,
-      form,
-      onModalOpen,
-      handleFormSubmit,
-      handleSign,
-      handleBack,
-      onConsolidationOpen,
-    ],
-  );
+  return {
+    state,
+    setState,
+    form,
+    onModalOpen,
+    handleFormSubmit,
+    handleSign,
+    handleBack,
+    onConsolidationOpen,
+  };
 };

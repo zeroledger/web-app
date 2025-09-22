@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { SigningData } from "@src/components/SigningPreview/SigningPreview";
 import { shortString } from "@src/utils/common";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
+import debounce from "debounce";
 
 export const useViewAccountAuthorization = () => {
   const [isSigning, setIsSigning] = useState(false);
@@ -38,7 +39,7 @@ export const useViewAccountAuthorization = () => {
     [viewAccount, wallets],
   );
 
-  const handleSign = async () => {
+  const handleSign = debounce(async () => {
     try {
       setIsSigning(true);
       await viewAccount?.authorize(evmClients!, password!);
@@ -51,7 +52,7 @@ export const useViewAccountAuthorization = () => {
       setError(error as Error);
       setIsSigning(false);
     }
-  };
+  }, 50);
 
   useEffect(() => {
     if (isWalletAddressChanged) {

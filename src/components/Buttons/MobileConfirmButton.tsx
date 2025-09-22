@@ -7,6 +7,7 @@ interface MobileConfirmButtonProps {
   onClick?: () => void;
   type?: "submit" | "button";
   className?: string;
+  autoFocus?: boolean;
 }
 
 export const MobileConfirmButton = ({
@@ -14,6 +15,7 @@ export const MobileConfirmButton = ({
   label = "Confirm Payment",
   onClick,
   type = "submit",
+  autoFocus,
   className,
 }: MobileConfirmButtonProps) => (
   <Button
@@ -24,6 +26,7 @@ export const MobileConfirmButton = ({
     )}
     disabled={disabled}
     onClick={onClick}
+    autoFocus={autoFocus}
   >
     {label}
   </Button>

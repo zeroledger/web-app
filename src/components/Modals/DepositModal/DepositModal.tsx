@@ -1,12 +1,9 @@
-import clsx from "clsx";
 import { Loader } from "@src/components/Loader";
 import { BackButton } from "@src/components/Buttons/BackButton";
 import { SuccessMessage } from "@src/components/Modals/SuccessMessage";
 import { ErrorMessage } from "@src/components/Modals/ErrorMessage";
 import { DepositForm } from "./DepositForm";
 import { SigningPreview } from "@src/components/SigningPreview";
-import { Button } from "@headlessui/react";
-import { primaryButtonStyle } from "@src/components/styles/Button.styles";
 import { formatUnits } from "viem";
 import { shortString } from "@src/utils/common";
 import { type UseFormReturn } from "react-hook-form";
@@ -18,6 +15,7 @@ import {
   type DepositModalState,
 } from "@src/components/Panel/hooks/useDepositModal";
 import { BaseModal } from "@src/components/Modals/BaseModal";
+import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
 
 interface DepositModalProps {
   onFormSubmit: (data: DepositFormData) => void;
@@ -149,7 +147,13 @@ export default function DepositModal({
           </form>
         )}
         {shouldShowParams && (
-          <div className="flex flex-col pt-20">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              onApprove();
+            }}
+            className="flex flex-col pt-20"
+          >
             <div className="text-center mb-6">
               <h1 className="text-2xl font-bold text-white mb-2">
                 Review Deposit
@@ -187,15 +191,12 @@ export default function DepositModal({
               </div>
             </div>
 
-            <div className="flex justify-center">
-              <Button
-                className={clsx(primaryButtonStyle, "w-full")}
-                onClick={onApprove}
-              >
-                Approve Deposit
-              </Button>
-            </div>
-          </div>
+            <MobileConfirmButton
+              disabled={isModalLoading}
+              label="Approve Deposit"
+              autoFocus
+            />
+          </form>
         )}
         {shouldShowPreview && (
           <div className="flex flex-col pt-12 pb-1">

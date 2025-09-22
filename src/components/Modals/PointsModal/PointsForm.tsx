@@ -86,7 +86,7 @@ export const PointsForm = ({
         />
 
         {/* Information Section */}
-        <div className="mt-6 p-4 bg-gray-800/50 rounded-lg border border-gray-600/30">
+        <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-600/30">
           <div className="flex items-start space-x-3">
             <a
               href="https://docs.zeroledger.wtf/overview/betta-testing-points"
