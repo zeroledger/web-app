@@ -26,7 +26,6 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      closeOnEscape={true}
       closeOnOverlayClick={true}
       contentClassName="relative justify-center overflow-y-auto"
       style={style}
