@@ -7,6 +7,7 @@ import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
 import { DepositModalState } from "@src/components/Panel/hooks/useDepositModal";
 import { primaryInputStyle } from "@src/components/styles/Input.styles";
+import clsx from "clsx";
 
 interface DepositFormData {
   amount: string;
@@ -64,7 +65,6 @@ export const DepositForm = ({
         <Input
           type="number"
           step="0.01"
-          min="0"
           className={primaryInputStyle}
           {...register("amount", {
             required: "Amount is required",
@@ -89,11 +89,19 @@ export const DepositForm = ({
             </div>
           )}
         </div>
-        <div className="h-6 mt-1 text-base text-red-400">
+        <div
+          className={clsx(
+            "text-base/6 text-red-400 transition-all duration-200 ease-in-out",
+            {
+              "opacity-0 h-0": !errors.amount,
+              "opacity-100 h-6": errors.amount,
+            },
+          )}
+        >
           {errors.amount && <p>{errors.amount.message}</p>}
         </div>
       </Field>
-      <div className="py-4">
+      <div className="py-2">
         <MobileConfirmButton
           disabled={isSubmitting || isLoading}
           label="Confirm Deposit"

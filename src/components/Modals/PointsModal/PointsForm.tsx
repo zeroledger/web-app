@@ -3,6 +3,7 @@ import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton
 import { PointsModalState } from "@src/components/Panel/hooks/usePointsModal";
 import { linkButtonStyle } from "@src/components/styles/Button.styles";
 import { primaryInputStyle } from "@src/components/styles/Input.styles";
+import clsx from "clsx";
 import { useCallback } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { HiOutlineExternalLink } from "react-icons/hi";
@@ -73,7 +74,15 @@ export const PointsForm = ({
             onKeyDown={onEnter}
             className={primaryInputStyle}
           />
-          <div className="h-6 mt-1 text-base text-red-400">
+          <div
+            className={clsx(
+              "text-base/6 text-red-400 transition-all duration-200 ease-in-out",
+              {
+                "opacity-0 h-0": !error,
+                "opacity-100 h-6": error,
+              },
+            )}
+          >
             {error && <p>{error}</p>}
           </div>
         </Field>

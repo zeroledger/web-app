@@ -17,6 +17,7 @@ import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { QRScannerModal } from "./QRScannerModal";
 import { CameraIcon } from "@src/components/svg";
 import { primaryInputStyle } from "@src/components/styles/Input.styles";
+import clsx from "clsx";
 
 const amountRegex = /^\d*\.?\d*$/;
 
@@ -129,7 +130,7 @@ export const SpendForm = ({
         <Label className="text-base/6 font-medium text-white">
           Recipient address
         </Label>
-        <div className="relative">
+        <div className="relative mb-2">
           <Input
             className={primaryInputStyle}
             {...register("recipient", {
@@ -162,7 +163,15 @@ export const SpendForm = ({
             <CameraIcon />
           </button>
         </div>
-        <div className="h-6 mt-1 text-base text-red-400">
+        <div
+          className={clsx(
+            "text-base/6 text-red-400 transition-all duration-200 ease-in-out",
+            {
+              "opacity-0 h-0": !errors.recipient,
+              "opacity-100 h-6": errors.recipient,
+            },
+          )}
+        >
           {errors.recipient && <p>{errors.recipient.message}</p>}
         </div>
       </Field>
@@ -212,11 +221,19 @@ export const SpendForm = ({
             </div>
           )}
         </div>
-        <div className="h-6 mt-1 text-base text-red-400">
+        <div
+          className={clsx(
+            "text-base/6 mt-1 text-red-400 transition-all duration-200 ease-in-out",
+            {
+              "opacity-0 h-0": !errors.amount,
+              "opacity-100 h-6": errors.amount,
+            },
+          )}
+        >
           {errors.amount && <p>{errors.amount.message}</p>}
         </div>
       </Field>
-      <div className="py-4">
+      <div className="py-2">
         <MobileConfirmButton
           disabled={isSubmitting || isFeesLoading}
           label={`Review ${type}`}
