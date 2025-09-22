@@ -136,11 +136,7 @@ function TwoStepSpendModal({
           <BackButton onClick={onBack} />
         )}
         {shouldShowForm && (
-          <form
-            onSubmit={handleSubmit(onFormSubmit)}
-            onKeyDown={onEnter}
-            className="flex pt-20"
-          >
+          <form onSubmit={handleSubmit(onFormSubmit)} className="flex pt-20">
             <SpendForm
               formMethods={formMethods}
               onEnter={onEnter}

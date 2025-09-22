@@ -38,6 +38,13 @@ export default function SigningPreview({
   warningText,
   extraContent,
 }: SigningPreviewProps) {
+  const onSignEnter = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      onSign();
+    }
+  };
+
   return (
     <div className="mx-auto w-full transition-all duration-500 ease-in-out">
       {/* Header */}
@@ -118,6 +125,7 @@ export default function SigningPreview({
           )}
           disabled={isSigning || isSuccess}
           onClick={onSign}
+          onKeyDown={onSignEnter}
         >
           {isSigning ? (
             <div className="flex items-center space-x-2 animate-fade-in">
