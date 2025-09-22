@@ -1,5 +1,4 @@
 import { Field, Label, Input } from "@headlessui/react";
-import clsx from "clsx";
 import { UseFormReturn } from "react-hook-form";
 import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
 import { useDepositFees } from "@src/components/Panel/hooks/useFees";
@@ -7,6 +6,7 @@ import { useContext, useEffect } from "react";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
 import { DepositModalState } from "@src/components/Panel/hooks/useDepositModal";
+import { primaryInputStyle } from "@src/components/styles/Input.styles";
 
 interface DepositFormData {
   amount: string;
@@ -65,11 +65,7 @@ export const DepositForm = ({
           type="number"
           step="0.01"
           min="0"
-          className={clsx(
-            "mt-1 block w-full rounded-lg border-none bg-white/5 py-2.5 px-3 text-base text-white leading-7",
-            "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25",
-            errors.amount && "border-red-400",
-          )}
+          className={primaryInputStyle}
           {...register("amount", {
             required: "Amount is required",
             min: {

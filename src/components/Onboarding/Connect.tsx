@@ -1,5 +1,6 @@
 import { usePrivy } from "@privy-io/react-auth";
-import { Button, primaryButtonStyle } from "@src/components/Button";
+import { Button } from "@headlessui/react";
+import { primaryButtonStyle } from "@src/components/styles/Button.styles";
 import WelcomeBanner from "./WelcomeBanner";
 import { useCallback } from "react";
 

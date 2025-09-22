@@ -2,12 +2,13 @@ import { useCallback, useContext } from "react";
 import { useForm } from "react-hook-form";
 import { Description, Field, Label, Input, Button } from "@headlessui/react";
 import clsx from "clsx";
-import { primaryButtonStyle } from "@src/components/Button";
+import { primaryButtonStyle } from "@src/components/styles/Button.styles";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { Avatar } from "../EnsProfile/Avatar";
 import { Name } from "../EnsProfile/Name";
 import { Address } from "viem";
 import { useRegister } from "./useRegister";
+import { primaryInputStyle } from "../styles/Input.styles";
 
 export default function RegisterForm() {
   const {
@@ -100,10 +101,8 @@ export default function RegisterForm() {
           <Input
             type="password"
             className={clsx(
-              "mt-1 min-w-84 block rounded-lg border-none bg-white/5 py-2.5 px-3 text-white",
-              "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25",
-              "text-lg tracking-wider leading-none",
-              errors.password && "border-red-400",
+              primaryInputStyle,
+              "min-w-84 text-lg tracking-wider leading-none",
             )}
             {...register("password", {
               required: "Password is required",

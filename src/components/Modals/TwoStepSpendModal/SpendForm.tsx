@@ -1,5 +1,4 @@
 import { Field, Label, Input } from "@headlessui/react";
-import clsx from "clsx";
 import { UseFormReturn } from "react-hook-form";
 import { useContext, useEffect, useState } from "react";
 import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
@@ -17,6 +16,7 @@ import {
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { QRScannerModal } from "./QRScannerModal";
 import { CameraIcon } from "@src/components/svg";
+import { primaryInputStyle } from "@src/components/styles/Input.styles";
 
 const amountRegex = /^\d*\.?\d*$/;
 
@@ -131,11 +131,7 @@ export const SpendForm = ({
         </Label>
         <div className="relative">
           <Input
-            className={clsx(
-              "mt-1 block w-full rounded-lg border-none bg-white/5 py-2.5 px-3 pr-12 text-base text-white leading-7",
-              "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25",
-              errors.recipient && "border-red-400",
-            )}
+            className={primaryInputStyle}
             {...register("recipient", {
               required: "Recipient address is required",
               validate: async (value) => {
@@ -176,11 +172,7 @@ export const SpendForm = ({
         </Label>
         <Input
           type="string"
-          className={clsx(
-            "mt-1 block w-full rounded-lg border-none bg-white/5 py-2.5 px-3 text-base text-white leading-7",
-            "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25",
-            errors.amount && "border-red-400",
-          )}
+          className={primaryInputStyle}
           {...register("amount", {
             required: "Amount is required",
             pattern: {

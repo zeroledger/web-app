@@ -274,27 +274,42 @@ export class Tes {
   async unlockPoints(inviteCode: string, mainAccountAddress: Address) {
     return backOff(async () => {
       await this.manageAuth(mainAccountAddress);
-      await this.axios.post(`${this.tesUrl}/points/unlock`, {
-        code: inviteCode,
-        wallet: mainAccountAddress,
-      });
+      const { data } = await this.axios.post<
+        | {
+            unlocked: boolean;
+            reason: string;
+          }
+        | {
+            unlocked: boolean;
+            reason?: undefined;
+          }
+      >(
+        `${this.tesUrl}/points/unlock`,
+        {
+          code: inviteCode,
+          wallet: mainAccountAddress,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "x-custom-tes-csrf": this.csrf,
+          },
+          withCredentials: true,
+        },
+      );
+      return data;
     }, backoffOptions);
   }
 
-  async getPoints(mainAccountAddress: Address) {
-    return backOff(async () => {
-      const { data } = await this.axios
-        .get<{
-          points: number;
-        }>(`${this.tesUrl}/points/${mainAccountAddress}`)
-        .catch((error) => {
-          if (error.response.status === 404) {
-            return { data: { points: 0 } };
-          }
-          throw error;
-        });
-      return data.points;
-    }, backoffOptions);
+  async getPointsData(mainAccountAddress: Address) {
+    const { data } = await this.axios.get<{
+      points: number;
+      firstDepositPointsClaimed: boolean;
+      firstWithdrawalPointsClaimed: boolean;
+      dailyPointsEarned: number;
+      lastDailyReset: Date;
+    }>(`${this.tesUrl}/points/${mainAccountAddress}`);
+    return data;
   }
 
   reset() {

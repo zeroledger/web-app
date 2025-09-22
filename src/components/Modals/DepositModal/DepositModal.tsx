@@ -5,20 +5,19 @@ import { SuccessMessage } from "@src/components/Modals/SuccessMessage";
 import { ErrorMessage } from "@src/components/Modals/ErrorMessage";
 import { DepositForm } from "./DepositForm";
 import { SigningPreview } from "@src/components/SigningPreview";
-import { Button } from "@src/components/Button";
-import { primaryButtonStyle } from "@src/components/Button";
+import { Button } from "@headlessui/react";
+import { primaryButtonStyle } from "@src/components/styles/Button.styles";
 import { formatUnits } from "viem";
 import { shortString } from "@src/utils/common";
-import { UseFormReturn } from "react-hook-form";
+import { type UseFormReturn } from "react-hook-form";
 import { useContext } from "react";
 import { useDynamicHeight } from "@src/hooks/useDynamicHeight";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
-import { type DepositModalState } from "@src/components/Panel/hooks/useDepositModal";
+import {
+  type DepositFormData,
+  type DepositModalState,
+} from "@src/components/Panel/hooks/useDepositModal";
 import { BaseModal } from "@src/components/Modals/BaseModal";
-
-interface DepositFormData {
-  amount: string;
-}
 
 interface DepositModalProps {
   onFormSubmit: (data: DepositFormData) => void;

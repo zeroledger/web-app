@@ -1,6 +1,6 @@
 import { DepositModal } from "@src/components/Modals/DepositModal";
 import { MoreModal } from "@src/components/Modals/MoreModal";
-import { PointsModal } from "@src/components/Modals/PointsModal";
+import PointsModal from "@src/components/Modals/PointsModal";
 import { HiOutlineSparkles, HiDotsHorizontal } from "react-icons/hi";
 import { ArrowIcon } from "@src/components/svg";
 import { TbDroplet } from "react-icons/tb";
@@ -11,9 +11,10 @@ import { useContext } from "react";
 import { TwoStepSpendModal } from "@src/components/Modals/TwoStepSpendModal";
 import { useTwoStepWithdrawModal } from "./hooks/useWithdrawModal";
 import { useMultiStepDepositModal } from "./hooks/useDepositModal";
+import { usePointsModal } from "./hooks/usePointsModal";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
 import { useModal } from "@src/hooks/useModal";
-import { menuButtonStyle } from "@src/components/Button";
+import { menuButtonStyle } from "@src/components/styles/Button.styles";
 
 export default function MenuTab() {
   const { decimals, isLoading } = useContext(PanelContext);
@@ -45,10 +46,13 @@ export default function MenuTab() {
   } = useModal();
 
   const {
-    isOpen: isPointsModalOpen,
-    openModal: onPointsModalOpen,
-    closeModal: onPointsModalClose,
-  } = useModal();
+    state: pointsState,
+    setState: setPointsState,
+    form: pointsForm,
+    onModalOpen: onPointsModalOpen,
+    handleFormSubmit: handlePointsFormSubmit,
+    handleBack: handlePointsBack,
+  } = usePointsModal();
 
   const { isFauceting, handleFaucet, amount } = useFaucet();
 
@@ -94,7 +98,7 @@ export default function MenuTab() {
         <button
           className={buttonStyle}
           onClick={onPointsModalOpen}
-          disabled={true}
+          disabled={isFauceting || isLoading}
         >
           Points
           <HiOutlineSparkles />
@@ -136,7 +140,13 @@ export default function MenuTab() {
         isLoading={isLoading}
       />
 
-      <PointsModal isOpen={isPointsModalOpen} onClose={onPointsModalClose} />
+      <PointsModal
+        state={pointsState}
+        setState={setPointsState}
+        formMethods={pointsForm}
+        onFormSubmit={handlePointsFormSubmit}
+        handleBack={handlePointsBack}
+      />
     </div>
   );
 }

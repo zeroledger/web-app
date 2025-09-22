@@ -13,7 +13,7 @@ import {
   type MultiStepModalState,
 } from "@src/hooks/useMultiStepModal";
 
-interface DepositFormData {
+export interface DepositFormData {
   amount: string;
 }
 

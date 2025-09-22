@@ -1,8 +1,8 @@
 import clsx from "clsx";
-import { Button } from "@src/components/Button";
-import { primaryButtonStyle } from "@src/components/Button";
+import { primaryButtonStyle } from "@src/components/styles/Button.styles";
 import { WalletIcon } from "@src/components/svg";
 import { ReactNode } from "react";
+import { Button } from "@headlessui/react";
 
 export interface SigningData {
   label: string;

@@ -1,11 +1,13 @@
 interface BackButtonProps {
   onClick: () => void;
+  disabled?: boolean;
 }
 
-export const BackButton = ({ onClick }: BackButtonProps) => (
+export const BackButton = ({ onClick, disabled }: BackButtonProps) => (
   <button
     onClick={onClick}
     className="py-2 text-white/60 hover:text-white transition-colors hover:cursor-pointer"
+    disabled={disabled}
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"

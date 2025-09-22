@@ -12,7 +12,7 @@ import { useLogout } from "./useLogout";
 import { useBackupPrivateKey } from "./useBackupPrivateKey";
 import { ConfirmModal } from "@src/components/Modals/ConfirmModal";
 import { useSettings } from "@src/hooks/useSettings";
-import { menuButtonStyle } from "@src/components/Button";
+import { menuButtonStyle } from "@src/components/styles/Button.styles";
 import { BaseModal } from "../BaseModal";
 
 interface MoreModalProps {
