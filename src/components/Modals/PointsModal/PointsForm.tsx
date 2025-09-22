@@ -1,9 +1,11 @@
 import { Field, Label, Input } from "@headlessui/react";
 import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
 import { PointsModalState } from "@src/components/Panel/hooks/usePointsModal";
+import { linkButtonStyle } from "@src/components/styles/Button.styles";
 import { primaryInputStyle } from "@src/components/styles/Input.styles";
 import { useCallback } from "react";
 import { UseFormReturn } from "react-hook-form";
+import { HiOutlineExternalLink } from "react-icons/hi";
 
 interface InviteCodeForm {
   inviteCode: string;
@@ -79,6 +81,21 @@ export const PointsForm = ({
           disabled={isSubmitting || unlocking}
           label="Join Points Program"
         />
+
+        {/* Information Section */}
+        <div className="mt-6 p-4 bg-gray-800/50 rounded-lg border border-gray-600/30">
+          <div className="flex items-start space-x-3">
+            <a
+              href="https://docs.zeroledger.wtf/overview/betta-testing-points"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={linkButtonStyle}
+            >
+              <HiOutlineExternalLink className="w-4 h-4" />
+              Learn More About Points Program
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );

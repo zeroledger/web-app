@@ -3,7 +3,9 @@ import {
   HiOutlineSparkles,
   HiOutlineClock,
   HiOutlineGift,
+  HiOutlineExternalLink,
 } from "react-icons/hi";
+import { linkButtonStyle } from "@src/components/styles/Button.styles";
 
 interface PointsDisplayProps {
   data: NonNullable<PointsModalState["points"]>;
@@ -48,7 +50,8 @@ export const PointsDisplay = ({ data }: PointsDisplayProps) => {
   const getAvailableBonuses = () => {
     const bonuses = [];
     if (!firstDepositPointsClaimed) bonuses.push("First Deposit Bonus");
-    if (!firstWithdrawalPointsClaimed) bonuses.push("First Withdrawal Bonus");
+    if (!firstWithdrawalPointsClaimed)
+      bonuses.push("First Full Withdrawal Bonus");
     return bonuses;
   };
 
@@ -113,7 +116,7 @@ export const PointsDisplay = ({ data }: PointsDisplayProps) => {
             <div className="text-gray-300 text-sm space-y-1">
               {firstDepositPointsClaimed && <div>• First Deposit Bonus ✓</div>}
               {firstWithdrawalPointsClaimed && (
-                <div>• First Withdrawal Bonus ✓</div>
+                <div>• First Full Withdrawal Bonus ✓</div>
               )}
             </div>
           </div>
@@ -142,6 +145,19 @@ export const PointsDisplay = ({ data }: PointsDisplayProps) => {
             </div>
           </div>
         )}
+
+        {/* Read More Section */}
+        <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-lg p-4 border border-blue-500/20">
+          <a
+            href="https://docs.zeroledger.wtf/overview/betta-testing-points"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={linkButtonStyle}
+          >
+            <HiOutlineExternalLink className="w-4 h-4" />
+            Learn More About Points Program
+          </a>
+        </div>
       </div>
     </div>
   );
