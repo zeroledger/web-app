@@ -1,8 +1,8 @@
 import clsx from "clsx";
-import { Button } from "@src/components/Button";
-import { primaryButtonStyle } from "@src/components/Button";
+import { primaryButtonStyle } from "@src/components/styles/Button.styles";
 import { WalletIcon } from "@src/components/svg";
 import { ReactNode } from "react";
+import { Button } from "@headlessui/react";
 
 export interface SigningData {
   label: string;
@@ -39,7 +39,13 @@ export default function SigningPreview({
   extraContent,
 }: SigningPreviewProps) {
   return (
-    <div className="mx-auto w-full transition-all duration-500 ease-in-out">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSign();
+      }}
+      className="mx-auto w-full transition-all duration-500 ease-in-out"
+    >
       {/* Header */}
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold text-white mb-2">{title}</h1>
@@ -117,7 +123,8 @@ export default function SigningPreview({
             (isSigning || isSuccess) && "opacity-50 cursor-not-allowed",
           )}
           disabled={isSigning || isSuccess}
-          onClick={onSign}
+          type="submit"
+          autoFocus
         >
           {isSigning ? (
             <div className="flex items-center space-x-2 animate-fade-in">
@@ -138,6 +145,6 @@ export default function SigningPreview({
           <p className="text-gray-500 text-xs">{warningText}</p>
         </div>
       )}
-    </div>
+    </form>
   );
 }

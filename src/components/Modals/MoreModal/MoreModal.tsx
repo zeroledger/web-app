@@ -12,8 +12,10 @@ import { useLogout } from "./useLogout";
 import { useBackupPrivateKey } from "./useBackupPrivateKey";
 import { ConfirmModal } from "@src/components/Modals/ConfirmModal";
 import { useSettings } from "@src/hooks/useSettings";
-import { menuButtonStyle } from "@src/components/Button";
+import { menuButtonStyle } from "@src/components/styles/Button.styles";
 import { BaseModal } from "../BaseModal";
+import { useDynamicHeight } from "@src/hooks/useDynamicHeight";
+import debounce from "debounce";
 
 interface MoreModalProps {
   isOpen: boolean;
@@ -39,22 +41,29 @@ export default function MoreModal({
   const { handleLogout } = useLogout();
   const { settings, updateSettings } = useSettings();
 
-  const handlePreviewToggle = () => {
+  const handlePreviewToggle = debounce(() => {
     updateSettings({
       showTransactionPreview: !settings.showTransactionPreview,
     });
-  };
+  }, 50);
 
-  const handleHideDecoyToggle = () => {
+  const handleHideDecoyToggle = debounce(() => {
     updateSettings({
       hideDecoyTransactions: !settings.hideDecoyTransactions,
     });
-  };
+  }, 50);
 
   const buttonStyle = `${menuButtonStyle} w-full h-14 text-xl`;
 
+  const style = useDynamicHeight("h-dvh");
+
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose}>
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      closeOnOverlayClick={false}
+      style={style}
+    >
       <div className="flex-1 content-center py-5 px-6">
         <BackButton onClick={onClose} />
         <div className="flex flex-col h-full pt-20">

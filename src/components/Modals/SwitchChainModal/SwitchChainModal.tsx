@@ -3,12 +3,13 @@ import { useContext } from "react";
 import { catchService } from "@src/services/core/catch.service";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { BaseModal } from "@src/components/Modals/BaseModal";
+import debounce from "debounce";
 
 export default function SwitchChainModal() {
   const { isSwitchChainModalOpen, targetChain, evmClients } =
     useContext(LedgerContext);
 
-  const handleSwitchChain = async () => {
+  const handleSwitchChain = debounce(async () => {
     try {
       const externalClient = await evmClients?.externalClient();
       await externalClient?.switchChain({
@@ -17,9 +18,9 @@ export default function SwitchChainModal() {
     } catch (error) {
       catchService.catch(error as Error);
     }
-  };
+  }, 50);
 
-  const handleAddChain = async () => {
+  const handleAddChain = debounce(async () => {
     try {
       const externalClient = await evmClients?.externalClient();
       await externalClient?.addChain({
@@ -28,7 +29,7 @@ export default function SwitchChainModal() {
     } catch (error) {
       catchService.catch(error as Error);
     }
-  };
+  }, 50);
 
   if (!targetChain) {
     return null;
@@ -38,7 +39,6 @@ export default function SwitchChainModal() {
     <BaseModal
       isOpen={isSwitchChainModalOpen}
       onClose={() => {}} // No close functionality for this modal
-      closeOnEscape={false}
       closeOnOverlayClick={false}
       contentClassName="px-6"
     >

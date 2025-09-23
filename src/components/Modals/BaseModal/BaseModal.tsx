@@ -7,9 +7,7 @@ interface BaseModalProps {
   children: ReactNode;
   className?: string;
   contentClassName?: string;
-  closeOnEscape?: boolean;
   closeOnOverlayClick?: boolean;
-  onEnterKey?: () => void;
   style?: CSSProperties;
 }
 
@@ -19,9 +17,7 @@ export default function BaseModal({
   children,
   className,
   contentClassName,
-  closeOnEscape = true,
   closeOnOverlayClick = true,
-  onEnterKey,
   style,
 }: BaseModalProps) {
   const modalProps = {
@@ -38,15 +34,6 @@ export default function BaseModal({
           }
         }
       : undefined,
-    onKeyDown: (e: React.KeyboardEvent) => {
-      if (e.key === "Escape" && closeOnEscape) {
-        e.preventDefault();
-        onClose();
-      } else if (e.key === "Enter" && !e.shiftKey && onEnterKey) {
-        e.preventDefault();
-        onEnterKey();
-      }
-    },
   };
 
   const contentProps = {

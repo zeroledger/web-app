@@ -1,13 +1,14 @@
-import { useContext, useCallback } from "react";
+import { useContext } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { catchService } from "@src/services/core/catch.service";
+import debounce from "debounce";
 
 export const useBackupPrivateKey = () => {
   const { wallet } = useContext(LedgerContext);
   const { exportWallet } = usePrivy();
 
-  const handleBackupPrivateKey = useCallback(async () => {
+  const handleBackupPrivateKey = debounce(async () => {
     try {
       if (!wallet) {
         throw new Error("No wallet connected");
@@ -24,7 +25,7 @@ export const useBackupPrivateKey = () => {
     } catch (error) {
       catchService.catch(error as Error);
     }
-  }, [wallet, exportWallet]);
+  }, 50);
 
   // Check if the current wallet is an embedded wallet
   const isEmbeddedWallet = wallet?.walletClientType === "privy";

@@ -618,27 +618,29 @@ export class Transactions {
     return this.enqueue(
       async () => {
         const mainAccount = await this.mainAccount();
-        const userBalance = await this.evmClients.readClient.getBalance({
-          address: mainAccount.address,
-        });
-        const expectedBalance = parseEther("0.0001");
-        const nativeBalanceToFill =
-          userBalance > expectedBalance ? 0n : expectedBalance - userBalance;
-        const nativeBalanceToRequest =
-          nativeBalanceToFill < userBalance
-            ? undefined
-            : formatEther(nativeBalanceToFill);
         return this.faucetRpc.obtainTestTokens(
           new FaucetRequestDto(
             this.token,
             mainAccount.address,
             amount,
-            nativeBalanceToRequest,
+            // await getNativeBalanceToRequest(mainAccount.address)
           ),
         );
       },
       "faucet",
       240_000,
     );
+  }
+
+  private async getNativeBalanceToRequest(account: Address) {
+    const userBalance = await this.evmClients.readClient.getBalance({
+      address: account,
+    });
+    const expectedBalance = parseEther("0.0001");
+    const nativeBalanceToFill =
+      userBalance > expectedBalance ? 0n : expectedBalance - userBalance;
+    return nativeBalanceToFill < userBalance
+      ? undefined
+      : formatEther(nativeBalanceToFill);
   }
 }

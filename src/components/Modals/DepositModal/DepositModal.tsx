@@ -1,24 +1,21 @@
-import clsx from "clsx";
 import { Loader } from "@src/components/Loader";
 import { BackButton } from "@src/components/Buttons/BackButton";
 import { SuccessMessage } from "@src/components/Modals/SuccessMessage";
 import { ErrorMessage } from "@src/components/Modals/ErrorMessage";
 import { DepositForm } from "./DepositForm";
 import { SigningPreview } from "@src/components/SigningPreview";
-import { Button } from "@src/components/Button";
-import { primaryButtonStyle } from "@src/components/Button";
 import { formatUnits } from "viem";
 import { shortString } from "@src/utils/common";
-import { UseFormReturn } from "react-hook-form";
+import { type UseFormReturn } from "react-hook-form";
 import { useContext } from "react";
 import { useDynamicHeight } from "@src/hooks/useDynamicHeight";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
-import { type DepositModalState } from "@src/components/Panel/hooks/useDepositModal";
+import {
+  type DepositFormData,
+  type DepositModalState,
+} from "@src/components/Panel/hooks/useDepositModal";
 import { BaseModal } from "@src/components/Modals/BaseModal";
-
-interface DepositFormData {
-  amount: string;
-}
+import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
 
 interface DepositModalProps {
   onFormSubmit: (data: DepositFormData) => void;
@@ -42,13 +39,6 @@ export default function DepositModal({
   const { handleSubmit } = formMethods;
   const { decimals } = useContext(PanelContext);
   const style = useDynamicHeight("h-dvh");
-
-  const onFormEnter = (e: React.KeyboardEvent<HTMLElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(onFormSubmit)();
-    }
-  };
 
   const {
     depositParams,
@@ -124,15 +114,7 @@ export default function DepositModal({
     <BaseModal
       isOpen={isModalOpen}
       onClose={onBack}
-      closeOnEscape={true}
       closeOnOverlayClick={false}
-      onEnterKey={() => {
-        if (shouldShowParams) {
-          onApprove();
-        } else if (shouldShowPreview) {
-          onSign();
-        }
-      }}
       contentClassName="relative justify-center overflow-y-auto"
       style={style}
     >
@@ -156,11 +138,7 @@ export default function DepositModal({
           <BackButton onClick={onBack} />
         )}
         {shouldShowForm && (
-          <form
-            onSubmit={handleSubmit(onFormSubmit)}
-            onKeyDown={onFormEnter}
-            className="flex pt-20"
-          >
+          <form onSubmit={handleSubmit(onFormSubmit)} className="flex pt-20">
             <DepositForm
               formMethods={formMethods}
               setState={setState}
@@ -169,7 +147,13 @@ export default function DepositModal({
           </form>
         )}
         {shouldShowParams && (
-          <div className="flex flex-col pt-20">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              onApprove();
+            }}
+            className="flex flex-col pt-20"
+          >
             <div className="text-center mb-6">
               <h1 className="text-2xl font-bold text-white mb-2">
                 Review Deposit
@@ -207,15 +191,12 @@ export default function DepositModal({
               </div>
             </div>
 
-            <div className="flex justify-center">
-              <Button
-                className={clsx(primaryButtonStyle, "w-full")}
-                onClick={onApprove}
-              >
-                Approve Deposit
-              </Button>
-            </div>
-          </div>
+            <MobileConfirmButton
+              disabled={isModalLoading}
+              label="Approve Deposit"
+              autoFocus
+            />
+          </form>
         )}
         {shouldShowPreview && (
           <div className="flex flex-col pt-12 pb-1">

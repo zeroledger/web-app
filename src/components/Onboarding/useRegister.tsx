@@ -13,6 +13,7 @@ import {
 } from "@src/common.constants";
 import { EvmClients } from "@src/services/Clients";
 import { initialize } from "@src/services/ledger";
+import debounce from "debounce";
 
 export const useRegister = () => {
   const {
@@ -33,9 +34,9 @@ export const useRegister = () => {
   const navigate = useNavigate();
 
   // Trigger registration when password is set
-  const open = (password: string) => {
+  const open = debounce((password: string) => {
     setPendingPassword(password);
-  };
+  }, 50);
 
   // Run registration logic when password is pending
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useContext, useMemo, useCallback } from "react";
+import { useContext } from "react";
 import { parseUnits } from "viem";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { delay } from "@src/utils/common";
@@ -12,8 +12,9 @@ import {
   useMultiStepModal,
   type MultiStepModalState,
 } from "@src/hooks/useMultiStepModal";
+import debounce from "debounce";
 
-interface DepositFormData {
+export interface DepositFormData {
   amount: string;
 }
 
@@ -45,7 +46,7 @@ export const useMultiStepDepositModal = (decimals: number) => {
     },
   });
 
-  const handleFormSubmit = useCallback(
+  const handleFormSubmit = debounce(
     (data: DepositFormData) =>
       setPromise(async () => {
         await promise;
@@ -98,10 +99,10 @@ export const useMultiStepDepositModal = (decimals: number) => {
           handleBack();
         }
       }),
-    [ledger, decimals, handleBack, promise, state, setPromise, setState],
+    50,
   );
 
-  const handleParamsApprove = useCallback(
+  const handleParamsApprove = debounce(
     () =>
       setPromise(async () => {
         await promise;
@@ -146,10 +147,10 @@ export const useMultiStepDepositModal = (decimals: number) => {
           handleBack();
         }
       }),
-    [ledger, handleBack, promise, state, setPromise, setState],
+    50,
   );
 
-  const handleSign = useCallback(
+  const handleSign = debounce(
     () =>
       setPromise(async () => {
         await promise;
@@ -185,29 +186,17 @@ export const useMultiStepDepositModal = (decimals: number) => {
           handleBack();
         }
       }),
-    [ledger, handleBack, promise, state, setPromise, setState],
+    50,
   );
 
-  return useMemo(
-    () => ({
-      form,
-      onModalOpen,
-      handleFormSubmit,
-      handleParamsApprove,
-      handleSign,
-      handleBack,
-      state,
-      setState,
-    }),
-    [
-      form,
-      onModalOpen,
-      handleFormSubmit,
-      handleParamsApprove,
-      handleSign,
-      handleBack,
-      state,
-      setState,
-    ],
-  );
+  return {
+    form,
+    onModalOpen,
+    handleFormSubmit,
+    handleParamsApprove,
+    handleSign,
+    handleBack,
+    state,
+    setState,
+  };
 };

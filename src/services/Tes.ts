@@ -271,6 +271,47 @@ export class Tes {
     }, backoffOptions);
   }
 
+  async unlockPoints(inviteCode: string, mainAccountAddress: Address) {
+    return backOff(async () => {
+      await this.manageAuth(mainAccountAddress);
+      const { data } = await this.axios.post<
+        | {
+            unlocked: boolean;
+            reason: string;
+          }
+        | {
+            unlocked: boolean;
+            reason?: undefined;
+          }
+      >(
+        `${this.tesUrl}/points/unlock`,
+        {
+          code: inviteCode,
+          wallet: mainAccountAddress,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "x-custom-tes-csrf": this.csrf,
+          },
+          withCredentials: true,
+        },
+      );
+      return data;
+    }, backoffOptions);
+  }
+
+  async getPointsData(mainAccountAddress: Address) {
+    const { data } = await this.axios.get<{
+      points: number;
+      firstDepositPointsClaimed: boolean;
+      firstWithdrawalPointsClaimed: boolean;
+      dailyPointsEarned: number;
+      lastDailyReset: Date;
+    }>(`${this.tesUrl}/points/${mainAccountAddress}`);
+    return data;
+  }
+
   reset() {
     this.timeout = 0;
     this.csrf = "";

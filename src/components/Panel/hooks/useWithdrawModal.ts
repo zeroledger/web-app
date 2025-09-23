@@ -1,4 +1,4 @@
-import { useContext, useMemo, useCallback } from "react";
+import { useContext } from "react";
 import { parseUnits } from "viem";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { delay } from "@src/utils/common";
@@ -16,6 +16,7 @@ import {
   useMultiStepModal,
   type MultiStepModalState,
 } from "@src/hooks/useMultiStepModal";
+import debounce from "debounce";
 
 interface WithdrawFormData {
   recipient: string;
@@ -57,7 +58,7 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
     },
   });
 
-  const handleFormSubmit = useCallback(
+  const handleFormSubmit = debounce(
     (data: WithdrawFormData) =>
       setPromise(async () => {
         await promise;
@@ -134,20 +135,10 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
           handleBack();
         }
       }),
-    [
-      ledger,
-      skipSecondStep,
-      decimals,
-      privateBalance,
-      handleBack,
-      promise,
-      state,
-      setPromise,
-      setState,
-    ],
+    50,
   );
 
-  const handleSign = useCallback(
+  const handleSign = debounce(
     () =>
       setPromise(async () => {
         await promise;
@@ -192,27 +183,16 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
           handleBack();
         }
       }),
-    [ledger, handleBack, promise, state, setPromise, setState],
+    50,
   );
 
-  return useMemo(
-    () => ({
-      state,
-      setState,
-      form,
-      onModalOpen,
-      handleFormSubmit,
-      handleSign,
-      handleBack,
-    }),
-    [
-      state,
-      setState,
-      form,
-      onModalOpen,
-      handleFormSubmit,
-      handleSign,
-      handleBack,
-    ],
-  );
+  return {
+    state,
+    setState,
+    form,
+    onModalOpen,
+    handleFormSubmit,
+    handleSign,
+    handleBack,
+  };
 };

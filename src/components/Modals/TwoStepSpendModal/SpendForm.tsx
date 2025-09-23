@@ -1,5 +1,4 @@
 import { Field, Label, Input } from "@headlessui/react";
-import clsx from "clsx";
 import { UseFormReturn } from "react-hook-form";
 import { useContext, useEffect, useState } from "react";
 import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
@@ -17,6 +16,8 @@ import {
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { QRScannerModal } from "./QRScannerModal";
 import { CameraIcon } from "@src/components/svg";
+import { primaryInputStyle } from "@src/components/styles/Input.styles";
+import clsx from "clsx";
 
 const amountRegex = /^\d*\.?\d*$/;
 
@@ -27,7 +28,6 @@ interface SpendFormData {
 
 interface SpendFormProps {
   formMethods: UseFormReturn<SpendFormData>;
-  onEnter: (e: React.KeyboardEvent<HTMLElement>) => void;
   type: "Payment" | "Withdraw";
   setState: React.Dispatch<
     React.SetStateAction<SpendModalState | WithdrawModalState>
@@ -39,7 +39,6 @@ interface SpendFormProps {
 
 export const SpendForm = ({
   formMethods,
-  onEnter,
   type,
   setState,
   withdrawAll,
@@ -129,13 +128,9 @@ export const SpendForm = ({
         <Label className="text-base/6 font-medium text-white">
           Recipient address
         </Label>
-        <div className="relative">
+        <div className="relative mb-2">
           <Input
-            className={clsx(
-              "mt-1 block w-full rounded-lg border-none bg-white/5 py-2.5 px-3 pr-12 text-base text-white leading-7",
-              "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25",
-              errors.recipient && "border-red-400",
-            )}
+            className={primaryInputStyle}
             {...register("recipient", {
               required: "Recipient address is required",
               validate: async (value) => {
@@ -155,7 +150,6 @@ export const SpendForm = ({
               setValue("recipient", e.target.value);
               clearErrors("recipient");
             }}
-            onKeyDown={onEnter}
           />
           <button
             type="button"
@@ -166,7 +160,15 @@ export const SpendForm = ({
             <CameraIcon />
           </button>
         </div>
-        <div className="h-6 mt-1 text-base text-red-400">
+        <div
+          className={clsx(
+            "text-base/6 text-red-400 transition-all duration-200 ease-in-out",
+            {
+              "opacity-0 h-0": !errors.recipient,
+              "opacity-100 h-6": errors.recipient,
+            },
+          )}
+        >
           {errors.recipient && <p>{errors.recipient.message}</p>}
         </div>
       </Field>
@@ -176,11 +178,7 @@ export const SpendForm = ({
         </Label>
         <Input
           type="string"
-          className={clsx(
-            "mt-1 block w-full rounded-lg border-none bg-white/5 py-2.5 px-3 text-base text-white leading-7",
-            "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25",
-            errors.amount && "border-red-400",
-          )}
+          className={primaryInputStyle}
           {...register("amount", {
             required: "Amount is required",
             pattern: {
@@ -203,7 +201,6 @@ export const SpendForm = ({
             );
             clearErrors("amount");
           }}
-          onKeyDown={onEnter}
         />
         <div className="mt-1 text-sm text-white/80 flex items-center gap-2 justify-end min-h-5">
           {isFeesLoading && (
@@ -220,11 +217,19 @@ export const SpendForm = ({
             </div>
           )}
         </div>
-        <div className="h-6 mt-1 text-base text-red-400">
+        <div
+          className={clsx(
+            "text-base/6 mt-1 text-red-400 transition-all duration-200 ease-in-out",
+            {
+              "opacity-0 h-0": !errors.amount,
+              "opacity-100 h-6": errors.amount,
+            },
+          )}
+        >
           {errors.amount && <p>{errors.amount.message}</p>}
         </div>
       </Field>
-      <div className="py-4">
+      <div className="py-2">
         <MobileConfirmButton
           disabled={isSubmitting || isFeesLoading}
           label={`Review ${type}`}

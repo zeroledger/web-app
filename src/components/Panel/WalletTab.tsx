@@ -1,4 +1,4 @@
-import { primaryButtonStyle } from "../Button";
+import { primaryButtonStyle } from "@src/components/styles/Button.styles";
 import { TwoStepSpendModal } from "@src/components/Modals/TwoStepSpendModal";
 import { ReceiveModal } from "@src/components/Modals/ReceiveModal";
 import { formatBalance } from "@src/utils/common";
