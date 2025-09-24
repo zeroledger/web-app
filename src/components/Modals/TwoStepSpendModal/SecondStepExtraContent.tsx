@@ -1,4 +1,5 @@
 import { clsx } from "clsx";
+import debounce from "debounce";
 import { ReactNode } from "react";
 
 export const SecondStepExtraContent = ({
@@ -27,7 +28,8 @@ export const SecondStepExtraContent = ({
         </div>
       </div>
       <button
-        onClick={() => setIsDetailsOpen(!isDetailsOpen)}
+        type="button"
+        onClick={debounce(() => setIsDetailsOpen(!isDetailsOpen), 100)}
         className="w-full text-left p-4 hover:bg-gray-600 transition-colors border-b border-gray-600"
       >
         <div className="flex justify-between items-center">
