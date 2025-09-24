@@ -98,7 +98,7 @@ export default function MenuTab() {
         <button
           className={buttonStyle}
           onClick={onPointsModalOpen}
-          disabled={isFauceting || isLoading}
+          disabled={true}
         >
           Points
           <HiOutlineSparkles />
