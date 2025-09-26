@@ -16,6 +16,7 @@ import {
   APP_PREFIX_KEY,
   TES_URL,
   VAULT_ADDRESS,
+  INIT_SYNC_BLOCK,
 } from "@src/common.constants";
 import { usePrivateBalance } from "./usePrivateBalance";
 import { useConsolidationRatio } from "./useConsolidationRatio";
@@ -89,6 +90,7 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
         VAULT_ADDRESS,
         TOKEN_ADDRESS,
         FAUCET_URL,
+        INIT_SYNC_BLOCK,
       );
       setLedger(newLedger);
     } catch (error) {

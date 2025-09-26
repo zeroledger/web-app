@@ -10,6 +10,7 @@ import {
   WS_RPC,
   VAULT_ADDRESS,
   TOKEN_ADDRESS,
+  INIT_SYNC_BLOCK,
 } from "@src/common.constants";
 import { EvmClients } from "@src/services/Clients";
 import { initialize } from "@src/services/ledger";
@@ -68,6 +69,7 @@ export const useRegister = () => {
           VAULT_ADDRESS,
           TOKEN_ADDRESS,
           FAUCET_URL,
+          INIT_SYNC_BLOCK,
         );
         setLedger(newLedger);
 
