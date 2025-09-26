@@ -2,6 +2,7 @@ import { type Address, type Hex, type Log } from "viem";
 import { type Proof } from "@src/utils/prover";
 import { VAULT_ABI_EVENTS } from "./vault.abi";
 import { type CustomClient } from "@src/services/Clients";
+import { type toSignature } from "../common";
 
 export type DepositCommitmentParamsStruct = {
   poseidonHash: bigint;
@@ -26,6 +27,15 @@ export type DepositParams = {
   client: CustomClient;
   contract: Address;
   proof: Proof;
+};
+
+export type DepositParamsWithPermit = {
+  depositStruct: DepositStruct;
+  client: CustomClient;
+  contract: Address;
+  proof: Proof;
+  permitSignature: ReturnType<typeof toSignature>;
+  deadline: bigint;
 };
 
 export type DepositProofData = {

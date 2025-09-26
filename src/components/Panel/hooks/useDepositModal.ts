@@ -6,8 +6,8 @@ import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import {
   type DepositFeesData,
   type TransactionDetails,
+  type Transactions,
 } from "@src/services/ledger";
-import { type DepositParams } from "@src/utils/vault/types";
 import {
   useMultiStepModal,
   type MultiStepModalState,
@@ -21,7 +21,9 @@ export interface DepositFormData {
 export interface DepositModalState extends MultiStepModalState {
   step: "form" | "params" | "preview";
   depositFees?: DepositFeesData;
-  depositParams?: DepositParams;
+  depositParams?: Awaited<
+    ReturnType<Transactions["prepareDepositParamsForApproval"]>
+  >;
   metaTransaction?: UnsignedMetaTransaction;
   transactionDetails?: TransactionDetails;
 }
@@ -116,6 +118,32 @@ export const useMultiStepDepositModal = (decimals: number) => {
           }));
 
           const { depositParams, depositFees } = state;
+
+          // If permit is supported, we need to permit the deposit
+          if (depositParams.permitSupported) {
+            const { signature, deadline } =
+              await ledger!.transactions.permitDeposit(
+                depositParams,
+                depositFees.depositFee,
+              );
+
+            const metaTransactionData =
+              await ledger!.transactions.prepareDepositMetaTransactionWithPermit(
+                {
+                  ...depositParams,
+                  permitSignature: signature,
+                  deadline,
+                },
+              );
+
+            setState((prev) => ({
+              ...prev,
+              ...metaTransactionData,
+              step: "preview" as const,
+              isModalLoading: false,
+            }));
+            return;
+          }
 
           await ledger!.transactions.approveDeposit(
             depositParams,

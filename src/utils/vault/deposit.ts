@@ -38,7 +38,7 @@ export function getDepositTxGas(params: DepositParams) {
   });
 }
 
-export async function getDepositRequest(params: DepositParams) {
+async function getDepositRequest(params: DepositParams) {
   const { request } = await params.client.simulateContract({
     address: params.contract,
     abi: VAULT_ABI,

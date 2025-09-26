@@ -193,7 +193,11 @@ export default function DepositModal({
 
             <MobileConfirmButton
               disabled={isModalLoading}
-              label="Approve Deposit"
+              label={
+                depositParams?.permitSupported
+                  ? "Permit Deposit"
+                  : "Approve Deposit"
+              }
               autoFocus
             />
           </form>

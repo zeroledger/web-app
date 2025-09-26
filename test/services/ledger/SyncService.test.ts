@@ -18,7 +18,7 @@ describe("SyncService", () => {
 
   beforeEach(() => {
     mockDataSource = createMockDataSource();
-    syncService = new SyncService(mockDataSource, zeroAddress);
+    syncService = new SyncService(mockDataSource, zeroAddress, 0n);
   });
 
   afterEach(() => {

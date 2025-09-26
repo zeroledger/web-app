@@ -19,6 +19,7 @@ export const initialize = async (
   vaultAddress: Address,
   tokenAddress: Address,
   faucetUrl: string,
+  initSyncBlock: bigint,
 ) => {
   // Dynamically load heavy dependencies (use preloaded if available)
   const [
@@ -58,7 +59,11 @@ export const initialize = async (
     zeroLedgerDataSource,
     address,
   );
-  const syncService = new SyncService(zeroLedgerDataSource, address);
+  const syncService = new SyncService(
+    zeroLedgerDataSource,
+    address,
+    initSyncBlock,
+  );
   const tesService = new Tes(tesUrl, viewAccount, queue, axiosInstance);
 
   return {

@@ -1,6 +1,6 @@
 {
   "name": "web-app",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "repository": {
     "type": "git",
@@ -38,7 +38,7 @@
     "@tailwindcss/vite": "^4.1.12",
     "@types/qrcode": "^1.5.5",
     "@zeroledger/vycrypt": "^0.0.1-betta",
-    "axios": "^1.11.0",
+    "axios": "^1.12.2",
     "browser-level": "^2.0.0",
     "circomlibjs": "^0.1.7",
     "clsx": "^2.1.1",

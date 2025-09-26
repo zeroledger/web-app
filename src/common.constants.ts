@@ -14,6 +14,10 @@ export const APP_PREFIX_KEY = `${document.location.hostname}.${import.meta.env.V
 
 export const TOKEN_ADDRESS: Address = import.meta.env.VITE_TOKEN_ADDRESS;
 
+export const INIT_SYNC_BLOCK: bigint = BigInt(
+  import.meta.env.VITE_INIT_SYNC_BLOCK,
+);
+
 export const VAULT_ADDRESS: Address = import.meta.env.VITE_VAULT_ADDRESS;
 
 export const FAUCET_URL: Address = import.meta.env.VITE_FAUCET_URL;

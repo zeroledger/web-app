@@ -12,12 +12,12 @@ export default class SyncService {
   constructor(
     public readonly dataSource: DataSource,
     public readonly address: Address,
+    private _processedBlock: bigint,
   ) {
     this._store = this.dataSource.getEntityLevel(SyncEntityKey(address));
   }
 
   private _store: ReturnType<DataSource["getEntityLevel"]>;
-  private _processedBlock: bigint = 30538369n;
   private logger = new Logger(SyncService.name);
 
   /**

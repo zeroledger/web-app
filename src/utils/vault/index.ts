@@ -7,3 +7,4 @@ export * from "./spend";
 export * from "./withdraw";
 export * from "./types";
 export * from "./getContracts";
+export * from "./depositWithPermit";
