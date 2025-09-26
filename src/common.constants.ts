@@ -10,8 +10,6 @@ export const SUPPORTED_CHAINS = ENV === "test" ? [baseSepolia] : [base];
 export const OnesHash =
   "0x1111111111111111111111111111111111111111111111111111111111111111";
 
-export const APP_PREFIX_KEY = `${document.location.hostname}.${import.meta.env.VITE_APP_VERSION}`;
-
 export const TOKEN_ADDRESS: Address = import.meta.env.VITE_TOKEN_ADDRESS;
 
 export const INIT_SYNC_BLOCK: bigint = BigInt(
@@ -19,6 +17,8 @@ export const INIT_SYNC_BLOCK: bigint = BigInt(
 );
 
 export const VAULT_ADDRESS: Address = import.meta.env.VITE_VAULT_ADDRESS;
+
+export const APP_PREFIX_KEY = `${document.location.hostname}.${VAULT_ADDRESS}`;
 
 export const FAUCET_URL: Address = import.meta.env.VITE_FAUCET_URL;
 
