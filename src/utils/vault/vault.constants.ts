@@ -6,3 +6,4 @@ export const OUTPUT_RECORD_GAS_COST = 17_000n;
 export const GAS_LIMIT_NOMINATOR = 35n;
 export const GAS_LIMIT_DENOMINATOR = 10n;
 export const DEPOSIT_GAS_COST = 550_000n;
+export const PERMIT_GAS_COST = 20_000n;

@@ -1,12 +1,13 @@
 import { Address, formatEther, parseEther } from "viem";
 import { FaucetRpc, FaucetRequestDto } from "@src/services/core/faucet.dto";
-import { approve, allowance } from "@src/utils/erc20";
+import { approve, allowance, permitSupported, permit } from "@src/utils/erc20";
 import { JsonRpcClient, ServiceClient } from "@src/services/core/rpc";
 import { Logger } from "@src/utils/logger";
 import type { MemoryQueue } from "@src/services/core/queue";
 import {
   type CommitmentStruct,
   type DepositParams,
+  type DepositParamsWithPermit,
 } from "@src/utils/vault/types";
 import {
   type SignedMetaTransaction,
@@ -167,6 +168,7 @@ export class Transactions {
           contract: this.vault,
           proof: proofData.calldata_proof,
           approveRequired: spendAllowance < value,
+          permitSupported: await permitSupported(this.token, client),
         };
       },
       "prepareDepositParamsForApproval",
@@ -189,6 +191,26 @@ export class Transactions {
         });
       },
       "approveDeposit",
+      80_000,
+      true,
+    );
+  }
+
+  permitDeposit(depositParams: DepositParams, protocolFees: bigint) {
+    return this.enqueue(
+      async () => {
+        return await permit({
+          tokenAddress: depositParams.depositStruct.token,
+          receiverAddress: this.vault,
+          amount:
+            depositParams.depositStruct.amount +
+            depositParams.depositStruct.forwarderFee +
+            protocolFees,
+          client: await this.evmClients.externalClient(),
+          deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
+        });
+      },
+      "permitDeposit",
       80_000,
       true,
     );
@@ -299,6 +321,61 @@ export class Transactions {
         };
       },
       "prepareDepositMetaTransaction",
+      240_000,
+      true,
+    );
+  }
+
+  prepareDepositMetaTransactionWithPermit(
+    depositParams: DepositParamsWithPermit,
+  ) {
+    return this.enqueue(
+      async () => {
+        const { asyncVaultUtils, asyncMetaTxUtils } =
+          await this.preloadedModulesPromise;
+        const mainAccount = await this.mainAccount();
+        const gas =
+          await asyncVaultUtils.getDepositWithPermitTxGas(depositParams);
+
+        this.logger.log(`Deposit: gas without forwarding: ${gas.toString()}`);
+
+        return {
+          metaTransaction: {
+            from: mainAccount.address,
+            to: this.vault,
+            value: 0,
+            gas,
+            nonce: await asyncMetaTxUtils.getForwarderNonce(
+              mainAccount.address,
+              await this.getForwarder(),
+              this.evmClients.readClient,
+            ),
+            deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+            data: asyncVaultUtils.getDepositWithPermitTxData(
+              depositParams.depositStruct,
+              depositParams.proof,
+              depositParams.permitSignature,
+              depositParams.deadline,
+            ),
+          } as UnsignedMetaTransaction,
+          transactionDetails: {
+            type: "deposit",
+            vaultContract: this.vault,
+            token: this.token,
+            from: mainAccount.address,
+            to: mainAccount.address,
+            value: depositParams.depositStruct.amount,
+            forwarder: await this.getForwarder(),
+            inputs: [],
+            outputs: await Promise.all(
+              depositParams.depositStruct.depositCommitmentParams.map(
+                (item) => item.poseidonHash,
+              ),
+            ),
+          } as TransactionDetails,
+        };
+      },
+      "prepareDepositMetaTransactionWithPermit",
       240_000,
       true,
     );

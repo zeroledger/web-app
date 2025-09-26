@@ -1,7 +1,7 @@
-import { Address, Hex, slice } from "viem";
+import { Address, Hex } from "viem";
 import { ERC_20_WITH_MINT_ABI } from "./constants";
 import { type CustomClient } from "@src/services/Clients";
-import { toViemSignature } from "../common";
+import { toSignature } from "../common";
 
 export type PermitProps = {
   tokenAddress: Hex;
@@ -10,6 +10,8 @@ export type PermitProps = {
   deadline: bigint;
   client: CustomClient;
 };
+
+export type PermitSignature = ReturnType<typeof toSignature>;
 
 // EIP-712 types for permit
 const permitTypes = {
@@ -64,16 +66,7 @@ async function getNonce(
   });
 }
 
-// Split signature into v, r, s components
-export function splitSignature(signature: Hex) {
-  const r = slice(signature, 0, 32);
-  const s = slice(signature, 32, 64);
-  const v = parseInt(slice(signature, 64, 65));
-
-  return { r, s, v };
-}
-
-export default async function permit(params: PermitProps) {
+export async function permit(params: PermitProps) {
   const { tokenAddress, receiverAddress, amount, deadline, client } = params;
 
   // Get the owner address from the client
@@ -102,5 +95,55 @@ export default async function permit(params: PermitProps) {
     message,
   });
 
-  return toViemSignature(signature);
+  return {
+    signature: toSignature(signature),
+    deadline,
+  };
 }
+
+/**
+ * Check if a token supports EIP-2612 permit functionality
+ * @param tokenAddress - The token contract address
+ * @param client - The viem client
+ * @returns Promise<boolean> - true if permit is supported, false otherwise
+ */
+export const permitSupported = async (
+  tokenAddress: Address,
+  client: CustomClient,
+): Promise<boolean> => {
+  try {
+    // Check if the token has the required functions for permit
+    const [nameResult, noncesResult, eip712DomainResult] =
+      await client.multicall({
+        contracts: [
+          {
+            address: tokenAddress,
+            abi: ERC_20_WITH_MINT_ABI,
+            functionName: "name",
+          },
+          {
+            address: tokenAddress,
+            abi: ERC_20_WITH_MINT_ABI,
+            functionName: "nonces",
+            args: [client.account.address], // Test with current account
+          },
+          {
+            address: tokenAddress,
+            abi: ERC_20_WITH_MINT_ABI,
+            functionName: "eip712Domain",
+          },
+        ],
+      });
+
+    // All three functions must succeed for permit to be supported
+    return (
+      nameResult.status === "success" &&
+      noncesResult.status === "success" &&
+      eip712DomainResult.status === "success"
+    );
+  } catch (error) {
+    // If any call fails, permit is not supported
+    console.warn(`Permit check failed for token ${tokenAddress}:`, error);
+    return false;
+  }
+};
