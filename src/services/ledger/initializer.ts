@@ -60,6 +60,7 @@ export const initialize = async (
     address,
   );
   const syncService = new SyncService(
+    evmClients,
     zeroLedgerDataSource,
     address,
     initSyncBlock,

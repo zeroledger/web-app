@@ -3,16 +3,19 @@ import { type DataSource } from "@src/services/core/db/leveldb.source";
 import { getMissedEvents } from "@src/utils/vault/watcher";
 import { VaultEvent } from "@src/utils/vault/types";
 import { Logger } from "@src/utils/logger";
+import { EvmClients } from "@src/services/Clients";
 
 export const SyncEntityKey = (address: Address) => ({
   name: `sync_state-${address}`,
 });
 
 export default class SyncService {
+  private processedBlock: bigint = 0n;
   constructor(
+    private readonly evmClients: EvmClients,
     public readonly dataSource: DataSource,
     public readonly address: Address,
-    private _processedBlock: bigint,
+    private readonly defaultLastSyncBlock: bigint,
   ) {
     this._store = this.dataSource.getEntityLevel(SyncEntityKey(address));
   }
@@ -20,13 +23,27 @@ export default class SyncService {
   private _store: ReturnType<DataSource["getEntityLevel"]>;
   private logger = new Logger(SyncService.name);
 
+  private async getDefaultLastSyncBlock() {
+    return (
+      this.defaultLastSyncBlock > 0n
+        ? this.defaultLastSyncBlock
+        : await this.evmClients.readClient.getBlockNumber()
+    ).toString();
+  }
+
   /**
    * Get the last synced block number
-   * @returns The last synced block number as a string, or null if no sync has occurred
+   *
+   * @returns The last synced block number as a string
    */
   async getLastSyncedBlock(): Promise<string> {
-    const lastBlock = await this._store.get("lastSyncedBlock");
-    return lastBlock ?? "30538369";
+    const storedLastSyncBlock = await this._store.get("lastSyncedBlock");
+    if (storedLastSyncBlock) return storedLastSyncBlock;
+
+    const blockToAssign = await this.getDefaultLastSyncBlock();
+
+    await this.setLastSyncedBlock(blockToAssign);
+    return blockToAssign;
   }
 
   /**
@@ -38,7 +55,7 @@ export default class SyncService {
   }
 
   getProcessedBlock(): bigint {
-    return this._processedBlock;
+    return this.processedBlock;
   }
 
   /**
@@ -72,22 +89,22 @@ export default class SyncService {
     token: Address,
     currentBlock: bigint,
   ) {
-    const lastBlock = BigInt((await this.getLastSyncedBlock()) ?? "0");
+    const lastBlock = BigInt(await this.getLastSyncedBlock());
     if (lastBlock >= currentBlock) {
-      this._processedBlock = currentBlock;
+      this.processedBlock = currentBlock;
       return [];
     }
 
     const MAX_BLOCKS_PER_REQUEST = 500n;
     const RATE_LIMIT_DELAY = 100; // 100ms between requests
 
-    this._processedBlock = lastBlock + 1n;
+    this.processedBlock = lastBlock + 1n;
     const allCommitmentCreatedEvents: VaultEvent[] = [];
     const allCommitmentRemovedEvents: VaultEvent[] = [];
 
     // Process blocks in chunks of 500
-    while (this._processedBlock < currentBlock) {
-      const startBlock = this._processedBlock + 1n;
+    while (this.processedBlock < currentBlock) {
+      const startBlock = this.processedBlock + 1n;
       const toBlock = startBlock + MAX_BLOCKS_PER_REQUEST - 1n;
       const endBlock = toBlock > currentBlock ? currentBlock : toBlock;
 
@@ -118,10 +135,10 @@ export default class SyncService {
       allCommitmentRemovedEvents.push(...commitmentRemovedEvents);
 
       // Move to next block range
-      this._processedBlock = endBlock;
+      this.processedBlock = endBlock;
 
       // Rate limiting: wait 100ms before next request (except for the last iteration)
-      if (this._processedBlock < currentBlock) {
+      if (this.processedBlock < currentBlock) {
         await this.sleep(RATE_LIMIT_DELAY);
       }
     }

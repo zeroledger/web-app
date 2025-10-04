@@ -1,11 +1,25 @@
 import { type Address } from "viem";
-import { base, baseSepolia } from "viem/chains";
+import { base, baseSepolia, hardhat } from "viem/chains";
 
-export const ENV = document.location.hostname.match(/localhost|tmp|test/i)
-  ? "test"
-  : "prod";
+const matchedEnv = document.location.hostname.match(/localhost|test/i);
 
-export const SUPPORTED_CHAINS = ENV === "test" ? [baseSepolia] : [base];
+export const ENV = (matchedEnv ? matchedEnv[0] : "prod") as
+  | "localhost"
+  | "test"
+  | "prod";
+
+const hardhatBaseFork = {
+  ...hardhat,
+  contracts: base.contracts,
+};
+
+const supportedChainsPerEnvMap = {
+  localhost: [hardhatBaseFork],
+  test: [baseSepolia],
+  prod: [base],
+};
+
+export const SUPPORTED_CHAINS = supportedChainsPerEnvMap[ENV];
 
 export const OnesHash =
   "0x1111111111111111111111111111111111111111111111111111111111111111";
@@ -36,6 +50,7 @@ export const RPC: { [prop: number]: string[] } = {
     `https://base-sepolia.infura.io/v3/${import.meta.env.VITE_INFURA_RPC_KEY}`,
     `https://base-sepolia.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_RPC_KEY}`,
   ],
+  [hardhatBaseFork.id]: ["http://localhost:8545"],
 };
 
 export const WS_RPC: { [prop: number]: string[] } = {
@@ -43,12 +58,16 @@ export const WS_RPC: { [prop: number]: string[] } = {
     "wss://base-sepolia-rpc.publicnode.com",
     `wss://base-sepolia.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_RPC_KEY}`,
   ],
+  [hardhatBaseFork.id]: [],
 };
 
 export const SCAN_URL: { [prop: number]: string } = {
   [baseSepolia.id]: "https://sepolia.basescan.org",
+  [hardhatBaseFork.id]: "https://sepolia.basescan.org",
 };
 
 export const pollingInterval: { [prop: number]: number } = {
-  [baseSepolia.id]: 10000,
+  [baseSepolia.id]: 10_000,
+  [hardhatBaseFork.id]: 2_000,
+  [base.id]: 10_000,
 };

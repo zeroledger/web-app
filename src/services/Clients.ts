@@ -35,7 +35,6 @@ export class EvmClients {
     const transport = fallback([
       ...this.wsUrls.map((wss) => webSocket(wss)),
       ...this.httpUrls.map((url) => http(url)),
-      http(),
     ]);
     this.readClient = createClient({
       chain: this.chain,

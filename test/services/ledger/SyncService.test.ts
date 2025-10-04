@@ -1,3 +1,4 @@
+import { EvmClients } from "@src/services/Clients";
 import SyncService from "@src/services/ledger/SyncService";
 import { createMockDataSource } from "@test/mocks/mockDataSource";
 import { zeroAddress } from "viem";
@@ -15,10 +16,28 @@ vi.mock("@src/utils/logger", () => ({
 describe("SyncService", () => {
   let syncService: SyncService;
   let mockDataSource: ReturnType<typeof createMockDataSource>;
+  let mockEvmClients: EvmClients;
+  const mockAccount = "0xAccount" as const;
 
   beforeEach(() => {
     mockDataSource = createMockDataSource();
-    syncService = new SyncService(mockDataSource, zeroAddress, 0n);
+    mockEvmClients = {
+      readClient: {
+        getBlockNumber: vi.fn(() => Promise.resolve(30538369n)),
+        readContract: vi.fn(),
+      },
+      externalClient: vi.fn(() =>
+        Promise.resolve({
+          account: { address: mockAccount },
+        }),
+      ),
+    } as unknown as EvmClients;
+    syncService = new SyncService(
+      mockEvmClients,
+      mockDataSource,
+      zeroAddress,
+      0n,
+    );
   });
 
   afterEach(() => {
