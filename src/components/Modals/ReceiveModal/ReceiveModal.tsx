@@ -30,9 +30,9 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
       contentClassName="relative justify-center overflow-y-auto"
       style={style}
     >
-      <div className="px-6 py-5 h-full flex-col content-center">
-        <BackButton onClick={onClose} />
-        <div className="flex flex-col pt-20">
+      <div className="px-6 py-5 h-full grid grid-cols-1">
+        <BackButton onClick={onClose} className="place-self-start" />
+        <div className="flex flex-col">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-white mb-2">
               Receive Payment

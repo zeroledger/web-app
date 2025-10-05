@@ -115,7 +115,7 @@ export default function SigningPreview({
       {extraContent}
 
       {/* Sign Button */}
-      <div className="flex justify-center mb-6">
+      <div className="flex justify-center">
         <Button
           className={clsx(
             primaryButtonStyle,

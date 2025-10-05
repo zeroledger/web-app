@@ -1,12 +1,22 @@
+import clsx from "clsx";
+
 interface BackButtonProps {
   onClick: () => void;
   disabled?: boolean;
+  className?: string;
 }
 
-export const BackButton = ({ onClick, disabled }: BackButtonProps) => (
+export const BackButton = ({
+  onClick,
+  disabled,
+  className,
+}: BackButtonProps) => (
   <button
     onClick={onClick}
-    className="py-2 text-white/60 hover:text-white transition-colors hover:cursor-pointer"
+    className={clsx(
+      "py-2 text-white/60 hover:text-white transition-colors hover:cursor-pointer",
+      className,
+    )}
     disabled={disabled}
   >
     <svg

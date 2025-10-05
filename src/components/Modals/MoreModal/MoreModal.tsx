@@ -64,9 +64,9 @@ export default function MoreModal({
       closeOnOverlayClick={false}
       style={style}
     >
-      <div className="flex-1 content-center py-5 px-6">
-        <BackButton onClick={onClose} />
-        <div className="flex flex-col h-full pt-20">
+      <div className="px-6 py-5 h-full grid grid-cols-1">
+        <BackButton onClick={onClose} className="place-self-start" />
+        <div className="flex flex-col h-full">
           <div className="flex-1 flex flex-col justify-start">
             <div className="flex flex-col w-full space-y-2">
               <a

@@ -118,27 +118,25 @@ export default function DepositModal({
       contentClassName="relative justify-center overflow-y-auto"
       style={style}
     >
-      <div className="px-6 py-5 h-full flex-col content-center">
+      <div className="px-6 py-5 h-full grid grid-cols-1">
         {isModalError && (
-          <div className="flex-1 content-center flex-col justify-center animate-fade-in">
+          <div className="flex-1 place-self-center animate-fade-in">
             <ErrorMessage />
           </div>
         )}
         {isModalLoading && (
-          <div className="flex-1 content-center flex justify-center animate-fade-in">
-            <Loader />
-          </div>
+          <Loader className="flex-1 place-self-center animate-fade-in flex justify-center" />
         )}
         {isModalSuccess && (
-          <div className="flex-1 content-center flex-col justify-center animate-fade-in">
+          <div className="flex-1 place-self-center animate-fade-in">
             <SuccessMessage message="Deposit Successful!" />
           </div>
         )}
         {!isModalError && !isModalLoading && !isModalSuccess && (
-          <BackButton onClick={onBack} />
+          <BackButton onClick={onBack} className="place-self-start" />
         )}
         {shouldShowForm && (
-          <form onSubmit={handleSubmit(onFormSubmit)} className="flex pt-20">
+          <form onSubmit={handleSubmit(onFormSubmit)} className="flex">
             <DepositForm
               formMethods={formMethods}
               setState={setState}
@@ -152,7 +150,7 @@ export default function DepositModal({
               e.preventDefault();
               onApprove();
             }}
-            className="flex flex-col pt-20"
+            className="flex flex-col"
           >
             <div className="text-center mb-6">
               <h1 className="text-2xl font-bold text-white mb-2">
@@ -203,7 +201,7 @@ export default function DepositModal({
           </form>
         )}
         {shouldShowPreview && (
-          <div className="flex flex-col pt-12 pb-1">
+          <div className="flex flex-col self-end pt-5">
             <SigningPreview
               isSigning={isModalLoading}
               isSuccess={isModalSuccess}
