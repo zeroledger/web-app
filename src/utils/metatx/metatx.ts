@@ -51,7 +51,6 @@ export async function createSignedMetaTx(
     ...request,
     gas: request.gas.toString(),
     nonce: request.nonce.toString(),
-    deadline: request.deadline.toString(),
     value: request.value.toString(),
     signature,
   };
