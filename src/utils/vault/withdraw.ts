@@ -6,15 +6,19 @@ import {
   FORWARDER_EXECUTION_COST,
   GAS_LIMIT_DENOMINATOR,
   GAS_LIMIT_NOMINATOR,
+  BASE_WITHDRAW_GAS_COST,
+  REDEEM_ITEM_GAS_COST,
 } from "./vault.constants";
 
 // gas amount that should be covered by fee during sponsoring
 // computes like avg tx gas limit * 1.1 + agv forwarder execution gas
 export const withdrawGasSponsoredLimit = (withdrawingItemsAmount: number) => {
-  const transfers =
-    BigInt(withdrawingItemsAmount) * AVERAGE_ERC_20_TRANSFER_COST;
+  const redemptions =
+    BigInt(withdrawingItemsAmount) * REDEEM_ITEM_GAS_COST +
+    BASE_WITHDRAW_GAS_COST;
   return (
-    (transfers * GAS_LIMIT_NOMINATOR) / GAS_LIMIT_DENOMINATOR +
+    (redemptions * GAS_LIMIT_NOMINATOR) / GAS_LIMIT_DENOMINATOR +
+    AVERAGE_ERC_20_TRANSFER_COST +
     FORWARDER_EXECUTION_COST
   );
 };

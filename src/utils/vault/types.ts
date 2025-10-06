@@ -36,6 +36,7 @@ export type DepositParamsWithPermit = {
   proof: Proof;
   permitSignature: ReturnType<typeof toSignature>;
   deadline: bigint;
+  hardcodeGas: boolean;
 };
 
 export type DepositProofData = {

@@ -97,6 +97,7 @@ export async function permit(params: PermitProps) {
 
   return {
     signature: toSignature(signature),
+    rawSignature: signature,
     deadline,
   };
 }

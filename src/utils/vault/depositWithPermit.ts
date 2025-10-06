@@ -3,23 +3,16 @@ import { type DepositStruct, type DepositParamsWithPermit } from "./types";
 import { type Proof } from "@src/utils/prover";
 import { encodeFunctionData } from "viem";
 import {
-  AVERAGE_ERC_20_TRANSFER_COST,
   FORWARDER_EXECUTION_COST,
   GAS_LIMIT_DENOMINATOR,
   GAS_LIMIT_NOMINATOR,
-  OUTPUT_RECORD_GAS_COST,
-  PROOF_VERIFICATION_GAS_COST,
-  PERMIT_GAS_COST,
+  BASE_DEPOSIT_WITH_PERMIT_GAS_COST,
 } from "./vault.constants";
 
 // gas amount that should be covered by fee during sponsoring
 // computes like avg tx gas limit * 1.1 + agv forwarder execution gas
 export const depositWithPermitGasSponsoredLimit = () =>
-  ((OUTPUT_RECORD_GAS_COST * 3n +
-    AVERAGE_ERC_20_TRANSFER_COST * 3n +
-    PROOF_VERIFICATION_GAS_COST +
-    PERMIT_GAS_COST) *
-    GAS_LIMIT_NOMINATOR) /
+  (BASE_DEPOSIT_WITH_PERMIT_GAS_COST * GAS_LIMIT_NOMINATOR) /
     GAS_LIMIT_DENOMINATOR +
   FORWARDER_EXECUTION_COST;
 
@@ -44,19 +37,21 @@ export function getDepositWithPermitTxData(
 }
 
 export function getDepositWithPermitTxGas(params: DepositParamsWithPermit) {
-  return params.client.estimateContractGas({
-    address: params.contract,
-    abi: VAULT_ABI,
-    functionName: "depositWithPermit",
-    args: [
-      params.depositStruct,
-      params.proof,
-      params.deadline,
-      params.permitSignature.v,
-      params.permitSignature.r,
-      params.permitSignature.s,
-    ],
-  });
+  return params.hardcodeGas
+    ? BASE_DEPOSIT_WITH_PERMIT_GAS_COST
+    : params.client.estimateContractGas({
+        address: params.contract,
+        abi: VAULT_ABI,
+        functionName: "depositWithPermit",
+        args: [
+          params.depositStruct,
+          params.proof,
+          params.deadline,
+          params.permitSignature.v,
+          params.permitSignature.r,
+          params.permitSignature.s,
+        ],
+      });
 }
 
 async function getDepositWithPermitRequest(params: DepositParamsWithPermit) {
