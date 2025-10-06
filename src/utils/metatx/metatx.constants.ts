@@ -8,4 +8,4 @@ export const forwardRequestType = {
     { name: "deadline", type: "uint48" },
     { name: "data", type: "bytes" },
   ],
-};
+} as const;

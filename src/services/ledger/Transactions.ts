@@ -290,7 +290,7 @@ export class Transactions {
           metaTransaction: {
             from: mainAccount.address,
             to: this.vault,
-            value: 0,
+            value: 0n,
             gas,
             nonce: await asyncMetaTxUtils.getForwarderNonce(
               mainAccount.address,
@@ -343,7 +343,7 @@ export class Transactions {
           metaTransaction: {
             from: mainAccount.address,
             to: this.vault,
-            value: 0,
+            value: 0n,
             gas,
             nonce: await asyncMetaTxUtils.getForwarderNonce(
               mainAccount.address,
@@ -444,7 +444,7 @@ export class Transactions {
           metaTransaction: {
             from: mainAccount.address,
             to: this.vault,
-            value: 0,
+            value: 0n,
             gas,
             nonce: await asyncMetaTxUtils.getForwarderNonce(
               mainAccount.address,
@@ -548,7 +548,7 @@ export class Transactions {
           metaTransaction: {
             from: mainAccount.address,
             to: this.vault,
-            value: 0,
+            value: 0n,
             gas,
             nonce: await asyncMetaTxUtils.getForwarderNonce(
               mainAccount.address,
@@ -659,7 +659,7 @@ export class Transactions {
           metaTransaction: {
             from: mainAccount.address,
             to: this.vault,
-            value: 0,
+            value: 0n,
             gas: await asyncVaultUtils.getSpendTxGas(sendParams),
             nonce: await asyncMetaTxUtils.getForwarderNonce(
               mainAccount.address,

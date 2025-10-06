@@ -1,6 +1,6 @@
 {
   "name": "web-app",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "",
   "repository": {
     "type": "git",
@@ -33,10 +33,9 @@
   "dependencies": {
     "@headlessui/react": "^2.2.7",
     "@heroicons/react": "^2.2.0",
-    "@privy-io/react-auth": "^2.24.0",
+    "@privy-io/react-auth": "^3.0.1",
     "@solana/spl-token": "^0.4.14",
     "@tailwindcss/vite": "^4.1.12",
-    "@types/qrcode": "^1.5.5",
     "@zeroledger/vycrypt": "^0.0.1-betta",
     "axios": "^1.12.2",
     "browser-level": "^2.0.0",
@@ -64,6 +63,7 @@
   },
   "devDependencies": {
     "@types/circomlibjs": "^0.1.6",
+    "@types/qrcode": "^1.5.5",
     "@types/node": "^24.0.15",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",

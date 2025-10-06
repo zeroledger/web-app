@@ -29,7 +29,7 @@ export async function getForwarderNonce(
 export type UnsignedMetaTransaction = {
   from: Address;
   to: Address;
-  value: 0;
+  value: 0n;
   gas: bigint;
   nonce: bigint;
   deadline: number;
@@ -41,21 +41,18 @@ export async function createSignedMetaTx(
   forwarderAddress: Address,
   client: CustomClient,
 ) {
-  const stringifyRequest = {
+  const signature = await client.signTypedData({
+    domain: getForwarderDomain(client.chain.id, forwarderAddress),
+    types: forwardRequestType,
+    primaryType: "ForwardRequest",
+    message: request,
+  });
+  return {
     ...request,
     gas: request.gas.toString(),
     nonce: request.nonce.toString(),
     deadline: request.deadline.toString(),
     value: request.value.toString(),
-  };
-  const signature = await client.signTypedData({
-    domain: getForwarderDomain(client.chain.id, forwarderAddress),
-    types: forwardRequestType,
-    primaryType: "ForwardRequest",
-    message: stringifyRequest,
-  });
-  return {
-    ...stringifyRequest,
     signature,
   };
 }

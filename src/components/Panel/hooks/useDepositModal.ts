@@ -119,31 +119,31 @@ export const useMultiStepDepositModal = (decimals: number) => {
 
           const { depositParams, depositFees } = state;
 
-          // // If permit is supported, we need to permit the deposit
-          // if (depositParams.permitSupported) {
-          //   const { signature, deadline } =
-          //     await ledger!.transactions.permitDeposit(
-          //       depositParams,
-          //       depositFees.depositFee,
-          //     );
+          // If permit is supported, we need to permit the deposit
+          if (depositParams.permitSupported) {
+            const { signature, deadline } =
+              await ledger!.transactions.permitDeposit(
+                depositParams,
+                depositFees.depositFee,
+              );
 
-          //   const metaTransactionData =
-          //     await ledger!.transactions.prepareDepositMetaTransactionWithPermit(
-          //       {
-          //         ...depositParams,
-          //         permitSignature: signature,
-          //         deadline,
-          //       },
-          //     );
+            const metaTransactionData =
+              await ledger!.transactions.prepareDepositMetaTransactionWithPermit(
+                {
+                  ...depositParams,
+                  permitSignature: signature,
+                  deadline,
+                },
+              );
 
-          //   setState((prev) => ({
-          //     ...prev,
-          //     ...metaTransactionData,
-          //     step: "preview" as const,
-          //     isModalLoading: false,
-          //   }));
-          //   return;
-          // }
+            setState((prev) => ({
+              ...prev,
+              ...metaTransactionData,
+              step: "preview" as const,
+              isModalLoading: false,
+            }));
+            return;
+          }
 
           await ledger!.transactions.approveDeposit(
             depositParams,
