@@ -41,16 +41,21 @@ export async function createSignedMetaTx(
   forwarderAddress: Address,
   client: CustomClient,
 ) {
+  const stringifyRequest = {
+    ...request,
+    gas: request.gas.toString(),
+    nonce: request.nonce.toString(),
+    deadline: request.deadline.toString(),
+    value: request.value.toString(),
+  };
   const signature = await client.signTypedData({
     domain: getForwarderDomain(client.chain.id, forwarderAddress),
     types: forwardRequestType,
     primaryType: "ForwardRequest",
-    message: request,
+    message: stringifyRequest,
   });
   return {
-    ...request,
-    gas: request.gas.toString(),
-    nonce: request.nonce.toString(),
+    ...stringifyRequest,
     signature,
   };
 }

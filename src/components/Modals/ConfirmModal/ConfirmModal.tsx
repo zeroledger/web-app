@@ -24,7 +24,7 @@ export default function ConfirmModal({
       isOpen={isOpen}
       onClose={onCancel}
       closeOnOverlayClick={false}
-      contentClassName="px-6"
+      contentClassName="px-6 md:w-[100%] md:max-w-md md:rounded-xl"
     >
       <div className="flex-1 content-center py-5">
         <BackButton onClick={onCancel} />

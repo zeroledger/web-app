@@ -700,7 +700,7 @@ export class Transactions {
             this.token,
             mainAccount.address,
             amount,
-            // await getNativeBalanceToRequest(mainAccount.address)
+            // await this.getNativeBalanceToRequest(mainAccount.address),
           ),
         );
       },
@@ -713,11 +713,15 @@ export class Transactions {
     const userBalance = await this.evmClients.readClient.getBalance({
       address: account,
     });
+    console.log("userBalance", userBalance.toString());
     const expectedBalance = parseEther("0.0001");
     const nativeBalanceToFill =
       userBalance > expectedBalance ? 0n : expectedBalance - userBalance;
-    return nativeBalanceToFill < userBalance
-      ? undefined
-      : formatEther(nativeBalanceToFill);
+    const result =
+      nativeBalanceToFill < userBalance
+        ? undefined
+        : formatEther(nativeBalanceToFill);
+    console.log("result", result);
+    return result;
   }
 }
