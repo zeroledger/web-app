@@ -8,8 +8,7 @@ import {
   INPUT_REMOVAL_GAS_COST,
   OUTPUT_RECORD_GAS_COST,
   PROOF_VERIFICATION_GAS_COST,
-  GAS_LIMIT_DENOMINATOR,
-  GAS_LIMIT_NOMINATOR,
+  SMART_CONTRACT_WALLET_INITIALIZATION_GAS_COST,
 } from "./vault.constants";
 
 // gas amount that should be covered by fee during sponsoring
@@ -18,15 +17,21 @@ export const spendGasSponsoredLimit = (
   expectedInputs: number,
   expectedOutputs: number,
   expectedPublicOutputs: number,
+  smartWalletRequireInitialization: boolean,
 ) => {
   const rebates = BigInt(expectedInputs) * INPUT_REMOVAL_GAS_COST;
   const writes = BigInt(expectedOutputs) * OUTPUT_RECORD_GAS_COST;
   const transfers =
-    BigInt(expectedPublicOutputs) * AVERAGE_ERC_20_TRANSFER_COST;
-  const base = PROOF_VERIFICATION_GAS_COST;
+    BigInt(expectedPublicOutputs + 1) * AVERAGE_ERC_20_TRANSFER_COST;
+  const initialization = smartWalletRequireInitialization
+    ? SMART_CONTRACT_WALLET_INITIALIZATION_GAS_COST
+    : 0n;
   return (
-    ((base + transfers + writes + rebates) * GAS_LIMIT_NOMINATOR) /
-      GAS_LIMIT_DENOMINATOR +
+    initialization +
+    PROOF_VERIFICATION_GAS_COST +
+    transfers +
+    writes +
+    rebates +
     FORWARDER_EXECUTION_COST
   );
 };

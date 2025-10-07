@@ -56,7 +56,6 @@ vi.mock("debounce", () => ({
 describe("Watcher", () => {
   let watcher: Watcher;
   let mockEvmClients: EvmClients;
-  let mockViewAccount: ViewAccount;
   let mockQueue: MemoryQueue;
   let mockCommitments: Commitments;
   let mockCommitmentsHistory: CommitmentsHistory;
@@ -105,11 +104,6 @@ describe("Watcher", () => {
       ),
     } as unknown as EvmClients;
 
-    // Create mock ViewAccount
-    mockViewAccount = {
-      viewPrivateKey: vi.fn(() => "0xPrivateKey"),
-    } as unknown as ViewAccount;
-
     // Create mock Queue
     mockQueue = {
       enqueue: vi.fn(),
@@ -145,6 +139,9 @@ describe("Watcher", () => {
           sValue: 123456789n,
         }),
       ),
+      ViewAccount: {
+        viewPrivateKey: vi.fn(() => "0xPrivateKey"),
+      } as unknown as ViewAccount,
     } as unknown as Tes;
 
     // Create mock Axios
@@ -152,7 +149,6 @@ describe("Watcher", () => {
 
     // Create Watcher instance
     watcher = new Watcher(
-      mockViewAccount,
       mockEvmClients,
       mockVault,
       mockToken,
@@ -346,7 +342,6 @@ describe("Watcher", () => {
 
       // Create new watcher with error-prone Tes service
       const watcherWithError = new Watcher(
-        mockViewAccount,
         mockEvmClients,
         mockVault,
         mockToken,

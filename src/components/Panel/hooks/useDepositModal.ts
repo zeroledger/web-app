@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { isErc6492Signature, parseUnits } from "viem";
+import { parseUnits } from "viem";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { delay } from "@src/utils/common";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
@@ -120,14 +120,12 @@ export const useMultiStepDepositModal = (decimals: number) => {
           const { depositParams, depositFees } = state;
 
           // If permit is supported, we need to permit the deposit
-          if (depositParams.permitSupported) {
-            const { signature, rawSignature, deadline } =
+          if (depositFees.withPermit) {
+            const { signature, deadline } =
               await ledger!.transactions.permitDeposit(
                 depositParams,
                 depositFees.depositFee,
               );
-
-            const hardcodeGas = isErc6492Signature(rawSignature);
 
             const metaTransactionData =
               await ledger!.transactions.prepareDepositMetaTransactionWithPermit(
@@ -135,7 +133,6 @@ export const useMultiStepDepositModal = (decimals: number) => {
                   ...depositParams,
                   permitSignature: signature,
                   deadline,
-                  hardcodeGas,
                 },
               );
 

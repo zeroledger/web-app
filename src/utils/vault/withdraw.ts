@@ -4,24 +4,22 @@ import { type WithdrawParams } from "./types";
 import {
   AVERAGE_ERC_20_TRANSFER_COST,
   FORWARDER_EXECUTION_COST,
-  GAS_LIMIT_DENOMINATOR,
-  GAS_LIMIT_NOMINATOR,
-  BASE_WITHDRAW_GAS_COST,
   REDEEM_ITEM_GAS_COST,
+  SMART_CONTRACT_WALLET_INITIALIZATION_GAS_COST,
 } from "./vault.constants";
 
 // gas amount that should be covered by fee during sponsoring
 // computes like avg tx gas limit * 1.1 + agv forwarder execution gas
-export const withdrawGasSponsoredLimit = (withdrawingItemsAmount: number) => {
-  const redemptions =
-    BigInt(withdrawingItemsAmount) * REDEEM_ITEM_GAS_COST +
-    BASE_WITHDRAW_GAS_COST;
-  return (
-    (redemptions * GAS_LIMIT_NOMINATOR) / GAS_LIMIT_DENOMINATOR +
-    AVERAGE_ERC_20_TRANSFER_COST +
-    FORWARDER_EXECUTION_COST
-  );
-};
+export const withdrawGasSponsoredLimit = (
+  withdrawingItemsAmount: number,
+  smartWalletRequireInitialization: boolean,
+) =>
+  BigInt(withdrawingItemsAmount) * REDEEM_ITEM_GAS_COST +
+  (smartWalletRequireInitialization
+    ? SMART_CONTRACT_WALLET_INITIALIZATION_GAS_COST
+    : 0n) +
+  AVERAGE_ERC_20_TRANSFER_COST * 3n +
+  FORWARDER_EXECUTION_COST;
 
 export function getWithdrawTxData(params: WithdrawParams) {
   return encodeFunctionData({

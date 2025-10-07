@@ -1,8 +1,14 @@
-import { Address, formatUnits, parseUnits } from "viem";
+import {
+  type Address,
+  formatUnits,
+  isErc6492Signature,
+  parseUnits,
+} from "viem";
 import { Logger } from "@src/utils/logger";
 import { type Tes } from "@src/services/Tes";
-import { EvmClients } from "@src/services/Clients";
+import { type EvmClients } from "@src/services/Clients";
 import { roundToCents } from "@src/utils/common";
+import { permitSupported } from "@src/utils/erc20";
 
 type FeesData = {
   coveredGas: bigint;
@@ -13,54 +19,62 @@ type FeesData = {
 
 export type DepositFeesData = FeesData & {
   depositFee: bigint;
+  withPermit: boolean;
+  smartWalletAndRequireInitialization: boolean;
 };
 
 export type WithdrawFeesData = FeesData & {
   withdrawFee: bigint;
+  smartWalletAndRequireInitialization: boolean;
 };
 
 export type SpendFeesData = FeesData & {
   spendFee: bigint;
+  smartWalletAndRequireInitialization: boolean;
 };
 
 // Dynamic imports for heavy dependencies
 const loadHeavyDependencies = async () => {
-  const [
-    asyncVaultUtils,
-    asyncMetaTxUtils,
-    { Tes },
-    asyncProtocolManagerUtils,
-  ] = await Promise.all([
+  const [asyncVaultUtils, asyncProtocolManagerUtils] = await Promise.all([
     import("@src/utils/vault"),
-    import("@src/utils/metatx"),
-    import("@src/services/Tes"),
     import("@src/utils/protocolManager"),
   ]);
 
   return {
     asyncVaultUtils,
-    asyncMetaTxUtils,
-    Tes,
     asyncProtocolManagerUtils,
   };
 };
 
 export class Fees {
   private logger = new Logger(Fees.name);
-  private preloadedModulesPromise: Promise<{
-    asyncVaultUtils: typeof import("@src/utils/vault");
-    asyncMetaTxUtils: typeof import("@src/utils/metatx");
-    Tes: typeof import("@src/services/Tes").Tes;
-    asyncProtocolManagerUtils: typeof import("@src/utils/protocolManager");
-  }>;
+  private preloadedModulesPromise = loadHeavyDependencies();
   constructor(
     private readonly evmClients: EvmClients,
     private readonly vault: Address,
     private readonly token: Address,
     private readonly tesService: Tes,
+    private readonly walletAddress: Address,
   ) {
-    this.preloadedModulesPromise = loadHeavyDependencies();
     this.logger.log(`Fees service created with token ${this.token}`);
+  }
+
+  async walletParams() {
+    const delegationSig = this.tesService.viewAccount.getDelegationSignature();
+
+    const authWasErc6492Signature =
+      !!delegationSig && isErc6492Signature(delegationSig);
+    const bytecode = Boolean(
+      await this.evmClients.readClient.getCode({
+        address: this.walletAddress,
+      }),
+    );
+
+    return {
+      smartWalletAndRequireInitialization: bytecode && authWasErc6492Signature,
+      isEOA: !bytecode && !authWasErc6492Signature,
+      smartWallet: !!bytecode,
+    };
   }
 
   async getProtocolFees() {
@@ -79,13 +93,21 @@ export class Fees {
   async getDepositFeesData(decimals: number): Promise<DepositFeesData> {
     const { asyncVaultUtils } = await this.preloadedModulesPromise;
     const { deposit: depositFee } = await this.getProtocolFees();
+    const tokenWithPermit = await permitSupported(
+      this.token,
+      await this.evmClients.externalClient(),
+    );
+
+    const { isEOA, smartWalletAndRequireInitialization } =
+      await this.walletParams();
+    const withPermit = isEOA && tokenWithPermit;
+    const gasLimit = withPermit
+      ? asyncVaultUtils.depositGasSponsoredLimit()
+      : asyncVaultUtils.depositWithPermitGasSponsoredLimit(
+          smartWalletAndRequireInitialization,
+        );
     const { fee, paymasterAddress, roundedFee, coveredGas } =
-      await this.getBaseFeesData(
-        decimals,
-        depositFee,
-        asyncVaultUtils.depositGasSponsoredLimit(),
-        "deposit",
-      );
+      await this.getBaseFeesData(decimals, depositFee, gasLimit, "deposit");
 
     return {
       coveredGas,
@@ -93,6 +115,8 @@ export class Fees {
       depositFee,
       paymasterAddress,
       roundedFee,
+      withPermit,
+      smartWalletAndRequireInitialization,
     };
   }
 
@@ -102,39 +126,53 @@ export class Fees {
   ): Promise<WithdrawFeesData> {
     const { asyncVaultUtils } = await this.preloadedModulesPromise;
     const { withdraw: withdrawFee } = await this.getProtocolFees();
+    const { smartWalletAndRequireInitialization } = await this.walletParams();
     const { fee, paymasterAddress, roundedFee, coveredGas } =
       await this.getBaseFeesData(
         decimals,
         withdrawFee,
-        asyncVaultUtils.withdrawGasSponsoredLimit(withdrawingItemsAmount),
+        asyncVaultUtils.withdrawGasSponsoredLimit(
+          withdrawingItemsAmount,
+          smartWalletAndRequireInitialization,
+        ),
         "withdraw",
       );
+
     return {
       coveredGas,
       fee,
       withdrawFee,
       paymasterAddress,
       roundedFee,
+      smartWalletAndRequireInitialization,
     };
   }
 
   async getSpendFeesData(decimals: number): Promise<SpendFeesData> {
     const { asyncVaultUtils } = await this.preloadedModulesPromise;
     const { spend: spendFee } = await this.getProtocolFees();
+    const { smartWalletAndRequireInitialization } = await this.walletParams();
 
     const { fee, paymasterAddress, roundedFee, coveredGas } =
       await this.getBaseFeesData(
         decimals,
         spendFee,
-        asyncVaultUtils.spendGasSponsoredLimit(1, 3, 2),
+        asyncVaultUtils.spendGasSponsoredLimit(
+          1,
+          3,
+          2,
+          smartWalletAndRequireInitialization,
+        ),
         "spend",
       );
+
     return {
       coveredGas,
       fee,
       spendFee,
       paymasterAddress,
       roundedFee,
+      smartWalletAndRequireInitialization,
     };
   }
 

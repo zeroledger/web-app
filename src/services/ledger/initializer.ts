@@ -68,9 +68,8 @@ export const initialize = async (
   const tesService = new Tes(tesUrl, viewAccount, queue, axiosInstance);
 
   return {
-    fees: new Fees(evmClients, vaultAddress, tokenAddress, tesService),
+    fees: new Fees(evmClients, vaultAddress, tokenAddress, tesService, address),
     watcher: new Watcher(
-      viewAccount,
       evmClients,
       vaultAddress,
       tokenAddress,

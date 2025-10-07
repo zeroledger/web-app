@@ -98,7 +98,13 @@ describe("Fees", () => {
       ),
     } as unknown as Tes;
 
-    fees = new Fees(mockEvmClients, mockVault, mockToken, mockTesService);
+    fees = new Fees(
+      mockEvmClients,
+      mockVault,
+      mockToken,
+      mockTesService,
+      mockAccount,
+    );
   });
 
   afterEach(() => {

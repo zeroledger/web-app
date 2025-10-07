@@ -1,6 +1,6 @@
 import { Address, formatEther, parseEther } from "viem";
 import { FaucetRpc, FaucetRequestDto } from "@src/services/core/faucet.dto";
-import { approve, allowance, permitSupported, permit } from "@src/utils/erc20";
+import { approve, allowance, permit } from "@src/utils/erc20";
 import { JsonRpcClient, ServiceClient } from "@src/services/core/rpc";
 import { Logger } from "@src/utils/logger";
 import type { MemoryQueue } from "@src/services/core/queue";
@@ -168,7 +168,6 @@ export class Transactions {
           contract: this.vault,
           proof: proofData.calldata_proof,
           approveRequired: spendAllowance < value,
-          permitSupported: await permitSupported(this.token, client),
         };
       },
       "prepareDepositParamsForApproval",

@@ -4,15 +4,15 @@ import { type Proof } from "@src/utils/prover";
 import { encodeFunctionData } from "viem";
 import {
   FORWARDER_EXECUTION_COST,
-  GAS_LIMIT_DENOMINATOR,
-  GAS_LIMIT_NOMINATOR,
-  BASE_DEPOSIT_GAS_COST,
+  PROOF_VERIFICATION_GAS_COST,
+  AVERAGE_ERC_20_TRANSFER_COST,
 } from "./vault.constants";
 
 // gas amount that should be covered by fee during sponsoring
 // computes like avg tx gas limit * 1.1 + agv forwarder execution gas
 export const depositGasSponsoredLimit = () =>
-  (BASE_DEPOSIT_GAS_COST * GAS_LIMIT_NOMINATOR) / GAS_LIMIT_DENOMINATOR +
+  PROOF_VERIFICATION_GAS_COST +
+  AVERAGE_ERC_20_TRANSFER_COST * 3n +
   FORWARDER_EXECUTION_COST;
 
 export function getDepositTxData(depositStruct: DepositStruct, proof: Proof) {

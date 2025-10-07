@@ -4,17 +4,22 @@ import { type Proof } from "@src/utils/prover";
 import { encodeFunctionData } from "viem";
 import {
   FORWARDER_EXECUTION_COST,
-  GAS_LIMIT_DENOMINATOR,
-  GAS_LIMIT_NOMINATOR,
-  BASE_DEPOSIT_WITH_PERMIT_GAS_COST,
+  PROOF_VERIFICATION_GAS_COST,
+  AVERAGE_ERC_20_TRANSFER_COST,
+  SMART_CONTRACT_WALLET_INITIALIZATION_GAS_COST,
+  PERMIT_GAS_COST,
 } from "./vault.constants";
 
 // gas amount that should be covered by fee during sponsoring
 // computes like avg tx gas limit * 1.1 + agv forwarder execution gas
-export const depositWithPermitGasSponsoredLimit = () =>
-  (BASE_DEPOSIT_WITH_PERMIT_GAS_COST * GAS_LIMIT_NOMINATOR) /
-    GAS_LIMIT_DENOMINATOR +
-  FORWARDER_EXECUTION_COST;
+export const depositWithPermitGasSponsoredLimit = (
+  initializeSCWRequired: boolean,
+) =>
+  PROOF_VERIFICATION_GAS_COST +
+  PERMIT_GAS_COST +
+  AVERAGE_ERC_20_TRANSFER_COST * 3n +
+  FORWARDER_EXECUTION_COST +
+  (initializeSCWRequired ? SMART_CONTRACT_WALLET_INITIALIZATION_GAS_COST : 0n);
 
 export function getDepositWithPermitTxData(
   depositStruct: DepositStruct,
@@ -37,21 +42,19 @@ export function getDepositWithPermitTxData(
 }
 
 export function getDepositWithPermitTxGas(params: DepositParamsWithPermit) {
-  return params.hardcodeGas
-    ? BASE_DEPOSIT_WITH_PERMIT_GAS_COST
-    : params.client.estimateContractGas({
-        address: params.contract,
-        abi: VAULT_ABI,
-        functionName: "depositWithPermit",
-        args: [
-          params.depositStruct,
-          params.proof,
-          params.deadline,
-          params.permitSignature.v,
-          params.permitSignature.r,
-          params.permitSignature.s,
-        ],
-      });
+  return params.client.estimateContractGas({
+    address: params.contract,
+    abi: VAULT_ABI,
+    functionName: "depositWithPermit",
+    args: [
+      params.depositStruct,
+      params.proof,
+      params.deadline,
+      params.permitSignature.v,
+      params.permitSignature.r,
+      params.permitSignature.s,
+    ],
+  });
 }
 
 async function getDepositWithPermitRequest(params: DepositParamsWithPermit) {

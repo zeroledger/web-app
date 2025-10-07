@@ -18,7 +18,6 @@ import CommitmentsHistory from "./CommitmentsHistory";
 import SyncService from "./SyncService";
 import { HistoryRecordDto, LedgerRecordDto } from "./ledger.dto";
 import { EvmClients } from "@src/services/Clients";
-import { ViewAccount } from "@src/services/Account";
 import { compareEvents, EventLike } from "@src/utils/events";
 import { AxiosInstance } from "axios";
 import { LedgerEvents } from "./events";
@@ -51,7 +50,6 @@ export class Watcher extends EventEmitter {
   private _unwatchVault?: () => void;
   private classId = keccak256(`0x${uuidv4()}`).slice(0, 8);
   constructor(
-    private readonly viewAccount: ViewAccount,
     private readonly evmClients: EvmClients,
     private readonly vault: Address,
     private readonly token: Address,
@@ -182,7 +180,7 @@ export class Watcher extends EventEmitter {
             const { Tes } = await this.preloadedModulesPromise;
             const externalTes = new Tes(
               tesUrl,
-              this.viewAccount,
+              this.tesService.viewAccount,
               this.queue,
               this.axios,
             );
@@ -201,7 +199,7 @@ export class Watcher extends EventEmitter {
             );
             commitment = decryptCommitment(
               encryptedCommitment,
-              this.viewAccount.viewPrivateKey()!,
+              this.tesService.viewAccount.viewPrivateKey()!,
             );
           }
         } catch {
