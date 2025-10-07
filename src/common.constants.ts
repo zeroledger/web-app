@@ -14,7 +14,7 @@ const hardhatBaseFork = {
 };
 
 const supportedChainsPerEnvMap = {
-  localhost: [baseSepolia],
+  localhost: [hardhatBaseFork],
   test: [baseSepolia],
   prod: [base],
 };

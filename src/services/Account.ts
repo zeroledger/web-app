@@ -105,9 +105,7 @@ export class ViewAccount {
 
   prepareViewAccount(mainAccountAddress: Address, password: string) {
     this._viewPk = keccak256(
-      keccak256(
-        toHex(`${this.appPrefixKey}_${password}_${mainAccountAddress}`),
-      ),
+      keccak256(toHex(`zeroledger_${password}_${mainAccountAddress}`)),
     );
     this._viewAccount = privateKeyToAccount(this._viewPk);
   }

@@ -87,7 +87,7 @@ export class Tes {
     const [error] = await this.memoryQueue.schedule(
       Tes.name,
       async () => {
-        if (this.timeout < Date.now() || !this.csrf) {
+        if (!this.csrf || !this.timeout || this.timeout < Date.now()) {
           await this.challenge(mainAccountAddress);
         }
       },
