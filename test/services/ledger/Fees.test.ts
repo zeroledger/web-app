@@ -7,6 +7,7 @@ import { vi } from "vitest";
 // Mock the heavy dependencies
 vi.mock("@src/utils/vault", () => ({
   depositGasSponsoredLimit: vi.fn(() => 100000n),
+  depositWithPermitGasSponsoredLimit: vi.fn(() => 120000n),
   withdrawGasSponsoredLimit: vi.fn(
     (items: number) => 150000n + BigInt(items * 10000),
   ),
@@ -79,10 +80,25 @@ describe("Fees", () => {
       readClient: {
         getBlockNumber: vi.fn(),
         readContract: vi.fn(),
+        getCode: vi.fn(() => Promise.resolve(undefined)), // EOA has no bytecode
+        multicall: vi.fn(() =>
+          Promise.resolve([
+            { status: "success", result: "TestToken" },
+            { status: "success", result: 0n },
+            { status: "success", result: ["", "", "", 0n, "", ""] },
+          ]),
+        ),
       },
       externalClient: vi.fn(() =>
         Promise.resolve({
           account: { address: mockAccount },
+          multicall: vi.fn(() =>
+            Promise.resolve([
+              { status: "success", result: "TestToken" },
+              { status: "success", result: 0n },
+              { status: "success", result: ["", "", "", 0n, "", ""] },
+            ]),
+          ),
         }),
       ),
     } as unknown as EvmClients;
@@ -96,6 +112,13 @@ describe("Fees", () => {
           sponsoredVaultMethods: ["deposit", "withdraw"],
         }),
       ),
+      viewAccount: {
+        getDelegationSignature: vi.fn(() => "0x1234567890abcdef"),
+        getViewAccount: vi.fn(() => ({
+          address: "0xViewAccount",
+          signMessage: vi.fn(),
+        })),
+      },
     } as unknown as Tes;
 
     fees = new Fees(
