@@ -141,7 +141,7 @@ export default function SigningPreview({
 
       {/* Warning */}
       {warningText && (
-        <div className="text-center">
+        <div className="text-center mt-2">
           <p className="text-gray-500 text-xs">{warningText}</p>
         </div>
       )}

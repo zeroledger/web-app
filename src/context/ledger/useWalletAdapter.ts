@@ -1,13 +1,13 @@
 import { usePrevious } from "@src/hooks/usePrevious";
-import { useConnectWallet, usePrivy, useWallets } from "@privy-io/react-auth";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { Chain } from "viem";
-import { /* useCallback, */ useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { SUPPORTED_CHAINS } from "@src/common.constants";
 
 export function useWalletAdapter() {
   const { wallets } = useWallets();
-  const { logout, exportWallet /* authenticated, login */ } = usePrivy();
-  const { connectWallet } = useConnectWallet();
+  const { logout, exportWallet, authenticated, login: privyLogin } = usePrivy();
+  // const { connectWallet } = useConnectWallet();
   const [targetChain, setTargetChain] = useState<Chain>(SUPPORTED_CHAINS[0]);
 
   const wallet = wallets[0];
@@ -31,12 +31,12 @@ export function useWalletAdapter() {
     setTargetChain(chain);
   }, [walletChainId]);
 
-  // const properLogin = useCallback(async () => {
-  //   if (authenticated) {
-  //     await logout();
-  //   }
-  //   login();
-  // }, [authenticated, login, logout]);
+  const login = useCallback(async () => {
+    if (authenticated) {
+      await logout();
+    }
+    privyLogin();
+  }, [authenticated, privyLogin, logout]);
 
   return {
     wallets,
@@ -51,6 +51,6 @@ export function useWalletAdapter() {
     setTargetChain,
     logout,
     exportWallet,
-    login: connectWallet,
+    login,
   };
 }
