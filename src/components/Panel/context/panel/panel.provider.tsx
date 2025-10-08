@@ -24,6 +24,7 @@ import { useLedgerSync } from "./useLedgerSync";
 import { Address } from "viem";
 import { EvmClients } from "@src/services/Clients";
 import { initialize } from "@src/services/ledger";
+import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { PanelContext } from "./panel.context";
 import { prover } from "@src/utils/prover";
 import { useMetadata } from "./useMetadata";
@@ -31,10 +32,8 @@ import { useMetadata } from "./useMetadata";
 export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
   children,
 }) => {
+  const { wallet, isWalletChanged, chainSupported } = useWalletAdapter();
   const {
-    wallet,
-    isWalletChanged,
-    chainSupported,
     ledger,
     evmClients,
     viewAccount,

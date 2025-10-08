@@ -1,10 +1,9 @@
-import { useContext } from "react";
-import { LedgerContext } from "@src/context/ledger/ledger.context";
+import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { catchService } from "@src/services/core/catch.service";
 import debounce from "debounce";
 
 export const useLogout = () => {
-  const { logout, wallet } = useContext(LedgerContext);
+  const { logout, wallet } = useWalletAdapter();
 
   const handleLogout = debounce(async () => {
     try {

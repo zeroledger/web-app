@@ -1,5 +1,6 @@
 import { useContext, useState, useEffect } from "react";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
+import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { useNavigate } from "react-router-dom";
 import {
   APP_PREFIX_KEY,
@@ -17,13 +18,13 @@ import { initialize } from "@src/services/ledger";
 import debounce from "debounce";
 
 export const useRegister = () => {
+  const { wallet } = useWalletAdapter();
   const {
     setEvmClients,
     setLedger,
     setAuthorized,
     setPassword,
     targetChain,
-    wallet,
     viewAccount,
     ledger,
   } = useContext(LedgerContext);

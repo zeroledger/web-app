@@ -1,12 +1,9 @@
-import { useContext } from "react";
-import { usePrivy } from "@privy-io/react-auth";
-import { LedgerContext } from "@src/context/ledger/ledger.context";
+import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { catchService } from "@src/services/core/catch.service";
 import debounce from "debounce";
 
 export const useBackupPrivateKey = () => {
-  const { wallet } = useContext(LedgerContext);
-  const { exportWallet } = usePrivy();
+  const { exportWallet, wallet } = useWalletAdapter();
 
   const handleBackupPrivateKey = debounce(async () => {
     try {

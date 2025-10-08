@@ -14,7 +14,7 @@ import {
   custom,
   Address,
 } from "viem";
-import { ConnectedWallet } from "@privy-io/react-auth";
+import { type ConnectedWallet } from "@src/wallet.types";
 import { Logger } from "@src/utils/logger";
 
 export type CustomClient = PublicClient<Transport, Chain, Account, RpcSchema> &

@@ -1,18 +1,24 @@
+import { useContext } from "react";
+import { type Address } from "viem";
+import clsx from "clsx";
+
+import { LedgerContext } from "@src/context/ledger/ledger.context";
+import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
+
 import { primaryButtonStyle } from "@src/components/styles/Button.styles";
 import { TwoStepSpendModal } from "@src/components/Modals/TwoStepSpendModal";
 import { ReceiveModal } from "@src/components/Modals/ReceiveModal";
+import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
+import { useCopyAddress } from "@src/components/Modals/ReceiveModal";
+
 import { formatBalance } from "@src/utils/common";
+
+import { SCAN_URL } from "@src/common.constants";
+
 import { useTwoStepSpendModal } from "./hooks/useSpendModal";
 import { useReceiveModal } from "./hooks/useReceiveModal";
-import { useCopyAddress } from "@src/components/Modals/ReceiveModal";
-import { LedgerContext } from "@src/context/ledger/ledger.context";
-import { useContext } from "react";
 import { Avatar } from "../EnsProfile/Avatar";
 import { Name } from "../EnsProfile/Name";
-import { Address } from "viem";
-import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
-import clsx from "clsx";
-import { SCAN_URL } from "@src/common.constants";
 
 export default function WalletTab() {
   const {
@@ -24,8 +30,8 @@ export default function WalletTab() {
     consolidationRatio,
     balanceForConsolidation,
   } = useContext(PanelContext);
-  const { wallet, ensProfile, isEnsLoading, targetChain } =
-    useContext(LedgerContext);
+  const { wallet } = useWalletAdapter();
+  const { ensProfile, isEnsLoading, targetChain } = useContext(LedgerContext);
 
   const address = wallet?.address as Address | undefined;
 

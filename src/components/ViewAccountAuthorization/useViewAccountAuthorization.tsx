@@ -1,9 +1,9 @@
-import { useWallets } from "@privy-io/react-auth";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SigningData } from "@src/components/SigningPreview/SigningPreview";
 import { shortString } from "@src/utils/common";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
+import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import debounce from "debounce";
 
 export const useViewAccountAuthorization = () => {
@@ -11,14 +11,9 @@ export const useViewAccountAuthorization = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<Error>();
   const navigate = useNavigate();
-  const {
-    viewAccount,
-    setAuthorized,
-    password,
-    evmClients,
-    isWalletAddressChanged,
-  } = useContext(LedgerContext);
-  const { wallets } = useWallets();
+  const { viewAccount, setAuthorized, password, evmClients } =
+    useContext(LedgerContext);
+  const { wallets, isWalletAddressChanged } = useWalletAdapter();
 
   const messageData = useMemo(
     (): SigningData[] => [

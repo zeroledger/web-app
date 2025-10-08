@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import { useModal } from "@src/hooks/useModal";
-import { usePrivyWalletAdapter } from "./usePrivyWalletAdapter";
+import { useWalletAdapter } from "./useWalletAdapter";
 import { EvmClients } from "@src/services/Clients";
 
 export const useSwitchModal = (evmClients: EvmClients | undefined) => {
   const { wallet, targetChain, setTargetChain, chainSupported } =
-    usePrivyWalletAdapter();
+    useWalletAdapter();
   const {
     isOpen: isSwitchChainModalOpen,
     openModal: openSwitchChainModal,

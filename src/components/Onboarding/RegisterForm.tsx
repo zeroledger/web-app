@@ -4,6 +4,7 @@ import { Description, Field, Label, Input, Button } from "@headlessui/react";
 import clsx from "clsx";
 import { primaryButtonStyle } from "@src/components/styles/Button.styles";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
+import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { Avatar } from "../EnsProfile/Avatar";
 import { Name } from "../EnsProfile/Name";
 import { Address } from "viem";
@@ -19,8 +20,9 @@ export default function RegisterForm() {
     clearErrors,
   } = useForm<{ password: string }>();
 
-  const { wallet, ensProfile, isEnsLoading, viewAccount } =
-    useContext(LedgerContext);
+  const { wallet } = useWalletAdapter();
+
+  const { ensProfile, isEnsLoading, viewAccount } = useContext(LedgerContext);
 
   const { open, isConnecting, error, setError } = useRegister();
 

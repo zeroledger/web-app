@@ -4,7 +4,7 @@ import { APP_PREFIX_KEY } from "@src/common.constants";
 import { type Ledger } from "@src/services/ledger";
 import { EvmClients } from "@src/services/Clients";
 import { useViewAccountAuthorization } from "./useViewAccountAuthorization";
-import { usePrivyWalletAdapter } from "./usePrivyWalletAdapter";
+import { useWalletAdapter } from "./useWalletAdapter";
 import { useSwitchModal } from "./useSwitchModal";
 import { ViewAccount } from "@src/services/Account";
 import { useEnsProfile } from "./useEnsProfile";
@@ -24,14 +24,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
     setAuthorized,
   } = useViewAccountAuthorization();
   const [evmClients, setEvmClients] = useState<EvmClients>();
-  const {
-    wallet,
-    isWalletChanged,
-    chainSupported,
-    isWalletNetworkChanged,
-    isWalletAddressChanged,
-    logout,
-  } = usePrivyWalletAdapter();
+  const { wallet } = useWalletAdapter();
 
   const {
     isSwitchChainModalOpen,
@@ -62,12 +55,6 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       // Ledger
       ledger,
       setLedger,
-      // Wallet
-      wallet,
-      isWalletChanged,
-      isWalletNetworkChanged,
-      isWalletAddressChanged,
-      chainSupported,
       // Switch Chain Modal
       isSwitchChainModalOpen,
       openSwitchChainModal,
@@ -91,15 +78,9 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       isEnsLoading,
       // Reset
       reset,
-      // Logout
-      logout,
     }),
     [
       ledger,
-      wallet,
-      isWalletNetworkChanged,
-      isWalletAddressChanged,
-      isWalletChanged,
       isSwitchChainModalOpen,
       openSwitchChainModal,
       closeSwitchChainModal,
@@ -110,14 +91,12 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       authorized,
       setAuthorized,
       evmClients,
-      chainSupported,
       resetViewAccountAuthorization,
       setLedger,
       setEvmClients,
       reset,
       ensProfile,
       isEnsLoading,
-      logout,
     ],
   );
 

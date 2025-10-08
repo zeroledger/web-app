@@ -1,5 +1,5 @@
 import { BackButton } from "@src/components/Buttons/BackButton";
-import { usePrivyWalletAdapter } from "@src/context/ledger/usePrivyWalletAdapter";
+import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { useEnsProfile } from "@src/context/ledger/useEnsProfile";
 import { useDynamicHeight } from "@src/hooks/useDynamicHeight";
 import { useCopyAddress, useCopyEns } from ".";
@@ -13,7 +13,7 @@ interface ReceiveModalProps {
 }
 
 export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
-  const { wallet } = usePrivyWalletAdapter();
+  const { wallet } = useWalletAdapter();
   const { data: ensProfile } = useEnsProfile(wallet?.address as `0x${string}`);
   const { showCopiedTooltip: showAddressCopied, handleCopyAddress } =
     useCopyAddress(wallet?.address as `0x${string}`);

@@ -4,7 +4,7 @@ import axios from "axios";
 import { type FaucetRpc } from "@src/services/core/faucet.dto";
 import { type EvmClients } from "@src/services/Clients";
 import { type ViewAccount } from "@src/services/Account";
-import { type ConnectedWallet } from "@privy-io/react-auth";
+import { type ConnectedWallet } from "@src/wallet.types";
 
 const axiosInstance = axios.create();
 

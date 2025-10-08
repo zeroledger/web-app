@@ -1,5 +1,6 @@
 import { useContext } from "react";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
+import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { delay } from "@src/utils/common";
 import {
   useMultiStepModal,
@@ -23,7 +24,8 @@ export interface PointsModalState extends MultiStepModalState {
 }
 
 export const usePointsModal = () => {
-  const { ledger, wallet } = useContext(LedgerContext);
+  const { wallet } = useWalletAdapter();
+  const { ledger } = useContext(LedgerContext);
 
   const {
     form,

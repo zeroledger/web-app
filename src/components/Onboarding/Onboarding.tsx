@@ -1,6 +1,6 @@
 import { lazy, useEffect, useState } from "react";
 import { LoadingScreen } from "@src/components/LoadingScreen";
-import { useWallets } from "@privy-io/react-auth";
+import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { DumpLoadingScreen } from "@src/components/LoadingScreen";
 
 const RegisterForm = lazy(
@@ -10,7 +10,7 @@ const RegisterForm = lazy(
 const Connect = lazy(() => import("@src/components/Onboarding/Connect"));
 
 export default function Onboarding() {
-  const { wallets } = useWallets();
+  const { wallets } = useWalletAdapter();
 
   const [connecting, setConnecting] = useState(true);
 

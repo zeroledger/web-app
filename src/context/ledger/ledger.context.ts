@@ -1,6 +1,5 @@
 import { createContext } from "react";
 import { type Ledger } from "@src/services/ledger";
-import { ConnectedWallet } from "@privy-io/react-auth";
 import { Chain, mainnet } from "viem/chains";
 import { EvmClients } from "@src/services/Clients";
 import { ViewAccount } from "@src/services/Account";
@@ -9,12 +8,6 @@ export const LedgerContext = createContext<{
   // Ledger
   ledger: Ledger | undefined;
   setLedger: (ledger: Ledger | undefined) => void;
-  // Wallet
-  wallet: ConnectedWallet | undefined;
-  isWalletChanged: boolean;
-  isWalletNetworkChanged: boolean;
-  isWalletAddressChanged: boolean;
-  chainSupported: boolean;
   // Switch Chain Modal
   isSwitchChainModalOpen: boolean;
   openSwitchChainModal: () => void;
@@ -41,18 +34,10 @@ export const LedgerContext = createContext<{
   isEnsLoading: boolean;
   // Reset
   reset: () => void;
-  // Logout
-  logout: () => Promise<void>;
 }>({
   // Ledger
   ledger: undefined,
   setLedger: () => {},
-  // Wallet
-  wallet: undefined,
-  isWalletChanged: false,
-  isWalletNetworkChanged: false,
-  isWalletAddressChanged: false,
-  chainSupported: false,
   // Switch Chain Modal
   isSwitchChainModalOpen: false,
   openSwitchChainModal: () => {},
@@ -76,6 +61,4 @@ export const LedgerContext = createContext<{
   isEnsLoading: false,
   // Reset
   reset: () => {},
-  // Logout
-  logout: () => Promise.resolve(),
 });
