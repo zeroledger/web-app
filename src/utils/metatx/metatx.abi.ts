@@ -8,6 +8,44 @@ export const FORWARDER_ABI = [
     inputs: [
       {
         internalType: "address",
+        name: "authority",
+        type: "address",
+      },
+    ],
+    name: "AccessManagedInvalidAuthority",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "caller",
+        type: "address",
+      },
+      {
+        internalType: "uint32",
+        name: "delay",
+        type: "uint32",
+      },
+    ],
+    name: "AccessManagedRequiredDelay",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "caller",
+        type: "address",
+      },
+    ],
+    name: "AccessManagedUnauthorized",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
         name: "target",
         type: "address",
       },
@@ -166,6 +204,19 @@ export const FORWARDER_ABI = [
   },
   {
     anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "address",
+        name: "authority",
+        type: "address",
+      },
+    ],
+    name: "AuthorityUpdated",
+    type: "event",
+  },
+  {
+    anonymous: false,
     inputs: [],
     name: "EIP712DomainChanged",
     type: "event",
@@ -229,6 +280,19 @@ export const FORWARDER_ABI = [
         internalType: "string",
         name: "",
         type: "string",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "authority",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
       },
     ],
     stateMutability: "view",
@@ -383,23 +447,10 @@ export const FORWARDER_ABI = [
     type: "function",
   },
   {
-    inputs: [],
-    name: "getManager",
-    outputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
     inputs: [
       {
         internalType: "address",
-        name: "manager",
+        name: "initialAuthority",
         type: "address",
       },
     ],
@@ -419,6 +470,19 @@ export const FORWARDER_ABI = [
     name: "initialize",
     outputs: [],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "isConsumingScheduledOp",
+    outputs: [
+      {
+        internalType: "bytes4",
+        name: "",
+        type: "bytes4",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -451,6 +515,19 @@ export const FORWARDER_ABI = [
       },
     ],
     stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "newAuthority",
+        type: "address",
+      },
+    ],
+    name: "setAuthority",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function",
   },
   {
