@@ -15,32 +15,34 @@ interface PrivyContextProviderProps {
 }
 
 const config = {
-  loginMethods: ["email", "wallet"] as LoginModalOptions["loginMethods"],
+  loginMethods: ["wallet"] as LoginModalOptions["loginMethods"],
   appearance: {
     walletChainType: "ethereum-only" as const,
     theme: "#101828" as `#${string}`,
     accentColor: "#6A6FF5" as `#${string}`,
     showWalletLoginFirst: false,
     walletList: [
-      "metamask",
-      "base_account",
-      "safe",
       "coinbase_wallet",
+      "metamask",
+      "safe",
       "uniswap",
       "rainbow",
+      "rabby_wallet",
+      "okx_wallet",
       "phantom",
+      "wallet_connect",
     ] as WalletListEntry[],
   },
-  embeddedWallets: {
-    requireUserPasswordOnCreate: false,
-    showWalletUIs: true,
-    ethereum: {
-      createOnLogin: "users-without-wallets",
-    },
-  } as const,
-  mfa: {
-    noPromptOnMfaRequired: false,
-  },
+  // embeddedWallets: {
+  //   requireUserPasswordOnCreate: false,
+  //   showWalletUIs: true,
+  //   ethereum: {
+  //     createOnLogin: "users-without-wallets",
+  //   },
+  // } as const,
+  // mfa: {
+  //   noPromptOnMfaRequired: false,
+  // },
   supportedChains: SUPPORTED_CHAINS,
   defaultChain: SUPPORTED_CHAINS[0],
 };
