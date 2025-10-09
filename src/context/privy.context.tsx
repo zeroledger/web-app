@@ -34,16 +34,16 @@ const config = {
       "wallet_connect",
     ] as WalletListEntry[],
   },
-  // embeddedWallets: {
-  //   requireUserPasswordOnCreate: false,
-  //   showWalletUIs: true,
-  //   ethereum: {
-  //     createOnLogin: "users-without-wallets",
-  //   },
-  // } as const,
-  // mfa: {
-  //   noPromptOnMfaRequired: false,
-  // },
+  embeddedWallets: {
+    requireUserPasswordOnCreate: false,
+    showWalletUIs: false,
+    ethereum: {
+      createOnLogin: "users-without-wallets",
+    },
+  } as const,
+  mfa: {
+    noPromptOnMfaRequired: false,
+  },
   supportedChains: SUPPORTED_CHAINS,
   defaultChain: SUPPORTED_CHAINS[0],
 };
