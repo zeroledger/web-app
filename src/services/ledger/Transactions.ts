@@ -712,7 +712,6 @@ export class Transactions {
     const userBalance = await this.evmClients.readClient.getBalance({
       address: account,
     });
-    console.log("userBalance", userBalance.toString());
     const expectedBalance = parseEther("0.0001");
     const nativeBalanceToFill =
       userBalance > expectedBalance ? 0n : expectedBalance - userBalance;
@@ -720,7 +719,6 @@ export class Transactions {
       nativeBalanceToFill < userBalance
         ? undefined
         : formatEther(nativeBalanceToFill);
-    console.log("result", result);
     return result;
   }
 }

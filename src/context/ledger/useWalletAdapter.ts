@@ -22,8 +22,6 @@ export function useWalletAdapter() {
   const walletChainId = Number(wallet?.chainId.split(":")[1]);
   const chainSupported = targetChain.id === walletChainId;
 
-  console.log("e", window.ethereum);
-
   useEffect(() => {
     const chain =
       SUPPORTED_CHAINS.find((c) => c.id === walletChainId) ??
