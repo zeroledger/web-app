@@ -122,10 +122,12 @@ This document outlines comprehensive manual testing scenarios for the spend func
 
 1. Open spend modal
 2. Enter valid recipient address
-3. Enter invalid amount: `abc`
-4. Click "Review Payment"
+3. Try to enter invalid amount: `abc`
+4. Observe input behavior
 
-**Expected**: Error message "Amount must be a positive number" appears
+**Expected**: Input field prevents non-numeric characters from being entered (regex validation)
+
+**Note**: The input uses regex pattern validation (`/^\d*\.?\d*$/`) to allow only valid decimal numbers, preventing invalid input before form submission.
 
 #### 2.4 Zero Amount
 
@@ -144,10 +146,10 @@ This document outlines comprehensive manual testing scenarios for the spend func
 
 1. Open spend modal
 2. Enter valid recipient address
-3. Enter amount: `-10`
-4. Click "Review Payment"
+3. Try to enter negative amount: `-10`
+4. Observe input behavior
 
-**Expected**: Error message "Amount must be a positive number" appears
+**Expected**: Input field prevents the negative sign (`-`) from being entered (regex validation only allows positive numbers)
 
 #### 2.6 Decimal Input Testing
 
@@ -178,18 +180,16 @@ This document outlines comprehensive manual testing scenarios for the spend func
 2. **Attempt Overspend**
    - Open spend modal
    - Enter valid recipient address
-   - Enter amount higher than balance
-   - Click "Review Payment"
+   - Try to enter amount higher than balance
+   - Observe the input field behavior
 
 **Expected Results**:
 
-- ✅ Form allows input but may show warning
-- ✅ Transaction preparation fails
-- ✅ Error state is displayed
-- ✅ Modal shows appropriate error message
-- ✅ Modal auto-closes after error
+- ✅ Input automatically caps at maximum available private balance
+- ✅ User cannot enter amount exceeding their private balance
+- ✅ Form validation prevents submission of invalid amounts
 
-**Note**: Current implementation uses `getMaxFormattedValue` to automatically cap the input amount to the available balance, preventing users from entering amounts higher than their balance.
+**Note**: Current implementation uses `getMaxFormattedValue` to automatically cap the input amount to the available private balance, preventing users from entering amounts higher than their balance. This provides a seamless UX by preventing errors before they occur.
 
 ---
 
@@ -455,5 +455,5 @@ After any changes to spend logic:
 
 ---
 
-*Last Updated: [Current Date]*
-*Version: 1.0*
+*Last Updated: October 11, 2025*
+*Version: 1.1*

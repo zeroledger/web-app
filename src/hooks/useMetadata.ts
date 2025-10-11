@@ -4,18 +4,23 @@ import useSWR from "swr";
 import { Address } from "viem";
 import { useConditionalPrevious } from "@src/hooks/usePrevious";
 
-const fetcher = async ([evmClients, tokenAddress]: [EvmClients, Address]) => {
-  const externalClient = await evmClients.externalClient();
+const fetcher = async ([evmClients, tokenAddress, address]: [
+  EvmClients,
+  Address,
+  Address,
+]) => {
   const data = await metadata({
     tokenAddress,
-    client: externalClient,
+    client: evmClients.readClient,
+    address,
   });
   return data;
 };
 
 export function useMetadata(
   tokenAddress: Address,
-  isChainSupported: boolean,
+  address: Address,
+  executeCall: boolean,
   evmClients?: EvmClients,
 ) {
   const {
@@ -23,12 +28,9 @@ export function useMetadata(
     isLoading: isMetadataLoading,
     error: metadataError,
     mutate,
-  } = useSWR(isChainSupported ? [evmClients, tokenAddress] : null, fetcher);
+  } = useSWR(executeCall ? [evmClients, tokenAddress, address] : null, fetcher);
 
-  const prevWalletData = useConditionalPrevious(
-    onchainWalletData,
-    isChainSupported,
-  );
+  const prevWalletData = useConditionalPrevious(onchainWalletData, executeCall);
 
   const [symbol, publicBalance, decimals] = onchainWalletData ??
     prevWalletData ?? ["", 0n, 0];

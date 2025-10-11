@@ -23,12 +23,21 @@ interface SpendFormData {
 
 export interface SpendModalState extends MultiStepModalState {
   step: "form" | "preview";
-  errorMessage?: string;
   spendFees?: SpendFeesData;
   spendParams?: SpendParams;
   metaTransaction?: UnsignedMetaTransaction;
   transactionDetails?: TransactionDetails;
 }
+
+const defaultConfig = {
+  defaultState: {
+    step: "form",
+  } as SpendModalState,
+  defaultValues: {
+    recipient: "",
+    amount: "",
+  },
+};
 
 export const useTwoStepSpendModal = (
   decimals: number,
@@ -47,15 +56,7 @@ export const useTwoStepSpendModal = (
     handleBack,
     state,
     setState,
-  } = useMultiStepModal({
-    defaultState: {
-      step: "form",
-    } as SpendModalState,
-    defaultValues: {
-      recipient: "",
-      amount: "",
-    },
-  });
+  } = useMultiStepModal(defaultConfig);
 
   const onConsolidationOpen = debounce(() => {
     setPromise(

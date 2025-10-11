@@ -121,7 +121,7 @@ export default function DepositModal({
       <div className="px-6 py-5 h-full grid grid-cols-1">
         {isModalError && (
           <div className="flex-1 place-self-center animate-fade-in">
-            <ErrorMessage />
+            <ErrorMessage message={state.errorMessage} />
           </div>
         )}
         {isModalLoading && (
@@ -141,6 +141,7 @@ export default function DepositModal({
               formMethods={formMethods}
               setState={setState}
               isModalOpen={isModalOpen}
+              handleBack={onBack}
             />
           </form>
         )}

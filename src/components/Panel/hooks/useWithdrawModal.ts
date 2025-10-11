@@ -25,7 +25,6 @@ interface WithdrawFormData {
 
 export interface WithdrawModalState extends MultiStepModalState {
   step: "form" | "preview";
-  errorMessage?: string;
   withdrawFees?: WithdrawFeesData;
   itemsToWithdraw?: CommitmentStruct[];
   spendFees?: SpendFeesData;
@@ -33,6 +32,16 @@ export interface WithdrawModalState extends MultiStepModalState {
   metaTransaction?: UnsignedMetaTransaction;
   transactionDetails?: TransactionDetails;
 }
+
+const defaultConfig = {
+  defaultState: {
+    step: "form",
+  } as WithdrawModalState,
+  defaultValues: {
+    recipient: "",
+    amount: "",
+  },
+};
 
 export const useTwoStepWithdrawModal = (decimals: number) => {
   const { ledger } = useContext(LedgerContext);
@@ -48,15 +57,7 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
     handleBack,
     state,
     setState,
-  } = useMultiStepModal({
-    defaultState: {
-      step: "form",
-    } as WithdrawModalState,
-    defaultValues: {
-      recipient: "",
-      amount: "",
-    },
-  });
+  } = useMultiStepModal(defaultConfig);
 
   const handleFormSubmit = debounce(
     (data: WithdrawFormData) =>

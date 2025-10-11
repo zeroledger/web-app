@@ -9,7 +9,9 @@ const defaultBaseMultiStepModalState = {
   isModalSuccess: false,
 };
 
-export type MultiStepModalState = typeof defaultBaseMultiStepModalState;
+export type MultiStepModalState = typeof defaultBaseMultiStepModalState & {
+  errorMessage?: string;
+};
 
 export const useMultiStepModal = <
   TConfig extends {

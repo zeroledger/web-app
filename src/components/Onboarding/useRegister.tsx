@@ -10,7 +10,6 @@ import {
   RPC,
   WS_RPC,
   VAULT_ADDRESS,
-  TOKEN_ADDRESS,
   INIT_SYNC_BLOCK,
 } from "@src/common.constants";
 import { EvmClients } from "@src/services/Clients";
@@ -27,6 +26,7 @@ export const useRegister = () => {
     targetChain,
     viewAccount,
     ledger,
+    tokenAddress,
   } = useContext(LedgerContext);
 
   const [isConnecting, setIsConnecting] = useState(false);
@@ -68,7 +68,7 @@ export const useRegister = () => {
           APP_PREFIX_KEY,
           TES_URL,
           VAULT_ADDRESS,
-          TOKEN_ADDRESS,
+          tokenAddress,
           FAUCET_URL,
           INIT_SYNC_BLOCK,
         );
@@ -128,6 +128,7 @@ export const useRegister = () => {
     navigate,
     ledger,
     isConnecting,
+    tokenAddress,
   ]);
 
   return { open, isConnecting, error, setError };

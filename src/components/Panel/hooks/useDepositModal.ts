@@ -13,10 +13,13 @@ import {
   type MultiStepModalState,
 } from "@src/hooks/useMultiStepModal";
 import debounce from "debounce";
+import { Logger } from "@src/utils/logger";
 
 export interface DepositFormData {
   amount: string;
 }
+
+const logger = new Logger("useDepositModal");
 
 export interface DepositModalState extends MultiStepModalState {
   step: "form" | "params" | "preview";
@@ -27,6 +30,18 @@ export interface DepositModalState extends MultiStepModalState {
   metaTransaction?: UnsignedMetaTransaction;
   transactionDetails?: TransactionDetails;
 }
+
+const defaultState = {
+  step: "form",
+} as DepositModalState;
+const defaultValues = {
+  amount: "",
+};
+
+const defaultConfig = {
+  defaultState,
+  defaultValues,
+};
 
 export const useMultiStepDepositModal = (decimals: number) => {
   const { ledger } = useContext(LedgerContext);
@@ -39,14 +54,7 @@ export const useMultiStepDepositModal = (decimals: number) => {
     handleBack,
     state,
     setState,
-  } = useMultiStepModal({
-    defaultState: {
-      step: "form",
-    } as DepositModalState,
-    defaultValues: {
-      amount: "",
-    },
-  });
+  } = useMultiStepModal(defaultConfig);
 
   const handleFormSubmit = debounce(
     (data: DepositFormData) =>
@@ -91,12 +99,15 @@ export const useMultiStepDepositModal = (decimals: number) => {
             isModalLoading: false,
           }));
         } catch (error) {
-          console.error("Failed to prepare deposit params:", error);
           setState((prev) => ({
             ...prev,
             isModalError: true,
+            errorMessage: "Failed to prepare deposit params",
             isModalLoading: false,
           }));
+          logger.error(
+            `Failed to prepare deposit params: ${error instanceof Error ? error.message : "Unknown error"}`,
+          );
           await delay(3000);
           handleBack();
         }
@@ -162,15 +173,16 @@ export const useMultiStepDepositModal = (decimals: number) => {
             isModalLoading: false,
           }));
         } catch (error) {
-          console.error(
-            "Failed to approve deposit or prepare meta transaction:",
-            error,
-          );
           setState((prev) => ({
             ...prev,
             isModalError: true,
+            errorMessage:
+              "Failed to approve deposit or prepare meta transaction",
             isModalLoading: false,
           }));
+          logger.error(
+            `Failed to approve deposit or prepare meta transaction: ${error instanceof Error ? error.message : "Unknown error"}`,
+          );
           await delay(3000);
           handleBack();
         }
@@ -203,8 +215,11 @@ export const useMultiStepDepositModal = (decimals: number) => {
           setState((prev) => ({
             ...prev,
             isModalError: true,
+            errorMessage: "Failed to sign deposit transaction",
           }));
-          console.error(error);
+          logger.error(
+            `Failed to sign deposit transaction: ${error instanceof Error ? error.message : "Unknown error"}`,
+          );
         } finally {
           setState((prev) => ({
             ...prev,

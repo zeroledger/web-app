@@ -52,9 +52,7 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
             {/* ENS Name (if available) */}
             {ensProfile?.name && (
               <div className="mb-4">
-                <label className="block text-gray-400 text-sm mb-2">
-                  ENS Name
-                </label>
+                <div className="block text-gray-400 text-sm mb-2">ENS Name</div>
                 <div className="relative">
                   <div className="bg-gray-700 rounded-lg p-3 pr-12">
                     <span className="text-white font-mono text-sm">
@@ -91,9 +89,9 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
 
             {/* Wallet Address */}
             <div>
-              <label className="block text-gray-400 text-sm mb-2">
+              <div className="block text-gray-400 text-sm mb-2">
                 Wallet Address
-              </label>
+              </div>
               <div className="relative">
                 <div className="bg-gray-700 rounded-lg p-3 pr-12">
                   <span className="text-white font-mono text-sm">
@@ -132,9 +130,7 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
 
           {/* Full Address Display */}
           <div className="bg-gray-800 rounded-lg p-4">
-            <label className="block text-gray-400 text-sm mb-2">
-              Full Address
-            </label>
+            <div className="block text-gray-400 text-sm mb-2">Full Address</div>
             <div className="bg-gray-700 rounded-lg p-3">
               <span className="text-white font-mono text-xs break-all">
                 {wallet?.address || "No address available"}

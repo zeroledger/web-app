@@ -4,10 +4,15 @@ import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton
 import { useDepositFees } from "@src/components/Panel/hooks/useFees";
 import { useContext, useEffect } from "react";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
-import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
 import { DepositModalState } from "@src/components/Panel/hooks/useDepositModal";
 import { primaryInputStyle } from "@src/components/styles/Input.styles";
+import { delay, getMaxFormattedValue } from "@src/utils/common";
 import clsx from "clsx";
+import { useMetadata } from "@src/hooks/useMetadata";
+import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
+import { Address } from "viem";
+
+const amountRegex = /^\d*\.?\d*$/;
 
 interface DepositFormData {
   amount: string;
@@ -17,12 +22,14 @@ interface DepositFormProps {
   formMethods: UseFormReturn<DepositFormData>;
   setState: React.Dispatch<React.SetStateAction<DepositModalState>>;
   isModalOpen: boolean;
+  handleBack: () => void;
 }
 
 export const DepositForm = ({
   formMethods,
   setState,
   isModalOpen,
+  handleBack,
 }: DepositFormProps) => {
   const {
     register,
@@ -31,8 +38,16 @@ export const DepositForm = ({
     setValue,
   } = formMethods;
 
-  const { ledger } = useContext(LedgerContext);
-  const { decimals } = useContext(PanelContext);
+  const { ledger, evmClients, tokenAddress } = useContext(LedgerContext);
+  const { wallet } = useWalletAdapter();
+
+  const { publicBalance, decimals } = useMetadata(
+    tokenAddress,
+    wallet?.address as Address,
+    isModalOpen,
+    evmClients,
+  );
+
   const {
     data: depositFees,
     isLoading,
@@ -44,7 +59,9 @@ export const DepositForm = ({
       setState((prev) => ({
         ...prev,
         isModalError: true,
+        errorMessage: "Failed to get deposit fees",
       }));
+      delay(3000).then(handleBack);
       return;
     }
     if (depositFees) {
@@ -54,28 +71,37 @@ export const DepositForm = ({
       }));
       return;
     }
-  }, [error, depositFees, setState]);
+  }, [error, depositFees, setState, handleBack]);
 
   return (
     <div className="w-full">
       <Field className="mt-2">
-        <Label className="text-base/6 font-medium text-white">
+        <Label
+          htmlFor="deposit-amount"
+          className="text-base/6 font-medium text-white"
+        >
           Amount (USD)
         </Label>
         <Input
-          type="number"
-          step="0.01"
+          type="string"
+          id="deposit-amount"
           className={primaryInputStyle}
           {...register("amount", {
             required: "Amount is required",
-            min: {
-              value: 0.01,
-              message: "Amount must be greater than 0",
+            pattern: {
+              value: amountRegex,
+              message: "Amount must be a positive number",
             },
           })}
           placeholder="0.00"
           onChange={(e) => {
-            setValue("amount", e.target.value);
+            if (!amountRegex.test(e.target.value)) return;
+            const value = getMaxFormattedValue(
+              e.target.value,
+              decimals,
+              publicBalance,
+            );
+            setValue("amount", value);
             clearErrors("amount");
           }}
         />

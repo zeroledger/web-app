@@ -139,7 +139,7 @@ function TwoStepSpendModal({
         )}
 
         {shouldShowPreview && (
-          <div className="flex flex-col pt-5">
+          <div className="flex flex-col py-5">
             <SigningPreview
               isSigning={isModalLoading}
               isSuccess={isModalSuccess}

@@ -3,6 +3,8 @@ import { type Ledger } from "@src/services/ledger";
 import { Chain, mainnet } from "viem/chains";
 import { EvmClients } from "@src/services/Clients";
 import { ViewAccount } from "@src/services/Account";
+import { Address } from "viem";
+import { TOKEN_ADDRESS } from "@src/common.constants";
 
 export const LedgerContext = createContext<{
   // Ledger
@@ -34,6 +36,8 @@ export const LedgerContext = createContext<{
   isEnsLoading: boolean;
   // Reset
   reset: () => void;
+  // Token Address
+  tokenAddress: Address;
 }>({
   // Ledger
   ledger: undefined,
@@ -61,4 +65,6 @@ export const LedgerContext = createContext<{
   isEnsLoading: false,
   // Reset
   reset: () => {},
+  // Token Address
+  tokenAddress: TOKEN_ADDRESS,
 });

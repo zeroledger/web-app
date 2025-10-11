@@ -18,10 +18,18 @@ type PointsData = Awaited<ReturnType<Tes["getPointsData"]>>;
 
 export interface PointsModalState extends MultiStepModalState {
   step: "form" | "points";
-  errorMessage?: string;
   points?: PointsData;
   isUnlocking?: boolean;
 }
+
+const defaultConfig = {
+  defaultState: {
+    step: "form",
+  } as PointsModalState,
+  defaultValues: {
+    inviteCode: "",
+  },
+};
 
 export const usePointsModal = () => {
   const { wallet } = useWalletAdapter();
@@ -35,14 +43,7 @@ export const usePointsModal = () => {
     handleBack,
     state,
     setState,
-  } = useMultiStepModal({
-    defaultState: {
-      step: "form",
-    } as PointsModalState,
-    defaultValues: {
-      inviteCode: "",
-    },
-  });
+  } = useMultiStepModal(defaultConfig);
 
   const onModalOpenWithLoadPoints = debounce(() => {
     onModalOpen();

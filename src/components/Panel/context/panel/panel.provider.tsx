@@ -9,7 +9,6 @@ import {
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import {
   RPC,
-  TOKEN_ADDRESS,
   pollingInterval,
   WS_RPC,
   FAUCET_URL,
@@ -27,7 +26,7 @@ import { initialize } from "@src/services/ledger";
 import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { PanelContext } from "./panel.context";
 import { prover } from "@src/utils/prover";
-import { useMetadata } from "./useMetadata";
+import { useMetadata } from "@src/hooks/useMetadata";
 
 export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
   children,
@@ -43,6 +42,7 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
     targetChain,
     password,
     reset,
+    tokenAddress,
   } = useContext(LedgerContext);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<Error>();
@@ -55,7 +55,12 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
     isMetadataLoading,
     metadataError,
     mutate,
-  } = useMetadata(TOKEN_ADDRESS, chainSupported, evmClients);
+  } = useMetadata(
+    tokenAddress,
+    wallet?.address as Address,
+    chainSupported,
+    evmClients,
+  );
 
   const privateBalance = usePrivateBalance(mutate, ledger);
   const { ratio: consolidationRatio, balanceForConsolidation } =
@@ -87,7 +92,7 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
         APP_PREFIX_KEY,
         TES_URL,
         VAULT_ADDRESS,
-        TOKEN_ADDRESS,
+        tokenAddress,
         FAUCET_URL,
         INIT_SYNC_BLOCK,
       );
@@ -107,6 +112,7 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
     targetChain,
     ledger,
     reset,
+    tokenAddress,
   ]);
 
   useEffect(() => {

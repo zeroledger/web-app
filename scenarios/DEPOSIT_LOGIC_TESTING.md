@@ -139,22 +139,22 @@ This document outlines comprehensive manual testing scenarios for the deposit fu
 **Steps**:
 
 1. Open deposit modal
-2. Enter amount: `-10`
-3. Click "Confirm Deposit"
+2. Try to enter negative amount: `-10`
+3. Observe input behavior
 
-**Expected**: Error message "Amount must be greater than 0" appears
+**Expected**: Input field prevents the negative sign (`-`) from being entered (regex validation only allows positive numbers)
 
 #### 2.4 Invalid Amount Format
 
 **Steps**:
 
 1. Open deposit modal
-2. Enter invalid amount: `abc`
-3. Click "Confirm Deposit"
+2. Try to enter invalid amount: `abc`
+3. Observe input behavior
 
-**Expected**: Error message appears, form validation prevents submission
+**Expected**: Input field prevents non-numeric characters from being entered (regex validation)
 
-**Note**: HTML5 number input prevents most invalid characters, but form validation still catches edge cases.
+**Note**: The input uses regex pattern validation (`/^\d*\.?\d*$/`) to allow only valid decimal numbers, preventing invalid input before form submission.
 
 #### 2.5 Decimal Input Testing
 
@@ -194,17 +194,15 @@ This document outlines comprehensive manual testing scenarios for the deposit fu
 2. **Attempt Overspend**
    - Open deposit modal
    - Enter amount higher than balance
-   - Click "Confirm Deposit"
+   - Observe the input field behavior
 
 **Expected Results**:
 
-- ✅ Form allows input but may show warning
-- ✅ Parameters preparation fails
-- ✅ Error state is displayed
-- ✅ Modal shows appropriate error message
-- ✅ Modal auto-closes after error
+- ✅ Input automatically caps at maximum available public balance
+- ✅ User cannot enter amount exceeding their on-chain balance
+- ✅ Form validation prevents submission of invalid amounts
 
-**Note**: Current implementation does not validate balance before form submission. Balance validation occurs during the simulateContract approve transaction, which fail if insufficient balance.
+**Note**: Current implementation uses `getMaxFormattedValue` to automatically cap the input amount to the available public on-chain balance, preventing users from entering amounts higher than their balance. This matches the behavior of the spend/withdraw functionality.
 
 ---
 
@@ -625,3 +623,8 @@ After any changes to deposit logic:
 4. Document any new issues found
 5. Test with multiple amount ranges
 6. Verify cross-browser compatibility
+
+---
+
+*Last Updated: October 11, 2025*
+*Version: 1.1*

@@ -1,11 +1,11 @@
 import { Address, Hex } from "viem";
 import { ERC_20_WITH_MINT_ABI } from "./constants";
-import { type CustomClient } from "@src/services/Clients";
+import { type PublicClient } from "viem";
 
 export type ERC20MetadataParams = {
   tokenAddress: Hex;
-  client: CustomClient;
-  address?: Address;
+  client: PublicClient;
+  address: Address;
 };
 
 export default async function metadata(params: ERC20MetadataParams) {
@@ -23,7 +23,7 @@ export default async function metadata(params: ERC20MetadataParams) {
       {
         ...contract,
         functionName: "balanceOf",
-        args: [params.address ?? params.client.account.address],
+        args: [params.address],
       },
       {
         ...contract,
