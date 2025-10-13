@@ -115,8 +115,8 @@ export class Fees {
       depositFee,
       paymasterAddress,
       roundedFee,
-      withPermit,
-      smartWalletAndRequireInitialization,
+      withPermit: false,
+      smartWalletAndRequireInitialization: false,
     };
   }
 

@@ -15,7 +15,7 @@ interface PrivyContextProviderProps {
 }
 
 const config = {
-  loginMethods: ["wallet"] as LoginModalOptions["loginMethods"],
+  loginMethods: ["email", "wallet"] as LoginModalOptions["loginMethods"],
   appearance: {
     walletChainType: "ethereum-only" as const,
     theme: "#101828" as `#${string}`,
