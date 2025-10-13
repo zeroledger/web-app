@@ -1,8 +1,7 @@
-import { Address, Chain, hashTypedData, Hex, PublicClient } from "viem";
+import { Address, Chain, Hex, PublicClient } from "viem";
 import { FORWARDER_ABI } from "./metatx.abi";
 import { CustomClient } from "@src/services/Clients";
 import { forwardRequestType } from "./metatx.constants";
-import { logStringify } from "../common";
 
 const getForwarderDomain = (
   chainId: Chain["id"],
@@ -48,8 +47,6 @@ export async function createSignedMetaTx(
     primaryType: "ForwardRequest" as const,
     message: request,
   };
-  console.log(`Request: ${logStringify(obj)}`);
-  console.log(`Signed DATA: ${hashTypedData(obj)}`);
   const signature = await client.signTypedData(obj);
   return {
     ...request,

@@ -29,11 +29,20 @@ export function useWalletAdapter() {
     setTargetChain(chain);
   }, [walletChainId]);
 
-  const login = useCallback(async () => {
+  const connect = useCallback(async () => {
     if (authenticated) {
       await logout();
     }
-    privyLogin();
+    privyLogin({
+      loginMethods: ["wallet"],
+    });
+  }, [authenticated, privyLogin, logout]);
+
+  const signIn = useCallback(async () => {
+    if (authenticated) {
+      await logout();
+    }
+    privyLogin({ loginMethods: ["email"] });
   }, [authenticated, privyLogin, logout]);
 
   return {
@@ -49,6 +58,7 @@ export function useWalletAdapter() {
     setTargetChain,
     logout,
     exportWallet,
-    login,
+    connect,
+    signIn,
   };
 }

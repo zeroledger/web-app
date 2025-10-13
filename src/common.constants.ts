@@ -32,6 +32,9 @@ export const INIT_SYNC_BLOCK: bigint = BigInt(
 
 export const VAULT_ADDRESS: Address = import.meta.env.VITE_VAULT_ADDRESS;
 
+export const ENABLE_EMBEDDED_WALLETS: boolean =
+  import.meta.env.VITE_ENABLE_EMBEDDED_WALLETS === "true";
+
 export const APP_PREFIX_KEY = `${document.location.hostname}.${VAULT_ADDRESS}`;
 
 export const FAUCET_URL: Address = import.meta.env.VITE_FAUCET_URL;
