@@ -18,7 +18,9 @@ import { type ConnectedWallet } from "@src/wallet.types";
 import { Logger } from "@src/utils/logger";
 
 export type CustomClient = PublicClient<Transport, Chain, Account, RpcSchema> &
-  WalletClient<Transport, Chain, Account, RpcSchema>;
+  WalletClient<Transport, Chain, Account, RpcSchema> & {
+    walletClientType: string;
+  };
 
 export class EvmClients {
   public readonly readClient: PublicClient;
@@ -49,7 +51,11 @@ export class EvmClients {
       account: this.wallet.address as Address,
       chain: this.chain,
       transport: custom(provider),
-    }).extend(publicActions);
+    })
+      .extend(publicActions)
+      .extend(() => ({ walletClientType: this.wallet.walletClientType }));
+
+    this.logger.log(`init external wallet for ${client.walletClientType}`);
     return client;
   }
 

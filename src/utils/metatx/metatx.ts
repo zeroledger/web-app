@@ -1,4 +1,4 @@
-import { Address, Chain, Hex, PublicClient } from "viem";
+import { Address, Chain, hashTypedData, Hex, PublicClient } from "viem";
 import { FORWARDER_ABI } from "./metatx.abi";
 import { CustomClient } from "@src/services/Clients";
 import { forwardRequestType } from "./metatx.constants";
@@ -47,7 +47,12 @@ export async function createSignedMetaTx(
     primaryType: "ForwardRequest" as const,
     message: request,
   };
-  const signature = await client.signTypedData(obj);
+  let signature: Hex;
+  if (client.walletClientType === "privy" && client.account.sign) {
+    signature = await client.account.sign({ hash: hashTypedData(obj) });
+  } else {
+    signature = await client.signTypedData(obj);
+  }
   return {
     ...request,
     gas: request.gas.toString(),
