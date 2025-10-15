@@ -82,7 +82,6 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
         {
           account,
           provider,
-          silentSigner: wallet.walletClientType === "privy",
         },
       );
       setEvmClients(newEvmClientService);

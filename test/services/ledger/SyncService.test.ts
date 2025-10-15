@@ -26,11 +26,16 @@ describe("SyncService", () => {
         getBlockNumber: vi.fn(() => Promise.resolve(30538369n)),
         readContract: vi.fn(),
       },
-      externalClient: vi.fn(() =>
-        Promise.resolve({
-          account: { address: mockAccount },
-        }),
-      ),
+      externalClient: vi.fn(() => ({
+        account: {
+          address: mockAccount,
+          sign: vi.fn(),
+        },
+        chain: { id: 1 },
+        signTypedData: vi.fn(),
+        multicall: vi.fn(),
+        readContract: vi.fn(),
+      })),
     } as unknown as EvmClients;
     syncService = new SyncService(
       mockEvmClients,

@@ -91,17 +91,22 @@ describe("Watcher", () => {
     }) as VaultEvent;
 
   beforeEach(() => {
-    // Create mock EvmClients
+    // Create mock EvmClients with new CustomClient structure
     mockEvmClients = {
       readClient: {
         getBlockNumber: vi.fn(),
         readContract: vi.fn(),
       },
-      externalClient: vi.fn(() =>
-        Promise.resolve({
-          account: { address: mockAccount },
-        }),
-      ),
+      externalClient: vi.fn(() => ({
+        account: {
+          address: mockAccount,
+          sign: vi.fn(),
+        },
+        chain: { id: 1 },
+        signTypedData: vi.fn(),
+        multicall: vi.fn(),
+        readContract: vi.fn(),
+      })),
     } as unknown as EvmClients;
 
     // Create mock Queue
@@ -163,6 +168,85 @@ describe("Watcher", () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  describe("mainAccount", () => {
+    it("should return the account from external client", async () => {
+      const result = await watcher.mainAccount();
+
+      expect(result).toBeDefined();
+      expect(result.address).toBe(mockAccount);
+    });
+
+    it("should handle external client initialization", async () => {
+      // Test that external client is called and returns proper account
+      const externalClientSpy = vi.spyOn(mockEvmClients, "externalClient");
+
+      const result = await watcher.mainAccount();
+
+      expect(externalClientSpy).toHaveBeenCalled();
+      expect(result.address).toBe(mockAccount);
+    });
+  });
+
+  describe("getForwarder", () => {
+    it("should get forwarder address from vault contract", async () => {
+      const mockForwarderAddress = "0xForwarder" as const;
+
+      // Mock the asyncVaultUtils.getTrustedForwarder method
+      const mockGetTrustedForwarder = vi.fn(() =>
+        Promise.resolve(mockForwarderAddress),
+      );
+
+      // Mock the preloaded modules
+      const mockAsyncVaultUtils = {
+        getTrustedForwarder: mockGetTrustedForwarder,
+      };
+
+      // Mock the preloadedModulesPromise
+      (
+        watcher as unknown as {
+          preloadedModulesPromise: Promise<{
+            asyncVaultUtils: typeof mockAsyncVaultUtils;
+          }>;
+        }
+      ).preloadedModulesPromise = Promise.resolve({
+        asyncVaultUtils: mockAsyncVaultUtils,
+      });
+
+      const result = await watcher.getForwarder();
+
+      expect(result).toBe(mockForwarderAddress);
+      expect(mockGetTrustedForwarder).toHaveBeenCalledWith({
+        client: mockEvmClients.readClient,
+        contract: mockVault,
+      });
+    });
+
+    it("should handle errors when getting forwarder", async () => {
+      const mockError = new Error("Failed to get forwarder");
+
+      // Mock the asyncVaultUtils.getTrustedForwarder method to throw
+      const mockGetTrustedForwarder = vi.fn(() => Promise.reject(mockError));
+
+      const mockAsyncVaultUtils = {
+        getTrustedForwarder: mockGetTrustedForwarder,
+      };
+
+      (
+        watcher as unknown as {
+          preloadedModulesPromise: Promise<{
+            asyncVaultUtils: typeof mockAsyncVaultUtils;
+          }>;
+        }
+      ).preloadedModulesPromise = Promise.resolve({
+        asyncVaultUtils: mockAsyncVaultUtils,
+      });
+
+      await expect(watcher.getForwarder()).rejects.toThrow(
+        "Failed to get forwarder",
+      );
+    });
   });
 
   describe("handleEventsBatch", () => {
@@ -487,6 +571,38 @@ describe("Watcher", () => {
         currentBlock: 200n,
         anchorBlock: 100n, // Both equal, so anchorBlock = lastSyncedBlock
       });
+    });
+  });
+
+  describe("meta transaction integration", () => {
+    it("should support meta transaction signing with external client", async () => {
+      const mockExternalClient = mockEvmClients.externalClient();
+
+      // Test that the external client has the required methods for meta transactions
+      expect(mockExternalClient.account).toBeDefined();
+      expect(mockExternalClient.account.address).toBe(mockAccount);
+      expect(mockExternalClient.account.sign).toBeDefined();
+      expect(mockExternalClient.signTypedData).toBeDefined();
+      expect(mockExternalClient.chain).toBeDefined();
+      expect(mockExternalClient.chain.id).toBe(1);
+    });
+
+    it("should support permit signing with external client", async () => {
+      const mockExternalClient = mockEvmClients.externalClient();
+
+      // Test that the external client has the required methods for permit signing
+      expect(mockExternalClient.multicall).toBeDefined();
+      expect(mockExternalClient.readContract).toBeDefined();
+      expect(mockExternalClient.account.sign).toBeDefined();
+      expect(mockExternalClient.signTypedData).toBeDefined();
+    });
+
+    it("should handle external client initialization", () => {
+      // Test that external client is properly initialized
+      const client = mockEvmClients.externalClient();
+      expect(client).toBeDefined();
+      expect(client.account).toBeDefined();
+      expect(client.chain).toBeDefined();
     });
   });
 

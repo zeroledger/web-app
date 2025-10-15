@@ -62,7 +62,6 @@ export const useRegister = () => {
           {
             account,
             provider,
-            silentSigner: wallet.walletClientType === "privy",
           },
         );
         setEvmClients(newEvmClientService);
