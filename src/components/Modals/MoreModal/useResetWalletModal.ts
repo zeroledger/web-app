@@ -11,7 +11,7 @@ export const useResetWalletModal = () => {
 
   const handleResetWallet = debounce(async () => {
     try {
-      const externalClient = await evmClients?.externalClient();
+      const externalClient = evmClients?.externalClient();
       viewAccount?.reset(externalClient!.account.address);
       await ledger?.watcher.reset();
       await logout();

@@ -9,6 +9,7 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import { decrypt, encrypt } from "@zeroledger/vycrypt";
 import { type EvmClients } from "@src/services/Clients";
+import { signTypedData } from "@src/utils/signTypedData";
 
 export type EncryptedAccountsStore = Record<
   string,
@@ -112,17 +113,18 @@ export class ViewAccount {
 
   async authorize(evmClients: EvmClients, password: string) {
     const { pubK } = this.deriveEphemeralEncryptionKeys(password);
-    const externalClient = await evmClients.externalClient();
-    this._delegationSignature = await externalClient.signTypedData({
+    const externalClient = evmClients.externalClient();
+    const obj = {
       domain,
       types,
-      primaryType: "Authorize",
+      primaryType: "Authorize" as const,
       message: {
         protocol: "zeroledger",
         main_account: externalClient.account.address,
         view_account: this._viewAccount!.address,
       },
-    });
+    };
+    this._delegationSignature = await signTypedData(externalClient, obj);
     localStorage.setItem(
       `${this.PKS_STORE_KEY}.view.${externalClient.account.address}`,
       await encrypt(this._viewPk!, pubK),
