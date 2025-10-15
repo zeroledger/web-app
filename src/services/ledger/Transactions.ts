@@ -80,7 +80,7 @@ export class Transactions {
     this.logger.log(`Transactions service created with token ${this.token}`);
   }
 
-  async mainAccount() {
+  mainAccount() {
     return this.evmClients.externalClient().account;
   }
 
@@ -115,7 +115,7 @@ export class Transactions {
   }
 
   private async getEncryptionParams(user: Address) {
-    const mainAccount = await this.mainAccount();
+    const mainAccount = this.mainAccount();
     const encryptionPublicKey = await this.tesService.getUserPublicKey(user);
     if (!encryptionPublicKey) {
       this.logger.warn(
@@ -136,7 +136,7 @@ export class Transactions {
     return this.enqueue(
       async () => {
         const { asyncVaultUtils } = await this.preloadedModulesPromise;
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
         const { tesUrl, encryptionPublicKey } = await this.getEncryptionParams(
           mainAccount.address,
         );
@@ -237,7 +237,7 @@ export class Transactions {
   ) {
     return this.enqueue(
       async () => {
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
         return await this.tesService.executeMetaTransactions(
           metaTransactions,
           coveredGas,
@@ -262,7 +262,7 @@ export class Transactions {
           await this.getForwarder(),
           this.evmClients.externalClient(),
         );
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
         return await this.tesService.executeMetaTransactions(
           [signedMetaTransaction],
           coveredGas,
@@ -280,7 +280,7 @@ export class Transactions {
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
           await this.preloadedModulesPromise;
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
         const gas = await asyncVaultUtils.getDepositTxGas(depositParams);
 
         this.logger.log(`Deposit: gas without forwarding: ${gas.toString()}`);
@@ -332,7 +332,7 @@ export class Transactions {
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
           await this.preloadedModulesPromise;
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
         const gas =
           await asyncVaultUtils.getDepositWithPermitTxGas(depositParams);
 
@@ -406,7 +406,7 @@ export class Transactions {
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
           await this.preloadedModulesPromise;
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
 
         if (withdrawItems.length === 0) {
           throw new Error("No commitments found to cover the requested amount");
@@ -485,7 +485,7 @@ export class Transactions {
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
           await this.preloadedModulesPromise;
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
 
         const { selectedCommitmentRecords, totalAmount } =
           await this.commitments.findCommitments(value);
@@ -589,7 +589,7 @@ export class Transactions {
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
           await this.preloadedModulesPromise;
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
 
         /**
          * Inputs rebate fee, outputs add fee
@@ -693,7 +693,7 @@ export class Transactions {
   async faucet(amount: string) {
     return this.enqueue(
       async () => {
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
         return this.faucetRpc.obtainTestTokens(
           new FaucetRequestDto(
             this.token,

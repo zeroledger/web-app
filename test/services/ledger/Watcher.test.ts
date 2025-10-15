@@ -171,18 +171,18 @@ describe("Watcher", () => {
   });
 
   describe("mainAccount", () => {
-    it("should return the account from external client", async () => {
-      const result = await watcher.mainAccount();
+    it("should return the account from external client", () => {
+      const result = watcher.mainAccount();
 
       expect(result).toBeDefined();
       expect(result.address).toBe(mockAccount);
     });
 
-    it("should handle external client initialization", async () => {
+    it("should handle external client initialization", () => {
       // Test that external client is called and returns proper account
       const externalClientSpy = vi.spyOn(mockEvmClients, "externalClient");
 
-      const result = await watcher.mainAccount();
+      const result = watcher.mainAccount();
 
       expect(externalClientSpy).toHaveBeenCalled();
       expect(result.address).toBe(mockAccount);
