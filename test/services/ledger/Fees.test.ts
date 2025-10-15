@@ -89,18 +89,22 @@ describe("Fees", () => {
           ]),
         ),
       },
-      externalClient: vi.fn(() =>
-        Promise.resolve({
-          account: { address: mockAccount },
-          multicall: vi.fn(() =>
-            Promise.resolve([
-              { status: "success", result: "TestToken" },
-              { status: "success", result: 0n },
-              { status: "success", result: ["", "", "", 0n, "", ""] },
-            ]),
-          ),
-        }),
-      ),
+      externalClient: vi.fn(() => ({
+        account: {
+          address: mockAccount,
+          sign: vi.fn(),
+        },
+        chain: { id: 1 },
+        signTypedData: vi.fn(),
+        multicall: vi.fn(() =>
+          Promise.resolve([
+            { status: "success", result: "TestToken" },
+            { status: "success", result: 0n },
+            { status: "success", result: ["", "", "", 0n, "", ""] },
+          ]),
+        ),
+        readContract: vi.fn(),
+      })),
     } as unknown as EvmClients;
 
     // Create mock Tes service

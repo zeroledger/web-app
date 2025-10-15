@@ -80,8 +80,8 @@ export class Transactions {
     this.logger.log(`Transactions service created with token ${this.token}`);
   }
 
-  async mainAccount() {
-    return (await this.evmClients.externalClient()).account;
+  mainAccount() {
+    return this.evmClients.externalClient().account;
   }
 
   async getForwarder() {
@@ -115,7 +115,7 @@ export class Transactions {
   }
 
   private async getEncryptionParams(user: Address) {
-    const mainAccount = await this.mainAccount();
+    const mainAccount = this.mainAccount();
     const encryptionPublicKey = await this.tesService.getUserPublicKey(user);
     if (!encryptionPublicKey) {
       this.logger.warn(
@@ -136,7 +136,7 @@ export class Transactions {
     return this.enqueue(
       async () => {
         const { asyncVaultUtils } = await this.preloadedModulesPromise;
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
         const { tesUrl, encryptionPublicKey } = await this.getEncryptionParams(
           mainAccount.address,
         );
@@ -153,7 +153,7 @@ export class Transactions {
             tesUrl,
           );
 
-        const client = await this.evmClients.externalClient();
+        const client = this.evmClients.externalClient();
 
         const spendAllowance = await allowance({
           client,
@@ -186,7 +186,7 @@ export class Transactions {
             depositParams.depositStruct.amount +
             depositParams.depositStruct.forwarderFee +
             protocolFees,
-          client: await this.evmClients.externalClient(),
+          client: this.evmClients.externalClient(),
         });
       },
       "approveDeposit",
@@ -205,7 +205,7 @@ export class Transactions {
             depositParams.depositStruct.amount +
             depositParams.depositStruct.forwarderFee +
             protocolFees,
-          client: await this.evmClients.externalClient(),
+          client: this.evmClients.externalClient(),
           deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
         });
       },
@@ -222,7 +222,7 @@ export class Transactions {
         return await asyncMetaTxUtils.createSignedMetaTx(
           metaTransaction,
           await this.getForwarder(),
-          await this.evmClients.externalClient(),
+          this.evmClients.externalClient(),
         );
       },
       "signMetaTransaction",
@@ -237,7 +237,7 @@ export class Transactions {
   ) {
     return this.enqueue(
       async () => {
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
         return await this.tesService.executeMetaTransactions(
           metaTransactions,
           coveredGas,
@@ -260,9 +260,9 @@ export class Transactions {
         const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
           metaTransaction,
           await this.getForwarder(),
-          await this.evmClients.externalClient(),
+          this.evmClients.externalClient(),
         );
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
         return await this.tesService.executeMetaTransactions(
           [signedMetaTransaction],
           coveredGas,
@@ -280,7 +280,7 @@ export class Transactions {
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
           await this.preloadedModulesPromise;
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
         const gas = await asyncVaultUtils.getDepositTxGas(depositParams);
 
         this.logger.log(`Deposit: gas without forwarding: ${gas.toString()}`);
@@ -332,7 +332,7 @@ export class Transactions {
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
           await this.preloadedModulesPromise;
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
         const gas =
           await asyncVaultUtils.getDepositWithPermitTxGas(depositParams);
 
@@ -406,7 +406,7 @@ export class Transactions {
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
           await this.preloadedModulesPromise;
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
 
         if (withdrawItems.length === 0) {
           throw new Error("No commitments found to cover the requested amount");
@@ -418,7 +418,7 @@ export class Transactions {
         );
 
         const withdrawParams = {
-          client: await this.evmClients.externalClient(),
+          client: this.evmClients.externalClient(),
           contract: this.vault,
           token: this.token,
           withdrawItems,
@@ -485,7 +485,7 @@ export class Transactions {
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
           await this.preloadedModulesPromise;
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
 
         const { selectedCommitmentRecords, totalAmount } =
           await this.commitments.findCommitments(value);
@@ -532,7 +532,7 @@ export class Transactions {
 
         const partialWithdrawParams = {
           transactionStruct,
-          client: await this.evmClients.externalClient(),
+          client: this.evmClients.externalClient(),
           contract: this.vault,
           proof: proofData.calldata_proof,
         };
@@ -589,7 +589,7 @@ export class Transactions {
       async () => {
         const { asyncVaultUtils, asyncMetaTxUtils } =
           await this.preloadedModulesPromise;
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
 
         /**
          * Inputs rebate fee, outputs add fee
@@ -649,7 +649,7 @@ export class Transactions {
 
         const sendParams = {
           transactionStruct,
-          client: await this.evmClients.externalClient(),
+          client: this.evmClients.externalClient(),
           contract: this.vault,
           proof: proofData.calldata_proof,
         };
@@ -693,7 +693,7 @@ export class Transactions {
   async faucet(amount: string) {
     return this.enqueue(
       async () => {
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
         return this.faucetRpc.obtainTestTokens(
           new FaucetRequestDto(
             this.token,

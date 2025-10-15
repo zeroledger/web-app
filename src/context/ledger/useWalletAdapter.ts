@@ -1,6 +1,6 @@
 import { usePrevious } from "@src/hooks/usePrevious";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { Chain } from "viem";
+import { toViemAccount, usePrivy, useWallets } from "@privy-io/react-auth";
+import { type Address, Chain } from "viem";
 import { useCallback, useEffect, useState } from "react";
 import { SUPPORTED_CHAINS } from "@src/common.constants";
 
@@ -45,9 +45,21 @@ export function useWalletAdapter() {
     privyLogin({ loginMethods: ["email"] });
   }, [authenticated, privyLogin, logout]);
 
+  const getAccount = useCallback(() => {
+    return wallet.walletClientType === "privy"
+      ? toViemAccount({ wallet })
+      : (wallet.address as Address);
+  }, [wallet]);
+  const getProvider = useCallback(
+    () => wallet?.getEthereumProvider(),
+    [wallet],
+  );
+
   return {
     wallets,
     wallet,
+    getAccount,
+    getProvider,
     prevWallet,
     isWalletChanged,
     isWalletNetworkChanged,

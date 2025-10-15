@@ -31,7 +31,8 @@ import { useMetadata } from "@src/hooks/useMetadata";
 export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
   children,
 }) => {
-  const { wallet, isWalletChanged, chainSupported } = useWalletAdapter();
+  const { wallet, isWalletChanged, chainSupported, getAccount, getProvider } =
+    useWalletAdapter();
   const {
     ledger,
     evmClients,
@@ -69,18 +70,23 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
   const accountSwitch = useCallback(async () => {
     try {
       setIsConnecting(true);
+      const [account, provider] = await Promise.all([
+        getAccount(),
+        getProvider(),
+      ]);
       const newEvmClientService = new EvmClients(
         WS_RPC[targetChain.id],
         RPC[targetChain.id],
         pollingInterval[targetChain.id],
         targetChain,
-        wallet!,
+        {
+          account,
+          provider,
+        },
       );
       setEvmClients(newEvmClientService);
-      const [externalClient] = await Promise.all([
-        newEvmClientService.externalClient(),
-        ledger?.watcher.softReset(),
-      ]);
+      await ledger?.watcher.softReset();
+      const externalClient = newEvmClientService.externalClient();
       await viewAccount!
         .unlockViewAccount(externalClient.account.address, password!)
         .catch(reset);
@@ -113,6 +119,8 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
     ledger,
     reset,
     tokenAddress,
+    getAccount,
+    getProvider,
   ]);
 
   useEffect(() => {

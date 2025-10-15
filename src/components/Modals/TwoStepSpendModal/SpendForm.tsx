@@ -14,6 +14,7 @@ import {
   useWithdrawFees,
 } from "@src/components/Panel/hooks/useFees";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
+import { useSettings } from "@src/hooks/useSettings";
 import { QRScannerModal } from "./QRScannerModal";
 import { CameraIcon } from "@src/components/svg";
 import { primaryInputStyle } from "@src/components/styles/Input.styles";
@@ -52,6 +53,7 @@ export const SpendForm = ({
     setValue,
   } = formMethods;
   const { privateBalance, decimals } = useContext(PanelContext);
+  const { settings } = useSettings();
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
 
   const { ledger } = useContext(LedgerContext);
@@ -213,7 +215,7 @@ export const SpendForm = ({
           )}
           {withdrawAll && withdrawFeesData && !isFeesLoading && (
             <div>
-              {type} fee:{withdrawFeesData.withdrawFees.roundedFee} USD
+              {type} fee: {withdrawFeesData.withdrawFees.roundedFee} USD
             </div>
           )}
         </div>
@@ -232,7 +234,7 @@ export const SpendForm = ({
       <div className="py-2">
         <MobileConfirmButton
           disabled={isSubmitting || isFeesLoading}
-          label={`Review ${type}`}
+          label={settings.showTransactionPreview ? `Review ${type}` : "Confirm"}
         />
       </div>
 

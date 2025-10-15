@@ -17,7 +17,7 @@ import { initialize } from "@src/services/ledger";
 import debounce from "debounce";
 
 export const useRegister = () => {
-  const { wallet } = useWalletAdapter();
+  const { wallet, getAccount, getProvider } = useWalletAdapter();
   const {
     setEvmClients,
     setLedger,
@@ -49,17 +49,24 @@ export const useRegister = () => {
       try {
         setIsConnecting(true);
         setPassword(pendingPassword);
+        const [account, provider] = await Promise.all([
+          getAccount(),
+          getProvider(),
+        ]);
 
         const newEvmClientService = new EvmClients(
           WS_RPC[targetChain.id],
           RPC[targetChain.id],
           pollingInterval[targetChain.id],
           targetChain,
-          wallet,
+          {
+            account,
+            provider,
+          },
         );
         setEvmClients(newEvmClientService);
 
-        const externalClient = await newEvmClientService.externalClient();
+        const externalClient = newEvmClientService.externalClient();
 
         const newLedger = await initialize(
           wallet,
@@ -129,6 +136,8 @@ export const useRegister = () => {
     ledger,
     isConnecting,
     tokenAddress,
+    getAccount,
+    getProvider,
   ]);
 
   return { open, isConnecting, error, setError };

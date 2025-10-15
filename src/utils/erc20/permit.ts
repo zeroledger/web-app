@@ -1,7 +1,8 @@
 import { Address, Hex } from "viem";
 import { ERC_20_WITH_MINT_ABI } from "./constants";
 import { type CustomClient } from "@src/services/Clients";
-import { toSignature } from "../common";
+import { toSignature } from "@src/utils/common";
+import { signTypedData } from "@src/utils/signTypedData";
 
 export type PermitProps = {
   tokenAddress: Hex;
@@ -87,13 +88,15 @@ export async function permit(params: PermitProps) {
     deadline,
   };
 
-  // Sign the typed data
-  const signature = await client.signTypedData({
+  const obj = {
     domain,
     types: permitTypes,
-    primaryType: "Permit",
+    primaryType: "Permit" as const,
     message,
-  });
+  };
+
+  // Sign the typed data
+  const signature = await signTypedData(client, obj);
 
   return {
     signature: toSignature(signature),

@@ -78,8 +78,8 @@ export class Watcher extends EventEmitter {
     this.logger.log(`Created with token ${this.token}`);
   }
 
-  async mainAccount() {
-    return (await this.evmClients.externalClient()).account;
+  mainAccount() {
+    return this.evmClients.externalClient().account;
   }
 
   async getForwarder() {
@@ -131,7 +131,7 @@ export class Watcher extends EventEmitter {
     updateBlockNumber = false,
   }: { updateBlockNumber?: boolean } = {}) {
     const events = this.eventsCache.splice(0);
-    const mainAccount = await this.mainAccount();
+    const mainAccount = this.mainAccount();
     this.logger.log(`handle ${events.length} events batch`);
     const selectedInOrderEvents = events
       .filter(
@@ -394,7 +394,7 @@ export class Watcher extends EventEmitter {
           },
         );
         const currentBlock = await this.evmClients.readClient.getBlockNumber();
-        const mainAccount = await this.mainAccount();
+        const mainAccount = this.mainAccount();
         const tesSyncEvents = await this.tesService.syncWithTes(
           mainAccount.address,
           this.token,

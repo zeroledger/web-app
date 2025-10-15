@@ -14,8 +14,12 @@ import {
   custom,
   Address,
 } from "viem";
-import { type ConnectedWallet } from "@src/wallet.types";
 import { Logger } from "@src/utils/logger";
+
+export type ExternalClientOptions = {
+  account: Account | Address;
+  provider: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+};
 
 export type CustomClient = PublicClient<Transport, Chain, Account, RpcSchema> &
   WalletClient<Transport, Chain, Account, RpcSchema>;
@@ -30,7 +34,7 @@ export class EvmClients {
     private readonly httpUrls: string[],
     private readonly pollingInterval: number,
     private readonly chain: Chain,
-    private readonly wallet: ConnectedWallet,
+    private readonly externalClientOptions: ExternalClientOptions,
   ) {
     const transport = fallback([
       ...this.wsUrls.map((wss) => webSocket(wss)),
@@ -43,19 +47,26 @@ export class EvmClients {
     }).extend(publicActions);
   }
 
-  async _initExternalClient() {
-    const provider = await this.wallet.getEthereumProvider();
+  _initExternalClient() {
     const client = createWalletClient({
-      account: this.wallet.address as Address,
+      account: this.externalClientOptions.account,
       chain: this.chain,
-      transport: custom(provider),
+      transport: custom(this.externalClientOptions.provider),
     }).extend(publicActions);
+
+    this.logger.log(
+      `init external client for ${
+        typeof this.externalClientOptions.account === "object"
+          ? this.externalClientOptions.account.address
+          : this.externalClientOptions.account
+      }`,
+    );
     return client;
   }
 
-  async externalClient() {
+  externalClient() {
     if (!this._externalClient) {
-      this._externalClient = await this._initExternalClient();
+      this._externalClient = this._initExternalClient();
     }
     return this._externalClient;
   }

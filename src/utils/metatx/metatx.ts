@@ -2,6 +2,7 @@ import { Address, Chain, Hex, PublicClient } from "viem";
 import { FORWARDER_ABI } from "./metatx.abi";
 import { CustomClient } from "@src/services/Clients";
 import { forwardRequestType } from "./metatx.constants";
+import { signTypedData } from "../signTypedData";
 
 const getForwarderDomain = (
   chainId: Chain["id"],
@@ -47,7 +48,7 @@ export async function createSignedMetaTx(
     primaryType: "ForwardRequest" as const,
     message: request,
   };
-  const signature = await client.signTypedData(obj);
+  const signature = await signTypedData(client, obj);
   return {
     ...request,
     gas: request.gas.toString(),

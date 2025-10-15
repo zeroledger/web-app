@@ -117,7 +117,9 @@ export const getMaxFormattedValue = (
   try {
     const rawValue = parseUnits(normalizedValue, decimals);
     const amount =
-      rawValue > privateBalance ? formatUnits(privateBalance, decimals) : value;
+      rawValue > privateBalance
+        ? formatUnits(privateBalance, decimals)
+        : formatUnits(rawValue, decimals);
     return amount;
   } catch {
     // If parsing fails, return the original value
