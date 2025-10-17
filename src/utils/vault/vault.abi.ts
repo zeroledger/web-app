@@ -1,145 +1,5 @@
 export const VAULT_ABI = [
   {
-    inputs: [],
-    stateMutability: "nonpayable",
-    type: "constructor",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "authority",
-        type: "address",
-      },
-    ],
-    name: "AccessManagedInvalidAuthority",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "caller",
-        type: "address",
-      },
-      {
-        internalType: "uint32",
-        name: "delay",
-        type: "uint32",
-      },
-    ],
-    name: "AccessManagedRequiredDelay",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "caller",
-        type: "address",
-      },
-    ],
-    name: "AccessManagedUnauthorized",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "target",
-        type: "address",
-      },
-    ],
-    name: "AddressEmptyCode",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "implementation",
-        type: "address",
-      },
-    ],
-    name: "ERC1967InvalidImplementation",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "ERC1967NonPayable",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "EnforcedPause",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "ExpectedPause",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "FailedCall",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "InvalidInitialization",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "NotInitializing",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "ReentrancyGuardReentrantCall",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "token",
-        type: "address",
-      },
-    ],
-    name: "SafeERC20FailedOperation",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "UUPSUnauthorizedCallContext",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "bytes32",
-        name: "slot",
-        type: "bytes32",
-      },
-    ],
-    name: "UUPSUnsupportedProxiableUUID",
-    type: "error",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "address",
-        name: "authority",
-        type: "address",
-      },
-    ],
-    name: "AuthorityUpdated",
-    type: "event",
-  },
-  {
     anonymous: false,
     inputs: [
       {
@@ -199,32 +59,6 @@ export const VAULT_ABI = [
     anonymous: false,
     inputs: [
       {
-        indexed: false,
-        internalType: "uint64",
-        name: "version",
-        type: "uint64",
-      },
-    ],
-    name: "Initialized",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "address",
-        name: "account",
-        type: "address",
-      },
-    ],
-    name: "Paused",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
         indexed: true,
         internalType: "address",
         name: "user",
@@ -237,13 +71,13 @@ export const VAULT_ABI = [
         type: "address",
       },
       {
-        indexed: false,
+        indexed: true,
         internalType: "uint256",
         name: "amount",
         type: "uint256",
       },
     ],
-    name: "TokenDeposited",
+    name: "Deposit",
     type: "event",
   },
   {
@@ -274,33 +108,7 @@ export const VAULT_ABI = [
         type: "uint256[]",
       },
     ],
-    name: "TransactionSpent",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "address",
-        name: "account",
-        type: "address",
-      },
-    ],
-    name: "Unpaused",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "implementation",
-        type: "address",
-      },
-    ],
-    name: "Upgraded",
+    name: "Spend",
     type: "event",
   },
   {
@@ -319,40 +127,14 @@ export const VAULT_ABI = [
         type: "address",
       },
       {
-        indexed: false,
+        indexed: true,
         internalType: "uint256",
         name: "total",
         type: "uint256",
       },
     ],
-    name: "Withdrawal",
+    name: "Withdraw",
     type: "event",
-  },
-  {
-    inputs: [],
-    name: "UPGRADE_INTERFACE_VERSION",
-    outputs: [
-      {
-        internalType: "string",
-        name: "",
-        type: "string",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "authority",
-    outputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
   },
   {
     inputs: [
@@ -542,11 +324,6 @@ export const VAULT_ABI = [
         name: "owner",
         type: "address",
       },
-      {
-        internalType: "bool",
-        name: "locked",
-        type: "bool",
-      },
     ],
     stateMutability: "view",
     type: "function",
@@ -594,47 +371,6 @@ export const VAULT_ABI = [
     inputs: [
       {
         internalType: "address",
-        name: "verifiers",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "trustedForwarder",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "protocolManager",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "initialAuthority",
-        type: "address",
-      },
-    ],
-    name: "initialize",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "isConsumingScheduledOp",
-    outputs: [
-      {
-        internalType: "bytes4",
-        name: "",
-        type: "bytes4",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
         name: "forwarder",
         type: "address",
       },
@@ -653,45 +389,6 @@ export const VAULT_ABI = [
   {
     inputs: [],
     name: "pause",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "paused",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "proxiableUUID",
-    outputs: [
-      {
-        internalType: "bytes32",
-        name: "",
-        type: "bytes32",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "newAuthority",
-        type: "address",
-      },
-    ],
-    name: "setAuthority",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -771,25 +468,77 @@ export const VAULT_ABI = [
     type: "function",
   },
   {
-    inputs: [],
-    name: "unpause",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "upgradeCallBack",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
     inputs: [
       {
         internalType: "address",
-        name: "newImplementation",
+        name: "to",
         type: "address",
+      },
+      {
+        components: [
+          {
+            internalType: "address",
+            name: "token",
+            type: "address",
+          },
+          {
+            internalType: "uint256[]",
+            name: "inputsPoseidonHashes",
+            type: "uint256[]",
+          },
+          {
+            internalType: "uint256[]",
+            name: "outputsPoseidonHashes",
+            type: "uint256[]",
+          },
+          {
+            internalType: "bytes[]",
+            name: "metadata",
+            type: "bytes[]",
+          },
+          {
+            components: [
+              {
+                internalType: "address",
+                name: "owner",
+                type: "address",
+              },
+              {
+                internalType: "uint8[]",
+                name: "indexes",
+                type: "uint8[]",
+              },
+            ],
+            internalType: "struct OutputsOwners[]",
+            name: "outputsOwners",
+            type: "tuple[]",
+          },
+          {
+            components: [
+              {
+                internalType: "address",
+                name: "owner",
+                type: "address",
+              },
+              {
+                internalType: "uint240",
+                name: "amount",
+                type: "uint240",
+              },
+            ],
+            internalType: "struct PublicOutput[]",
+            name: "publicOutputs",
+            type: "tuple[]",
+          },
+        ],
+        internalType: "struct Transaction",
+        name: "transaction",
+        type: "tuple",
+      },
+      {
+        internalType: "uint256[24]",
+        name: "proof",
+        type: "uint256[24]",
       },
       {
         internalType: "bytes",
@@ -797,9 +546,16 @@ export const VAULT_ABI = [
         type: "bytes",
       },
     ],
-    name: "upgradeToAndCall",
+    name: "spendAndCall",
     outputs: [],
-    stateMutability: "payable",
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "unpause",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function",
   },
   {
