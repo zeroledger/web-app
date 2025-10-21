@@ -155,7 +155,7 @@ export class Watcher extends EventEmitter {
       const event = selectedInOrderEvents[i];
       if (event.eventName === "CommitmentCreated" && event.args.metadata) {
         // add commitment to LedgerRecordDto
-        const { encryptedCommitment, tesUrl } = decodeMetadata(
+        const { encryptedCommitment, tesUrl, message } = decodeMetadata(
           event.args.metadata,
         );
 
@@ -225,6 +225,7 @@ export class Watcher extends EventEmitter {
             ledgerRecord,
             event.blockNumber!.toString(),
             event.transactionIndex!,
+            message || undefined,
           ),
         );
         if (updateBlockNumber) {
@@ -247,6 +248,7 @@ export class Watcher extends EventEmitter {
               ledgerRecord,
               event.blockNumber!.toString(),
               event.transactionIndex!,
+              undefined,
             ),
           );
         }

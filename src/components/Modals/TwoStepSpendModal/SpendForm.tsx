@@ -74,9 +74,10 @@ export const SpendForm = ({
   const isFeesLoading = isSpendLoading || isWithdrawLoading;
 
   const handleQRCodeDetected = (data: string) => {
-    // Extract address and amount from QR code data
+    // Extract address, amount, and message from QR code data
     let address = data;
     let amount = "";
+    let message = "";
 
     // Check if it's an ethereum: URL format (matches our generation)
     if (data.includes("zeroledger:")) {
@@ -86,9 +87,15 @@ export const SpendForm = ({
       }
 
       // Extract amount from query parameter
-      const amountMatch = data.match(/&amount=([^&]+)/);
+      const amountMatch = data.match(/[?&]amount=([^&]+)/);
       if (amountMatch) {
         amount = amountMatch[1];
+      }
+
+      // Extract message from query parameter
+      const messageMatch = data.match(/[?&]message=([^&]+)/);
+      if (messageMatch) {
+        message = decodeURIComponent(messageMatch[1]);
       }
     } else if (data.includes("/address/")) {
       // Handle other URL formats (like explorer links)
@@ -109,6 +116,12 @@ export const SpendForm = ({
     if (amount && parseFloat(amount) > 0) {
       setValue("amount", amount);
       clearErrors("amount");
+    }
+
+    // Set the message if found
+    if (message) {
+      setValue("message", message);
+      clearErrors("message");
     }
   };
 

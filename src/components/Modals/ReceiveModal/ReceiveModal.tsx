@@ -27,6 +27,7 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
 
   const [amount, setAmount] = useState("");
   const [amountError, setAmountError] = useState("");
+  const [messageRequest, setMessageRequest] = useState("");
 
   const amountRegex = /^\d*\.?\d*$/;
 
@@ -36,15 +37,31 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
     setAmountError("");
   };
 
+  const handleMessageRequestChange = (value: string) => {
+    if (value.length <= 32) {
+      setMessageRequest(value);
+    }
+  };
+
   const generateQRData = () => {
     if (!wallet?.address) return "";
 
-    if (amount && parseFloat(amount) > 0) {
-      // Include both address and amount in QR code
-      return `zeroledger:address=${wallet.address}&amount=${amount}`;
+    const hasAmount = amount && parseFloat(amount) > 0;
+    const hasMessage = messageRequest.trim().length > 0;
+
+    if (hasAmount || hasMessage) {
+      // Build QR code with parameters
+      let qrData = `zeroledger:address=${wallet.address}`;
+      if (hasAmount) {
+        qrData += `&amount=${amount}`;
+      }
+      if (hasMessage) {
+        qrData += `&message=${encodeURIComponent(messageRequest)}`;
+      }
+      return qrData;
     }
 
-    // Just the address if no amount specified
+    // Just the address if no parameters specified
     return wallet.address;
   };
 
@@ -74,7 +91,7 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
           </div>
 
           {/* Amount Input */}
-          <div className="mb-6">
+          <div className="mb-4">
             <Field>
               <Label className="text-base/6 font-medium text-white mb-2 block">
                 Request Amount (USD)
@@ -91,6 +108,27 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
               )}
               <div className="text-sm text-white/60 mt-1">
                 Leave empty to receive any amount
+              </div>
+            </Field>
+          </div>
+
+          {/* Message Request Input */}
+          <div className="mb-6">
+            <Field>
+              <Label className="text-base/6 font-medium text-white mb-2 block">
+                Request Message (optional)
+              </Label>
+              <Input
+                type="text"
+                className={primaryInputStyle}
+                value={messageRequest}
+                onChange={(e) => handleMessageRequestChange(e.target.value)}
+                placeholder="e.g., Invoice #123, Coffee payment..."
+                maxLength={32}
+              />
+              <div className="text-sm text-white/60 mt-1 flex justify-between">
+                <span>Ask sender to include a message</span>
+                <span>{messageRequest.length}/32</span>
               </div>
             </Field>
           </div>
