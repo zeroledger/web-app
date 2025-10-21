@@ -1,6 +1,7 @@
 import { useContext } from "react";
 import { parseUnits } from "viem";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
+import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { delay } from "@src/utils/common";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import {
@@ -9,7 +10,6 @@ import {
   type SpendFeesData,
 } from "@src/services/ledger";
 import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
-import { ens } from "@src/services/Ens";
 import { type WithdrawParams, type CommitmentStruct } from "@src/utils/vault";
 import { useSettings } from "@src/hooks/useSettings";
 import {
@@ -19,7 +19,6 @@ import {
 import debounce from "debounce";
 
 interface WithdrawFormData {
-  recipient: string;
   amount: string;
 }
 
@@ -38,13 +37,13 @@ const defaultConfig = {
     step: "form",
   } as WithdrawModalState,
   defaultValues: {
-    recipient: "",
     amount: "",
   },
 };
 
 export const useTwoStepWithdrawModal = (decimals: number) => {
   const { ledger } = useContext(LedgerContext);
+  const { wallet } = useWalletAdapter();
   const { settings } = useSettings();
   const skipSecondStep = !settings.showTransactionPreview;
   const { privateBalance } = useContext(PanelContext);
@@ -76,7 +75,8 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
             isModalLoading: true,
           }));
 
-          const recipient = await ens.universalResolve(data.recipient);
+          // Use user's own address as recipient for withdraw
+          const recipient = wallet!.address as `0x${string}`;
 
           const amount = parseUnits(data.amount, decimals);
           let metaTransactionData;

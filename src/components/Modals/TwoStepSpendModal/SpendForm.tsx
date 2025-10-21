@@ -127,54 +127,58 @@ export const SpendForm = ({
 
   return (
     <div className="w-full">
-      <Field className="mt-2">
-        <Label className="text-base/6 font-medium text-white">
-          Recipient address
-        </Label>
-        <div className="relative mb-2">
-          <Input
-            className={primaryInputStyle}
-            {...register("recipient", {
-              required: "Recipient address is required",
-              validate: async (value) => {
-                if (value.startsWith("0x")) {
-                  return isAddress(value) || "Invalid address";
-                }
-                const ensAddress = await ens.client.getEnsAddress({
-                  name: normalize(value),
-                });
-                return (
-                  (!!ensAddress && isAddress(ensAddress)) || "Invalid ENS name"
-                );
+      {/* Only show recipient field for Payment type */}
+      {type === "Payment" && (
+        <Field className="mt-2">
+          <Label className="text-base/6 font-medium text-white">
+            Recipient address
+          </Label>
+          <div className="relative mb-2">
+            <Input
+              className={primaryInputStyle}
+              {...register("recipient", {
+                required: "Recipient address is required",
+                validate: async (value) => {
+                  if (value.startsWith("0x")) {
+                    return isAddress(value) || "Invalid address";
+                  }
+                  const ensAddress = await ens.client.getEnsAddress({
+                    name: normalize(value),
+                  });
+                  return (
+                    (!!ensAddress && isAddress(ensAddress)) ||
+                    "Invalid ENS name"
+                  );
+                },
+              })}
+              placeholder="ens.eth or 0x00..."
+              onChange={(e) => {
+                setValue("recipient", e.target.value);
+                clearErrors("recipient");
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setIsQRScannerOpen(true)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+              title="Scan QR code"
+            >
+              <CameraIcon />
+            </button>
+          </div>
+          <div
+            className={clsx(
+              "text-base/6 text-red-400 transition-all duration-200 ease-in-out",
+              {
+                "opacity-0 h-0": !errors.recipient,
+                "opacity-100 h-6": errors.recipient,
               },
-            })}
-            placeholder="ens.eth or 0x00..."
-            onChange={(e) => {
-              setValue("recipient", e.target.value);
-              clearErrors("recipient");
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => setIsQRScannerOpen(true)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-            title="Scan QR code"
+            )}
           >
-            <CameraIcon />
-          </button>
-        </div>
-        <div
-          className={clsx(
-            "text-base/6 text-red-400 transition-all duration-200 ease-in-out",
-            {
-              "opacity-0 h-0": !errors.recipient,
-              "opacity-100 h-6": errors.recipient,
-            },
-          )}
-        >
-          {errors.recipient && <p>{errors.recipient.message}</p>}
-        </div>
-      </Field>
+            {errors.recipient && <p>{errors.recipient.message}</p>}
+          </div>
+        </Field>
+      )}
       <Field className="mt-1">
         <Label className="text-base/6 font-medium text-white">
           Amount (USD)
