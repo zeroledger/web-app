@@ -17,10 +17,10 @@ import {
 import debounce from "debounce";
 
 interface SpendFormData {
-  recipient: string;
+  recipient?: string;
   amount: string;
-  publicOutput: boolean;
-  message: string;
+  publicOutput?: boolean;
+  message?: string;
 }
 
 export interface SpendModalState extends MultiStepModalState {
@@ -137,7 +137,7 @@ export const useTwoStepSpendModal = (
             isModalLoading: true,
           }));
 
-          const recipient = await ens.universalResolve(data.recipient);
+          const recipient = await ens.universalResolve(data.recipient!);
 
           let metaTransactionData;
 
