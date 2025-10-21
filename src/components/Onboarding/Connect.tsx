@@ -1,6 +1,7 @@
 import { Button } from "@headlessui/react";
 import { primaryButtonStyle } from "@src/components/styles/Button.styles";
 import WelcomeBanner from "./WelcomeBanner";
+import StepsExplanation from "./StepsExplanation";
 import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { MdEmail } from "react-icons/md";
 import { SiWalletconnect } from "react-icons/si";
@@ -13,13 +14,15 @@ export default function Connect() {
   const { connect, signIn } = useWalletAdapter();
 
   const containerClass = clsx(
-    "mt-5 mx-auto",
-    ENABLE_EMBEDDED_WALLETS && "grid grid-cols-2 gap-3",
+    "max-w-xs flex w-full flex",
+    !ENABLE_EMBEDDED_WALLETS && "justify-center",
+    ENABLE_EMBEDDED_WALLETS && "justify-between",
   );
 
   return (
     <>
       <WelcomeBanner />
+      <StepsExplanation />
       <div className={containerClass}>
         <Button
           className={clsx(
