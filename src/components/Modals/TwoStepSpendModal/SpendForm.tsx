@@ -1,4 +1,4 @@
-import { Field, Label, Input } from "@headlessui/react";
+import { Field, Label, Input, Switch } from "@headlessui/react";
 import { UseFormReturn } from "react-hook-form";
 import { useContext, useEffect, useState } from "react";
 import { MobileConfirmButton } from "@src/components/Buttons/MobileConfirmButton";
@@ -25,6 +25,7 @@ const amountRegex = /^\d*\.?\d*$/;
 interface SpendFormData {
   recipient: string;
   amount: string;
+  publicOutput: boolean;
 }
 
 interface SpendFormProps {
@@ -231,6 +232,42 @@ export const SpendForm = ({
           {errors.amount && <p>{errors.amount.message}</p>}
         </div>
       </Field>
+
+      {/* Public Output Switcher - only show for Payment type */}
+      {type === "Payment" && (
+        <Field className="mt-4">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <Label className="text-base/6 font-medium text-white">
+                Public Transfer
+              </Label>
+              <p className="text-sm text-white/70 mt-1">Send tokens publicly</p>
+            </div>
+            <Switch
+              checked={formMethods.watch("publicOutput")}
+              onChange={(checked) =>
+                formMethods.setValue("publicOutput", checked)
+              }
+              className={clsx(
+                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                formMethods.watch("publicOutput")
+                  ? "bg-blue-500"
+                  : "bg-white/20",
+              )}
+            >
+              <span
+                className={clsx(
+                  "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                  formMethods.watch("publicOutput")
+                    ? "translate-x-6"
+                    : "translate-x-1",
+                )}
+              />
+            </Switch>
+          </div>
+        </Field>
+      )}
+
       <div className="py-2">
         <MobileConfirmButton
           disabled={isSubmitting || isFeesLoading}
