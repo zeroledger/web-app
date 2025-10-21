@@ -26,22 +26,28 @@ export const encode = (
   commitment: CommitmentStruct,
   tesUrl: string,
   encryptionPublicKey: Hex,
+  message?: string,
 ) => {
   const encryptedCommitment = encrypt(
     JSON.stringify(serializeCommitment(commitment)),
     encryptionPublicKey,
   );
-  return encodeAbiParameters(ENCRYPTION_ABI, [encryptedCommitment, tesUrl]);
+  return encodeAbiParameters(ENCRYPTION_ABI, [
+    encryptedCommitment,
+    tesUrl,
+    message || "",
+  ]);
 };
 
 export const decodeMetadata = (metadata: Hex) => {
-  const [encryptedCommitment, tesUrl] = decodeAbiParameters(
+  const [encryptedCommitment, tesUrl, message] = decodeAbiParameters(
     ENCRYPTION_ABI,
     metadata,
   );
   return {
     encryptedCommitment,
     tesUrl,
+    message,
   };
 };
 

@@ -527,7 +527,6 @@ export class Transactions {
             receiverTesUrl: tesUrl,
             privateSpend: 0n,
             publicOutputs,
-            decoyParams: null,
           });
 
         const partialWithdrawParams = {
@@ -619,7 +618,9 @@ export class Transactions {
           tesUrl: receiverTesUrl,
         } = await this.getEncryptionParams(recipient);
 
-        const decoyParams = await this.tesService.getDecoyRecipient();
+        const decoyParams = !consolidation
+          ? await this.tesService.getDecoyRecipient()
+          : undefined;
 
         this.logger.log(`decoyParams: ${JSON.stringify(decoyParams)}`);
 
@@ -640,10 +641,9 @@ export class Transactions {
             privateSpend,
             publicOutputs,
             decoyParams:
-              consolidation ||
               decoyParams?.address === mainAccount.address ||
               decoyParams?.address === recipient
-                ? null
+                ? undefined
                 : decoyParams,
           });
 

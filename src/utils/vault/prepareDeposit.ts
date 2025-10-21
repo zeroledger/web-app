@@ -2,6 +2,7 @@ import { generatePrivateKey } from "viem/accounts";
 import { Address, Hex } from "viem";
 import { prover } from "@src/utils/prover";
 import {
+  DecoyParams,
   DepositCommitmentData,
   DepositCommitmentParamsStruct,
   DepositData,
@@ -26,22 +27,71 @@ async function createDepositStruct(
 }
 
 async function generateDepositCommitmentData(
-  individualAmounts: bigint[],
+  value: bigint,
   userAddress: Address,
   userEncryptionPublicKey: Hex,
   tesUrl: string,
+  twoDecoys?: DecoyParams[],
 ): Promise<DepositCommitmentData> {
   const amounts: bigint[] = [];
   const sValues: bigint[] = [];
   const hashes: bigint[] = [];
+  const { computePoseidon } = await import("@src/utils/poseidon");
 
+  if (twoDecoys) {
+    const params = shuffle(
+      await Promise.all(
+        Array.from({ length: 3 }, async (_, i) => {
+          const decoySValue = BigInt(generatePrivateKey());
+          const amount = i === 0 ? value : 0n;
+          return {
+            hash: await computePoseidon({
+              amount: amount,
+              entropy: decoySValue,
+            }),
+            owner: i === 0 ? userAddress : twoDecoys[i - 1].address,
+            amount: amount,
+            sValue: decoySValue,
+            tesUrl: i === 0 ? tesUrl : "",
+            userEncryptionPublicKey:
+              i === 0 ? userEncryptionPublicKey : twoDecoys[i - 1].publicKey,
+          };
+        }),
+      ),
+    );
+    const depositCommitmentParams = (await Promise.all(
+      params.map(async (param) => {
+        amounts.push(param.amount);
+        sValues.push(param.sValue);
+        hashes.push(param.hash);
+        return {
+          poseidonHash: param.hash,
+          owner: param.owner,
+          metadata: encode(
+            { amount: param.amount, sValue: param.sValue },
+            param.tesUrl,
+            param.userEncryptionPublicKey,
+          ),
+        };
+      }),
+    )) as [
+      DepositCommitmentParamsStruct,
+      DepositCommitmentParamsStruct,
+      DepositCommitmentParamsStruct,
+    ];
+    return { amounts, sValues, hashes, depositCommitmentParams };
+  }
+
+  let valueLef = value;
   for (let i = 0; i < 3; i++) {
+    const random = BigInt(Math.ceil(Math.random() * 3));
+    const amount = i < 2 ? valueLef / random : valueLef;
+    valueLef -= amount;
     const sValue = BigInt(generatePrivateKey());
     sValues.push(sValue);
-    amounts.push(individualAmounts[i]);
-    const { computePoseidon } = await import("@src/utils/poseidon");
+    amounts.push(amount);
     const hash = await computePoseidon({
-      amount: individualAmounts[i],
+      amount: amount,
       entropy: sValue,
     });
     hashes.push(hash);
@@ -118,30 +168,30 @@ export default async function prepareDeposit(
   forwarderFee: bigint,
   forwarderFeeRecipient: Address,
   tesUrl = "",
+  decoyParams?: DecoyParams[],
 ) {
   const valueLeftForUser = value - protocolDepositFee - forwarderFee;
-  const random = BigInt(Math.ceil(Math.random() * 3));
-  const firstAmount = valueLeftForUser / random;
-  const secondAmount = valueLeftForUser - firstAmount;
+
+  const depositCommitmentData = await generateDepositCommitmentData(
+    valueLeftForUser,
+    user,
+    userEncryptionPublicKey,
+    tesUrl,
+    decoyParams,
+  );
+
   const depositData: DepositData = {
     valueLeftForUser,
-    individualAmounts: shuffle([firstAmount, secondAmount, 0n]),
+    individualAmounts: depositCommitmentData.amounts,
     user,
     protocolDepositFee,
     forwarderFee,
     forwarderFeeRecipient,
   };
 
-  const depositCommitmentData = await generateDepositCommitmentData(
-    depositData.individualAmounts,
-    depositData.user,
-    userEncryptionPublicKey,
-    tesUrl,
-  );
-
   const proofData = await generateDepositProof(
     depositCommitmentData.hashes,
-    depositData.valueLeftForUser,
+    valueLeftForUser,
     depositCommitmentData.amounts,
     depositCommitmentData.sValues,
   );

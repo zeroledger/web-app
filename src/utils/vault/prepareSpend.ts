@@ -128,7 +128,7 @@ type TransactionStructCreationInput = {
   token: Address;
   inputHashes: bigint[];
   outputs: OutputRecord[];
-  decoyParams: DecoyParams;
+  decoyParams?: DecoyParams;
   spender: Address;
   spenderEncryptionPublicKey: Hex;
   spenderTesUrl: string;
@@ -241,7 +241,7 @@ export type PrepareSpendParams = {
   // public outputs
   publicOutputs: PublicOutput[];
   // decoy params
-  decoyParams: DecoyParams;
+  decoyParams?: DecoyParams;
 };
 
 export default async function prepareSpend({

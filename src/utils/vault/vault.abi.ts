@@ -689,6 +689,11 @@ export const ENCRYPTION_ABI = [
     name: "tesUrl",
     type: "string",
   },
+  {
+    internalType: "string",
+    name: "message",
+    type: "string",
+  },
 ] as const;
 
 export const REGISTRY_ABI = [
