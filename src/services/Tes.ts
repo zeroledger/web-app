@@ -312,6 +312,29 @@ export class Tes {
     return data;
   }
 
+  async registerInvoiceAddress(
+    invoiceAddress: Address,
+    mainAccountAddress: Address,
+  ) {
+    return backOff(async () => {
+      await this.manageAuth(mainAccountAddress);
+      return true;
+      // await this.axios.post(
+      //   `${this.tesUrl}/invoiceAddress/register`,
+      //   {
+      //     invoiceAddress,
+      //   },
+      //   {
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //       "x-custom-tes-csrf": this.csrf,
+      //     },
+      //     withCredentials: true,
+      //   },
+      // );
+    }, backoffOptions);
+  }
+
   reset() {
     this.timeout = 0;
     this.csrf = "";
