@@ -33,6 +33,7 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
   const [amount, setAmount] = useState("");
   const [amountError, setAmountError] = useState("");
   const [messageRequest, setMessageRequest] = useState("");
+  const [messageError, setMessageError] = useState("");
   const [isPublicPayment, setIsPublicPayment] = useState(false);
 
   const amountRegex = /^\d*\.?\d*$/;
@@ -65,6 +66,12 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
   const handleMessageRequestChange = (value: string) => {
     if (value.length <= 32) {
       setMessageRequest(value);
+      setMessageError("");
+
+      // Reset invoice when message changes
+      if (isPublicPayment && invoiceAddress) {
+        resetInvoice();
+      }
     }
   };
 
@@ -75,9 +82,22 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
       return;
     }
 
-    const success = await generateInvoice(amount);
+    // Validate message
+    if (!messageRequest || messageRequest.trim().length === 0) {
+      setMessageError("Invoice ID/Message is required for invoice generation");
+      return;
+    }
+
+    const success = await generateInvoice(amount, messageRequest);
     if (!success) {
-      setAmountError("Amount is required for invoice generation");
+      if (!amount || parseFloat(amount) <= 0) {
+        setAmountError("Amount is required for invoice generation");
+      }
+      if (!messageRequest || messageRequest.trim().length === 0) {
+        setMessageError(
+          "Invoice ID/Message is required for invoice generation",
+        );
+      }
     }
   };
 
@@ -87,6 +107,7 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
     if (!enabled) {
       resetInvoice();
       setAmountError("");
+      setMessageError("");
     }
   };
 
@@ -170,10 +191,13 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
             <InvoiceSection
               amount={amount}
               amountError={amountError}
+              message={messageRequest}
+              messageError={messageError}
               invoiceAddress={invoiceAddress}
               isGenerating={isGeneratingInvoice}
               showCopiedTooltip={showInvoiceCopied}
               onAmountChange={handleAmountChange}
+              onMessageChange={handleMessageRequestChange}
               onGenerate={handleGenerateInvoice}
               onCopyAddress={handleCopyInvoice}
             />

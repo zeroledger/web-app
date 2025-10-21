@@ -6,9 +6,16 @@ export const useInvoiceGeneration = () => {
   );
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const generateInvoice = async (amount: string): Promise<boolean> => {
-    // Validate amount
+  const generateInvoice = async (
+    amount: string,
+    message: string,
+  ): Promise<boolean> => {
+    // Validate amount and message
     if (!amount || parseFloat(amount) <= 0) {
+      return false;
+    }
+
+    if (!message || message.trim().length === 0) {
       return false;
     }
 

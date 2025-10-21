@@ -7,10 +7,13 @@ import clsx from "clsx";
 interface InvoiceSectionProps {
   amount: string;
   amountError: string;
+  message: string;
+  messageError: string;
   invoiceAddress: `0x${string}` | null;
   isGenerating: boolean;
   showCopiedTooltip: boolean;
   onAmountChange: (value: string) => void;
+  onMessageChange: (value: string) => void;
   onGenerate: () => void;
   onCopyAddress: () => void;
 }
@@ -18,10 +21,13 @@ interface InvoiceSectionProps {
 export const InvoiceSection = ({
   amount,
   amountError,
+  message,
+  messageError,
   invoiceAddress,
   isGenerating,
   showCopiedTooltip,
   onAmountChange,
+  onMessageChange,
   onGenerate,
   onCopyAddress,
 }: InvoiceSectionProps) => {
@@ -44,8 +50,29 @@ export const InvoiceSection = ({
           {amountError && (
             <div className="text-red-400 text-sm mt-1">{amountError}</div>
           )}
+        </Field>
+      </div>
+
+      {/* Message/Invoice ID Input (Required for Invoice) */}
+      <div className="mb-4">
+        <Field>
+          <Label className="text-base/6 font-medium text-white mb-2 block">
+            Invoice ID / Message *
+          </Label>
+          <Input
+            type="text"
+            className={primaryInputStyle}
+            value={message}
+            onChange={(e) => onMessageChange(e.target.value)}
+            placeholder="e.g., INV-2024-001"
+            maxLength={32}
+            disabled={isGenerating}
+          />
+          {messageError && (
+            <div className="text-red-400 text-sm mt-1">{messageError}</div>
+          )}
           <div className="text-sm text-white/60 mt-1">
-            Required to generate invoice
+            Required to generate invoice (max 32 characters)
           </div>
         </Field>
       </div>
@@ -54,11 +81,21 @@ export const InvoiceSection = ({
       {!invoiceAddress && (
         <Button
           onClick={onGenerate}
-          disabled={isGenerating || !amount || parseFloat(amount) <= 0}
+          disabled={
+            isGenerating ||
+            !amount ||
+            parseFloat(amount) <= 0 ||
+            !message ||
+            message.trim().length === 0
+          }
           className={clsx(
             primaryButtonStyle,
             "w-full",
-            (isGenerating || !amount || parseFloat(amount) <= 0) &&
+            (isGenerating ||
+              !amount ||
+              parseFloat(amount) <= 0 ||
+              !message ||
+              message.trim().length === 0) &&
               "opacity-50 cursor-not-allowed",
           )}
         >
