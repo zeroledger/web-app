@@ -90,106 +90,22 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
             <QRCodeDisplay value={generateQRData()} size={192} />
           </div>
 
-          {/* Amount Input */}
-          <div className="mb-4">
-            <Field>
-              <Label className="text-base/6 font-medium text-white mb-2 block">
-                Request Amount (USD)
-              </Label>
-              <Input
-                type="text"
-                className={primaryInputStyle}
-                value={amount}
-                onChange={(e) => handleAmountChange(e.target.value)}
-                placeholder="0.00"
-              />
-              {amountError && (
-                <div className="text-red-400 text-sm mt-1">{amountError}</div>
-              )}
-              <div className="text-sm text-white/60 mt-1">
-                Leave empty to receive any amount
-              </div>
-            </Field>
-          </div>
-
-          {/* Message Request Input */}
-          <div className="mb-6">
-            <Field>
-              <Label className="text-base/6 font-medium text-white mb-2 block">
-                Request Message (optional)
-              </Label>
-              <Input
-                type="text"
-                className={primaryInputStyle}
-                value={messageRequest}
-                onChange={(e) => handleMessageRequestChange(e.target.value)}
-                placeholder="e.g., Invoice #123, Coffee payment..."
-                maxLength={32}
-              />
-              <div className="text-sm text-white/60 mt-1 flex justify-between">
-                <span>Ask sender to include a message</span>
-                <span>{messageRequest.length}/32</span>
-              </div>
-            </Field>
-          </div>
-
-          {/* User Profile Section */}
-          <div className="bg-gray-800 rounded-lg p-4 mb-6">
-            {/* ENS Name (if available) */}
-            {ensProfile?.name && (
-              <div className="mb-4">
-                <div className="block text-gray-400 text-sm mb-2">ENS Name</div>
-                <div className="relative">
-                  <div className="bg-gray-700 rounded-lg p-3 pr-12">
-                    <span className="text-white font-mono text-sm">
-                      {ensProfile.name}
-                    </span>
-                  </div>
-                  <button
-                    onClick={handleCopyEns}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                    title="Copy ENS name"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </button>
-                  {showEnsCopied && (
-                    <div className="absolute -top-8 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded">
-                      Copied!
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Wallet Address */}
-            <div>
-              <div className="block text-gray-400 text-sm mb-2">
-                Wallet Address
+          {/* ENS Name (if available) */}
+          {ensProfile?.name && (
+            <div className="mb-4">
+              <div className="text-base/6 font-medium text-white mb-2 block">
+                ENS Name
               </div>
               <div className="relative">
-                <div className="bg-gray-700 rounded-lg p-3 pr-12">
+                <div className="bg-gray-700/35 rounded-lg p-3 pr-12">
                   <span className="text-white font-mono text-sm">
-                    {wallet?.address
-                      ? shortString(wallet.address)
-                      : "No address"}
+                    {ensProfile.name}
                   </span>
                 </div>
                 <button
-                  onClick={handleCopyAddress}
+                  onClick={handleCopyEns}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                  title="Copy wallet address"
+                  title="Copy ENS name"
                 >
                   <svg
                     className="w-5 h-5"
@@ -205,13 +121,87 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
                     />
                   </svg>
                 </button>
-                {showAddressCopied && (
+                {showEnsCopied && (
                   <div className="absolute -top-8 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded">
                     Copied!
                   </div>
                 )}
               </div>
             </div>
+          )}
+
+          {/* Wallet Address */}
+          <div className="mb-4">
+            <div className="text-base/6 font-medium text-white mb-2 block">
+              Wallet Address
+            </div>
+            <div className="relative">
+              <div className="bg-gray-700/35 rounded-lg p-3 pr-12">
+                <span className="text-white font-mono text-sm">
+                  {wallet?.address ? shortString(wallet.address) : "No address"}
+                </span>
+              </div>
+              <button
+                onClick={handleCopyAddress}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                title="Copy wallet address"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
+                </svg>
+              </button>
+              {showAddressCopied && (
+                <div className="absolute -top-8 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded">
+                  Copied!
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Amount Input */}
+          <div className="mb-4">
+            <Field>
+              <Label className="text-base/6 font-medium text-white mb-2 block">
+                Request Amount (USD). Optional.
+              </Label>
+              <Input
+                type="text"
+                className={primaryInputStyle}
+                value={amount}
+                onChange={(e) => handleAmountChange(e.target.value)}
+                placeholder="0.00"
+              />
+              {amountError && (
+                <div className="text-red-400 text-sm mt-1">{amountError}</div>
+              )}
+            </Field>
+          </div>
+
+          {/* Message Request Input */}
+          <div className="mb-6">
+            <Field>
+              <Label className="text-base/6 font-medium text-white mb-2 block">
+                Request Message. Optional.
+              </Label>
+              <Input
+                type="text"
+                className={primaryInputStyle}
+                value={messageRequest}
+                onChange={(e) => handleMessageRequestChange(e.target.value)}
+                placeholder="e.g., Invoice #123, Coffee payment..."
+                maxLength={32}
+              />
+            </Field>
           </div>
         </div>
       </div>
