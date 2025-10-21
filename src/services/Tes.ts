@@ -267,7 +267,7 @@ export class Tes {
         publicKey: Hex;
         address: Address;
       } | null>(`${this.tesUrl}/userMetadata/decoyRecipient?amount=${amount}`);
-      return data;
+      return !data ? undefined : data;
     }, backoffOptions);
   }
 

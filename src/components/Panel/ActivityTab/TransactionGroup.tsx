@@ -48,6 +48,9 @@ export default function TransactionGroup({
   );
   const total = totalIncomings - totalOutgoings;
 
+  // Find the first message from incoming transactions
+  const firstMessage = incomings.find((tx) => tx.message)?.message;
+
   const formatTotal = (amount: bigint, decimals: number) => {
     const prefix = amount >= 0n ? "+" : "-";
     const amountNumber = formatUnits(amount >= 0n ? amount : -amount, decimals);
@@ -92,6 +95,23 @@ export default function TransactionGroup({
                     {formatTotal(total, decimals)}
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Message Section */}
+        {firstMessage && (
+          <div className="space-y-2">
+            <div className="text-xs font-medium text-white/70 uppercase tracking-wide">
+              Message
+            </div>
+            <div className="pl-4 border-l-2 border-blue-400/30">
+              <div className="text-sm text-white/80 italic">
+                💬{" "}
+                {firstMessage.length > 32
+                  ? firstMessage.slice(0, 32) + "..."
+                  : firstMessage}
               </div>
             </div>
           </div>

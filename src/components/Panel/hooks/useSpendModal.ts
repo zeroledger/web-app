@@ -17,8 +17,10 @@ import {
 import debounce from "debounce";
 
 interface SpendFormData {
-  recipient: string;
+  recipient?: string;
   amount: string;
+  publicOutput?: boolean;
+  message?: string;
 }
 
 export interface SpendModalState extends MultiStepModalState {
@@ -36,7 +38,9 @@ const defaultConfig = {
   defaultValues: {
     recipient: "",
     amount: "",
-  },
+    publicOutput: false,
+    message: "",
+  } as SpendFormData,
 };
 
 export const useTwoStepSpendModal = (
@@ -133,17 +137,29 @@ export const useTwoStepSpendModal = (
             isModalLoading: true,
           }));
 
-          const recipient = await ens.universalResolve(data.recipient);
+          const recipient = await ens.universalResolve(data.recipient!);
 
-          // This is a placeholder - in reality, you would call the ledger service
-          // to prepare the metatransaction data
-          const metaTransactionData =
-            await ledger!.transactions.prepareSendMetaTransaction(
-              parseUnits(data.amount, decimals),
-              recipient,
-              false,
-              state.spendFees,
-            );
+          let metaTransactionData;
+
+          if (data.publicOutput) {
+            // Use partial withdraw logic for public output sends
+            metaTransactionData =
+              await ledger!.transactions.preparePartialWithdrawMetaTransaction(
+                parseUnits(data.amount, decimals),
+                recipient,
+                state.spendFees,
+              );
+          } else {
+            // Use standard send logic for private sends
+            metaTransactionData =
+              await ledger!.transactions.prepareSendMetaTransaction(
+                parseUnits(data.amount, decimals),
+                recipient,
+                false,
+                state.spendFees,
+                data.message,
+              );
+          }
 
           if (skipSecondStep) {
             // Skip preview step and go directly to signing

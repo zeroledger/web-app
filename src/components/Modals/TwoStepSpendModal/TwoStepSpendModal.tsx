@@ -20,8 +20,10 @@ import { useContext } from "react";
 import { BaseModal } from "@src/components/Modals/BaseModal";
 
 interface SpendFormData {
-  recipient: string;
+  recipient?: string;
   amount: string;
+  publicOutput?: boolean;
+  message?: string;
 }
 
 type TwoStepSpendModalProps = {

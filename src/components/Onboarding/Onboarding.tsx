@@ -2,6 +2,7 @@ import { lazy, useEffect, useState } from "react";
 import { LoadingScreen } from "@src/components/LoadingScreen";
 import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { DumpLoadingScreen } from "@src/components/LoadingScreen";
+const urgentMessage = import.meta.env.VITE_URGENT_MESSAGE;
 
 const RegisterForm = lazy(
   () => import("@src/components/Onboarding/RegisterForm"),
@@ -29,6 +30,11 @@ export default function Onboarding() {
         <DumpLoadingScreen />
       ) : (
         <LoadingScreen>
+          {urgentMessage && (
+            <div className="text-white text-center bg-amber-500 p-4 mb-10">
+              {urgentMessage}
+            </div>
+          )}
           <Component />
         </LoadingScreen>
       )}

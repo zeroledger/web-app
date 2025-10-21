@@ -29,6 +29,7 @@ export class HistoryRecordDto {
     public readonly record: LedgerRecordDto,
     public readonly blockNumber: string,
     public readonly transactionIndex: number,
+    public readonly message?: string,
   ) {
     this.id = `${this.record.hash}:${status}`;
   }
