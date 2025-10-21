@@ -1,7 +1,6 @@
 import { Button } from "@headlessui/react";
 import { primaryButtonStyle } from "@src/components/styles/Button.styles";
 import WelcomeBanner from "./WelcomeBanner";
-import StepsExplanation from "./StepsExplanation";
 import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { MdEmail } from "react-icons/md";
 import { SiWalletconnect } from "react-icons/si";
@@ -22,7 +21,9 @@ export default function Connect() {
   return (
     <>
       <WelcomeBanner />
-      <StepsExplanation />
+      <p className="text-center text-sm text-white/60 p-4">
+        Get started by connecting your wallet or signing in with your email.
+      </p>
       <div className={containerClass}>
         <Button
           className={clsx(
