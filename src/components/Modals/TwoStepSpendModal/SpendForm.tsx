@@ -73,26 +73,42 @@ export const SpendForm = ({
   const isFeesLoading = isSpendLoading || isWithdrawLoading;
 
   const handleQRCodeDetected = (data: string) => {
-    // Extract address from QR code data
-    // QR codes might contain just the address or a full URL
+    // Extract address and amount from QR code data
     let address = data;
+    let amount = "";
 
-    // If it's a URL, try to extract the address from it
-    if (data.includes("ethereum:")) {
-      const match = data.match(/ethereum:([a-fA-F0-9x]+)/);
-      if (match) {
-        address = match[1];
+    // Check if it's an ethereum: URL format (matches our generation)
+    if (data.includes("zeroledger:")) {
+      const addressMatch = data.match(/zeroledger:address=([a-fA-F0-9x]+)/);
+      if (addressMatch) {
+        address = addressMatch[1];
+      }
+
+      // Extract amount from query parameter
+      const amountMatch = data.match(/&amount=([^&]+)/);
+      if (amountMatch) {
+        amount = amountMatch[1];
       }
     } else if (data.includes("/address/")) {
+      // Handle other URL formats (like explorer links)
       const match = data.match(/\/address\/([a-fA-F0-9x]+)/);
       if (match) {
         address = match[1];
       }
+    } else if (data.startsWith("0x")) {
+      // Handle plain address format (matches our generation when no amount)
+      address = data;
     }
 
     // Set the address in the form
     setValue("recipient", address);
     clearErrors("recipient");
+
+    // Set the amount if found and valid
+    if (amount && parseFloat(amount) > 0) {
+      setValue("amount", amount);
+      clearErrors("amount");
+    }
   };
 
   useEffect(() => {

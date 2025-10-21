@@ -6,6 +6,9 @@ import { useCopyAddress, useCopyEns } from ".";
 import { shortString } from "@src/utils/common";
 import { QRCodeDisplay } from "./QRCodeDisplay";
 import { BaseModal } from "@src/components/Modals/BaseModal";
+import { useState } from "react";
+import { Field, Label, Input } from "@headlessui/react";
+import { primaryInputStyle } from "@src/components/styles/Input.styles";
 
 interface ReceiveModalProps {
   isOpen: boolean;
@@ -21,6 +24,29 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
     ensProfile?.name,
   );
   const style = useDynamicHeight("h-dvh");
+
+  const [amount, setAmount] = useState("");
+  const [amountError, setAmountError] = useState("");
+
+  const amountRegex = /^\d*\.?\d*$/;
+
+  const handleAmountChange = (value: string) => {
+    if (!amountRegex.test(value)) return;
+    setAmount(value);
+    setAmountError("");
+  };
+
+  const generateQRData = () => {
+    if (!wallet?.address) return "";
+
+    if (amount && parseFloat(amount) > 0) {
+      // Include both address and amount in QR code
+      return `zeroledger:address=${wallet.address}&amount=${amount}`;
+    }
+
+    // Just the address if no amount specified
+    return wallet.address;
+  };
 
   return (
     <BaseModal
@@ -44,7 +70,29 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
 
           {/* QR Code */}
           <div className="flex justify-center mb-8">
-            <QRCodeDisplay value={wallet?.address || ""} size={192} />
+            <QRCodeDisplay value={generateQRData()} size={192} />
+          </div>
+
+          {/* Amount Input */}
+          <div className="mb-6">
+            <Field>
+              <Label className="text-base/6 font-medium text-white mb-2 block">
+                Request Amount (USD)
+              </Label>
+              <Input
+                type="text"
+                className={primaryInputStyle}
+                value={amount}
+                onChange={(e) => handleAmountChange(e.target.value)}
+                placeholder="0.00"
+              />
+              {amountError && (
+                <div className="text-red-400 text-sm mt-1">{amountError}</div>
+              )}
+              <div className="text-sm text-white/60 mt-1">
+                Leave empty to receive any amount
+              </div>
+            </Field>
           </div>
 
           {/* User Profile Section */}
@@ -125,16 +173,6 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-
-          {/* Full Address Display */}
-          <div className="bg-gray-800 rounded-lg p-4">
-            <div className="block text-gray-400 text-sm mb-2">Full Address</div>
-            <div className="bg-gray-700 rounded-lg p-3">
-              <span className="text-white font-mono text-xs break-all">
-                {wallet?.address || "No address available"}
-              </span>
             </div>
           </div>
         </div>
