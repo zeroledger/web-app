@@ -15,7 +15,7 @@ import {
   DecoyParams,
 } from "./types";
 import { encode } from "./metadata";
-import { shuffle } from "@src/utils/common";
+import { createRandomString, shuffle } from "@src/utils/common";
 
 const SHARED_INPUT = {
   value: 0n,
@@ -136,6 +136,7 @@ type TransactionStructCreationInput = {
   receiverEncryptionPublicKey: Hex;
   receiverTesUrl: string;
   publicOutputs: PublicOutput[];
+  messageToReceiver?: string;
 };
 
 function createTransactionStruct({
@@ -150,6 +151,7 @@ function createTransactionStruct({
   receiverEncryptionPublicKey,
   receiverTesUrl,
   publicOutputs,
+  messageToReceiver,
 }: TransactionStructCreationInput): TransactionStruct {
   const receiverRecordIndex = outputs.findIndex(
     ({ type }) => type === "receiver",
@@ -166,6 +168,7 @@ function createTransactionStruct({
 
   const metadata: Hex[] = [];
 
+  // Encode metadata for receiver with optional message
   metadata[receiverRecordIndex] = encode(
     {
       amount: outputs[receiverRecordIndex]!.value,
@@ -173,6 +176,7 @@ function createTransactionStruct({
     },
     receiverTesUrl,
     receiverEncryptionPublicKey,
+    messageToReceiver,
   );
 
   if (changeRecordIndex !== -1) {
@@ -202,6 +206,8 @@ function createTransactionStruct({
       },
       "",
       decoyParams!.publicKey,
+      // to emulate message for decoy recipient
+      createRandomString(messageToReceiver?.length || 0),
     );
   }
 
@@ -242,6 +248,8 @@ export type PrepareSpendParams = {
   publicOutputs: PublicOutput[];
   // decoy params
   decoyParams?: DecoyParams;
+  // optional message for recipient
+  messageToReceiver?: string;
 };
 
 export default async function prepareSpend({
@@ -258,6 +266,7 @@ export default async function prepareSpend({
   privateSpend,
   publicOutputs,
   decoyParams,
+  messageToReceiver,
 }: PrepareSpendParams) {
   const publicMovingAmount = publicOutputs.reduce(
     (acc, item) => acc + item.amount,
@@ -302,6 +311,7 @@ export default async function prepareSpend({
     receiverEncryptionPublicKey,
     receiverTesUrl,
     publicOutputs,
+    messageToReceiver,
   });
 
   return {

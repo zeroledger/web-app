@@ -161,3 +161,13 @@ export function roundToCents(amount: bigint, decimals: number): string {
   // Return as string with 2 decimal places
   return rounded.toFixed(2);
 }
+
+export function createRandomString(length: number): string {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_ ";
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}

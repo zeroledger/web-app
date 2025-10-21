@@ -20,6 +20,7 @@ interface SpendFormData {
   recipient: string;
   amount: string;
   publicOutput: boolean;
+  message: string;
 }
 
 export interface SpendModalState extends MultiStepModalState {
@@ -38,7 +39,8 @@ const defaultConfig = {
     recipient: "",
     amount: "",
     publicOutput: false,
-  },
+    message: "",
+  } as SpendFormData,
 };
 
 export const useTwoStepSpendModal = (
@@ -155,6 +157,7 @@ export const useTwoStepSpendModal = (
                 recipient,
                 false,
                 state.spendFees,
+                data.message,
               );
           }
 

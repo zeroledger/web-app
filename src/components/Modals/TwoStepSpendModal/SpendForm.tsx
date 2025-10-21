@@ -23,9 +23,10 @@ import clsx from "clsx";
 const amountRegex = /^\d*\.?\d*$/;
 
 interface SpendFormData {
-  recipient: string;
+  recipient?: string;
   amount: string;
-  publicOutput: boolean;
+  publicOutput?: boolean;
+  message?: string;
 }
 
 interface SpendFormProps {
@@ -141,6 +142,8 @@ export const SpendForm = ({
     withdrawFeesData,
   ]);
 
+  const isPublicTransfer = !!formMethods.watch("publicOutput");
+
   return (
     <div className="w-full">
       {/* Only show recipient field for Payment type */}
@@ -155,6 +158,7 @@ export const SpendForm = ({
               {...register("recipient", {
                 required: "Recipient address is required",
                 validate: async (value) => {
+                  if (!value) return "Recipient address is required";
                   if (value.startsWith("0x")) {
                     return isAddress(value) || "Invalid address";
                   }
@@ -225,21 +229,6 @@ export const SpendForm = ({
             clearErrors("amount");
           }}
         />
-        <div className="mt-1 text-sm text-white/80 flex items-center gap-2 justify-end min-h-5">
-          {isFeesLoading && (
-            <div className="animate-pulse h-5 w-1/2 bg-white/10 rounded" />
-          )}
-          {spendFees && !withdrawAll && !isFeesLoading && (
-            <div>
-              {type} fee: {spendFees.roundedFee} USD
-            </div>
-          )}
-          {withdrawAll && withdrawFeesData && !isFeesLoading && (
-            <div>
-              {type} fee: {withdrawFeesData.withdrawFees.roundedFee} USD
-            </div>
-          )}
-        </div>
         <div
           className={clsx(
             "text-base/6 mt-1 text-red-400 transition-all duration-200 ease-in-out",
@@ -253,34 +242,86 @@ export const SpendForm = ({
         </div>
       </Field>
 
+      {/* Message field - only show for Payment type and private transfers */}
+      {type === "Payment" && (
+        <div
+          className={clsx(
+            "transition-all duration-300 ease-in-out overflow-hidden",
+            {
+              "opacity-100 max-h-32": !isPublicTransfer,
+              "opacity-0 max-h-0": isPublicTransfer,
+            },
+          )}
+        >
+          <Field className="mt-1">
+            <Label className="text-base/6 font-medium text-white">
+              Message (optional)
+            </Label>
+            <Input
+              type="text"
+              className={primaryInputStyle}
+              {...register("message", {
+                maxLength: {
+                  value: 32,
+                  message: "Message must be 32 characters or less",
+                },
+              })}
+              placeholder="Add a message for the recipient..."
+              maxLength={32}
+              disabled={isPublicTransfer}
+            />
+            <div
+              className={clsx(
+                "text-base/6 mt-1 text-red-400 transition-all duration-200 ease-in-out",
+                {
+                  "opacity-0 h-0": !errors.message,
+                  "opacity-100 h-6": errors.message,
+                },
+              )}
+            >
+              {errors.message && <p>{errors.message.message}</p>}
+            </div>
+          </Field>
+        </div>
+      )}
+
+      <div className="mt-1 text-sm text-white/80 flex items-center gap-2 justify-end min-h-5">
+        {isFeesLoading && (
+          <div className="animate-pulse h-5 w-1/2 bg-white/10 rounded" />
+        )}
+        {spendFees && !withdrawAll && !isFeesLoading && (
+          <div>
+            {type} fee: {spendFees.roundedFee} USD
+          </div>
+        )}
+        {withdrawAll && withdrawFeesData && !isFeesLoading && (
+          <div>
+            {type} fee: {withdrawFeesData.withdrawFees.roundedFee} USD
+          </div>
+        )}
+      </div>
+
       {/* Public Output Switcher - only show for Payment type */}
       {type === "Payment" && (
-        <Field className="mt-4">
+        <Field className="my-4">
           <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <Label className="text-base/6 font-medium text-white">
-                Public Transfer
-              </Label>
-              <p className="text-sm text-white/70 mt-1">Send tokens publicly</p>
-            </div>
+            <Label className="text-base/6 font-medium text-white">
+              Send tokens publicly
+            </Label>
             <Switch
-              checked={formMethods.watch("publicOutput")}
+              checked={isPublicTransfer}
               onChange={(checked) =>
                 formMethods.setValue("publicOutput", checked)
               }
               className={clsx(
                 "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-                formMethods.watch("publicOutput")
-                  ? "bg-blue-500"
-                  : "bg-white/20",
+                isPublicTransfer ? "bg-blue-500" : "bg-white/20",
               )}
             >
               <span
                 className={clsx(
                   "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                  formMethods.watch("publicOutput")
-                    ? "translate-x-6"
-                    : "translate-x-1",
+                  isPublicTransfer ? "translate-x-6" : "translate-x-1",
                 )}
               />
             </Switch>
@@ -288,7 +329,7 @@ export const SpendForm = ({
         </Field>
       )}
 
-      <div className="py-2">
+      <div className="pb-2">
         <MobileConfirmButton
           disabled={isSubmitting || isFeesLoading}
           label={settings.showTransactionPreview ? `Review ${type}` : "Confirm"}

@@ -583,6 +583,7 @@ export class Transactions {
     recipient: Address,
     consolidation: boolean,
     feesData: SpendFeesData,
+    message?: string,
   ) {
     return this.enqueue(
       async () => {
@@ -645,6 +646,7 @@ export class Transactions {
               decoyParams?.address === recipient
                 ? undefined
                 : decoyParams,
+            messageToReceiver: message,
           });
 
         const sendParams = {
