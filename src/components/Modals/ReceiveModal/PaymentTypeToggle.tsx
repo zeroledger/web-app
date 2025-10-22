@@ -11,7 +11,7 @@ export const PaymentTypeToggle = ({
   onChange,
 }: PaymentTypeToggleProps) => {
   return (
-    <div className="mb-6">
+    <div className="mb-6 hidden">
       <Field>
         <div className="flex items-center justify-between">
           <div className="flex-1">
