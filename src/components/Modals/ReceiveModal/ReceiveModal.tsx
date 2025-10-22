@@ -14,6 +14,7 @@ import {
 import { BaseModal } from "@src/components/Modals/BaseModal";
 import { useState } from "react";
 import clsx from "clsx";
+import { amountRegex } from "@src/utils/common";
 
 interface ReceiveModalProps {
   isOpen: boolean;
@@ -35,8 +36,6 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
   const [messageRequest, setMessageRequest] = useState("");
   const [messageError, setMessageError] = useState("");
   const [isPublicPayment, setIsPublicPayment] = useState(false);
-
-  const amountRegex = /^\d*\.?\d*$/;
 
   // Invoice generation hook
   const {

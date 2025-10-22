@@ -6,13 +6,11 @@ import { useContext, useEffect } from "react";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { DepositModalState } from "@src/components/Panel/hooks/useDepositModal";
 import { primaryInputStyle } from "@src/components/styles/Input.styles";
-import { delay, getMaxFormattedValue } from "@src/utils/common";
+import { delay, getMaxFormattedValue, amountRegex } from "@src/utils/common";
 import clsx from "clsx";
 import { useMetadata } from "@src/hooks/useMetadata";
 import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { Address } from "viem";
-
-const amountRegex = /^\d*\.?\d*$/;
 
 interface DepositFormData {
   amount: string;
@@ -101,6 +99,7 @@ export const DepositForm = ({
               decimals,
               publicBalance,
             );
+            console.log("value", value);
             setValue("amount", value);
             clearErrors("amount");
           }}

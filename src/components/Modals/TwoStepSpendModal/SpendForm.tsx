@@ -19,9 +19,7 @@ import { QRScannerModal } from "./QRScannerModal";
 import { CameraIcon } from "@src/components/svg";
 import { primaryInputStyle } from "@src/components/styles/Input.styles";
 import clsx from "clsx";
-
-const amountRegex = /^\d*\.?\d*$/;
-
+import { amountRegex } from "@src/utils/common";
 interface SpendFormData {
   recipient?: string;
   amount: string;
