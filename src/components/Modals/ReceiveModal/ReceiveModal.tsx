@@ -2,13 +2,18 @@ import { BackButton } from "@src/components/Buttons/BackButton";
 import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { useEnsProfile } from "@src/context/ledger/useEnsProfile";
 import { useDynamicHeight } from "@src/hooks/useDynamicHeight";
-import { useCopyAddress, useCopyEns } from ".";
-import { shortString } from "@src/utils/common";
-import { QRCodeDisplay } from "./QRCodeDisplay";
+import {
+  useCopyAddress,
+  useCopyEns,
+  QRCodeDisplay,
+  useInvoiceGeneration,
+  InvoiceSection,
+  PrivatePaymentFields,
+  PaymentTypeToggle,
+} from ".";
 import { BaseModal } from "@src/components/Modals/BaseModal";
 import { useState } from "react";
-import { Field, Label, Input } from "@headlessui/react";
-import { primaryInputStyle } from "@src/components/styles/Input.styles";
+import clsx from "clsx";
 
 interface ReceiveModalProps {
   isOpen: boolean;
@@ -28,27 +33,98 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
   const [amount, setAmount] = useState("");
   const [amountError, setAmountError] = useState("");
   const [messageRequest, setMessageRequest] = useState("");
+  const [messageError, setMessageError] = useState("");
+  const [isPublicPayment, setIsPublicPayment] = useState(false);
 
   const amountRegex = /^\d*\.?\d*$/;
+
+  // Invoice generation hook
+  const {
+    invoiceAddress,
+    isGenerating: isGeneratingInvoice,
+    generateInvoice,
+    resetInvoice,
+  } = useInvoiceGeneration();
+
+  // Copy hook for invoice address
+  const {
+    showCopiedTooltip: showInvoiceCopied,
+    handleCopyAddress: handleCopyInvoice,
+  } = useCopyAddress(invoiceAddress || ("" as `0x${string}`));
 
   const handleAmountChange = (value: string) => {
     if (!amountRegex.test(value)) return;
     setAmount(value);
     setAmountError("");
+
+    // Reset invoice when amount changes
+    if (isPublicPayment && invoiceAddress) {
+      resetInvoice();
+    }
   };
 
   const handleMessageRequestChange = (value: string) => {
     if (value.length <= 32) {
       setMessageRequest(value);
+      setMessageError("");
+
+      // Reset invoice when message changes
+      if (isPublicPayment && invoiceAddress) {
+        resetInvoice();
+      }
+    }
+  };
+
+  const handleGenerateInvoice = async () => {
+    // Validate amount
+    if (!amount || parseFloat(amount) <= 0) {
+      setAmountError("Amount is required for invoice generation");
+      return;
+    }
+
+    // Validate message
+    if (!messageRequest || messageRequest.trim().length === 0) {
+      setMessageError("Invoice ID/Message is required for invoice generation");
+      return;
+    }
+
+    const success = await generateInvoice(amount, messageRequest);
+    if (!success) {
+      if (!amount || parseFloat(amount) <= 0) {
+        setAmountError("Amount is required for invoice generation");
+      }
+      if (!messageRequest || messageRequest.trim().length === 0) {
+        setMessageError(
+          "Invoice ID/Message is required for invoice generation",
+        );
+      }
+    }
+  };
+
+  // Reset invoice when switching payment types
+  const handlePaymentTypeChange = (enabled: boolean) => {
+    setIsPublicPayment(enabled);
+    if (!enabled) {
+      resetInvoice();
+      setAmountError("");
+      setMessageError("");
     }
   };
 
   const generateQRData = () => {
-    if (!wallet?.address) return "";
+    // Use invoice address for public payments, otherwise use wallet address
+    const targetAddress = isPublicPayment ? invoiceAddress : wallet?.address;
+    if (!targetAddress) return "";
 
     const hasAmount = amount && parseFloat(amount) > 0;
     const hasMessage = messageRequest.trim().length > 0;
 
+    if (isPublicPayment) {
+      // For public payments, just return the invoice address (external ERC20 transfer)
+      return invoiceAddress;
+    }
+
+    // For private payments (ZeroLedger)
     if (hasAmount || hasMessage) {
       // Build QR code with parameters
       let qrData = `zeroledger:address=${wallet.address}`;
@@ -86,123 +162,63 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
           </div>
 
           {/* QR Code */}
-          <div className="flex justify-center mb-8">
-            <QRCodeDisplay value={generateQRData()} size={192} />
+          <div className="flex justify-center mb-8 relative">
+            <div
+              className={clsx(
+                "transition-all duration-200",
+                isPublicPayment && !invoiceAddress && "blur-lg",
+              )}
+            >
+              <QRCodeDisplay value={generateQRData() || ""} size={192} />
+            </div>
+            {isPublicPayment && !invoiceAddress && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <p className="text-white/80 text-sm font-medium">
+                  Generate invoice to view QR code
+                </p>
+              </div>
+            )}
           </div>
 
-          {/* ENS Name (if available) */}
-          {ensProfile?.name && (
-            <div className="mb-4">
-              <div className="text-base/6 font-medium text-white mb-2 block">
-                ENS Name
-              </div>
-              <div className="relative">
-                <div className="bg-gray-700/35 rounded-lg p-3 pr-12">
-                  <span className="text-white font-mono text-sm">
-                    {ensProfile.name}
-                  </span>
-                </div>
-                <button
-                  onClick={handleCopyEns}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                  title="Copy ENS name"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                    />
-                  </svg>
-                </button>
-                {showEnsCopied && (
-                  <div className="absolute -top-8 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded">
-                    Copied!
-                  </div>
-                )}
-              </div>
-            </div>
+          {/* Payment Type Toggle */}
+          <PaymentTypeToggle
+            isPublicPayment={isPublicPayment}
+            onChange={handlePaymentTypeChange}
+          />
+
+          {/* Invoice Generation (for public payments) */}
+          {isPublicPayment && (
+            <InvoiceSection
+              amount={amount}
+              amountError={amountError}
+              message={messageRequest}
+              messageError={messageError}
+              invoiceAddress={invoiceAddress}
+              isGenerating={isGeneratingInvoice}
+              showCopiedTooltip={showInvoiceCopied}
+              onAmountChange={handleAmountChange}
+              onMessageChange={handleMessageRequestChange}
+              onGenerate={handleGenerateInvoice}
+              onCopyAddress={handleCopyInvoice}
+            />
           )}
 
-          {/* Wallet Address */}
-          <div className="mb-4">
-            <div className="text-base/6 font-medium text-white mb-2 block">
-              Wallet Address
-            </div>
-            <div className="relative">
-              <div className="bg-gray-700/35 rounded-lg p-3 pr-12">
-                <span className="text-white font-mono text-sm">
-                  {wallet?.address ? shortString(wallet.address) : "No address"}
-                </span>
-              </div>
-              <button
-                onClick={handleCopyAddress}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                title="Copy wallet address"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                  />
-                </svg>
-              </button>
-              {showAddressCopied && (
-                <div className="absolute -top-8 right-0 bg-gray-800 text-white text-xs px-2 py-1 rounded">
-                  Copied!
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Amount Input */}
-          <div className="mb-4">
-            <Field>
-              <Label className="text-base/6 font-medium text-white mb-2 block">
-                Request Amount (USD). Optional.
-              </Label>
-              <Input
-                type="text"
-                className={primaryInputStyle}
-                value={amount}
-                onChange={(e) => handleAmountChange(e.target.value)}
-                placeholder="0.00"
-              />
-              {amountError && (
-                <div className="text-red-400 text-sm mt-1">{amountError}</div>
-              )}
-            </Field>
-          </div>
-
-          {/* Message Request Input */}
-          <div className="mb-6">
-            <Field>
-              <Label className="text-base/6 font-medium text-white mb-2 block">
-                Request Message. Optional.
-              </Label>
-              <Input
-                type="text"
-                className={primaryInputStyle}
-                value={messageRequest}
-                onChange={(e) => handleMessageRequestChange(e.target.value)}
-                placeholder="e.g., Invoice #123, Coffee payment..."
-                maxLength={32}
-              />
-            </Field>
-          </div>
+          {/* ZeroLedger-specific fields (only show for private payments) */}
+          {!isPublicPayment && (
+            <PrivatePaymentFields
+              ensName={ensProfile?.name}
+              walletAddress={wallet?.address as `0x${string}`}
+              amount={amount}
+              amountError={amountError}
+              messageRequest={messageRequest}
+              showEnsCopied={showEnsCopied}
+              showAddressCopied={showAddressCopied}
+              onAmountChange={handleAmountChange}
+              onMessageRequestChange={handleMessageRequestChange}
+              onCopyEns={handleCopyEns}
+              onCopyAddress={handleCopyAddress}
+            />
+          )}
         </div>
       </div>
     </BaseModal>

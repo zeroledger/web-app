@@ -17,12 +17,13 @@ import {
 import { encode } from "./metadata";
 import { createRandomString, shuffle } from "@src/utils/common";
 
+// poseidon hash of "[0, uint256(keccak256("shared-input"))]"
 const SHARED_INPUT = {
   value: 0n,
   sValue: BigInt(
-    "0xa4ab13e44b87313fad927d17efc647642903c8a860f5a2093a2d1c903df80730",
+    "0x8b4795ac6f891b04ae5bcb1821e66edae6d70aee3c18f33f685da34e10bb15d6",
   ),
-  hash: 16345784317541686154474118656352090725662212393131703302641232392927716723243n,
+  hash: 15137436504035450233189320721078414488136960400594787218856438198681086299747n,
 };
 
 function formalizeCommitments(

@@ -342,7 +342,11 @@ export const SpendForm = ({
         </Field>
       )}
 
-      <div className="pb-2">
+      <div
+        className={clsx("pb-2", {
+          "pt-4": type === "Withdraw",
+        })}
+      >
         <MobileConfirmButton
           disabled={isSubmitting || isFeesLoading}
           label={settings.showTransactionPreview ? `Review ${type}` : "Confirm"}

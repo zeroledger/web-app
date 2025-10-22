@@ -82,6 +82,7 @@ export const useTwoStepSpendModal = (
               ownerAddress,
               true,
               spendFees,
+              "consolidation",
             );
 
           if (skipSecondStep) {
