@@ -12,8 +12,12 @@ import {
   PaymentTypeToggle,
 } from ".";
 import { BaseModal } from "@src/components/Modals/BaseModal";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import clsx from "clsx";
+import { AMOUNT_REGEX } from "@src/common.constants";
+import { LedgerContext } from "@src/context/ledger/ledger.context";
+import { PanelContext } from "@src/components/Panel/context/panel/panel.context";
+import { useDepositFees } from "@src/components/Panel/hooks/useFees";
 
 interface ReceiveModalProps {
   isOpen: boolean;
@@ -22,6 +26,8 @@ interface ReceiveModalProps {
 
 export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
   const { wallet } = useWalletAdapter();
+  const { ledger } = useContext(LedgerContext);
+  const { decimals } = useContext(PanelContext);
   const { data: ensProfile } = useEnsProfile(wallet?.address as `0x${string}`);
   const { showCopiedTooltip: showAddressCopied, handleCopyAddress } =
     useCopyAddress(wallet?.address as `0x${string}`);
@@ -36,7 +42,7 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
   const [messageError, setMessageError] = useState("");
   const [isPublicPayment, setIsPublicPayment] = useState(false);
 
-  const amountRegex = /^\d*\.?\d*$/;
+  const { data: feesData } = useDepositFees(ledger!, decimals, true);
 
   // Invoice generation hook
   const {
@@ -44,7 +50,7 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
     isGenerating: isGeneratingInvoice,
     generateInvoice,
     resetInvoice,
-  } = useInvoiceGeneration();
+  } = useInvoiceGeneration(feesData!);
 
   // Copy hook for invoice address
   const {
@@ -53,7 +59,7 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
   } = useCopyAddress(invoiceAddress || ("" as `0x${string}`));
 
   const handleAmountChange = (value: string) => {
-    if (!amountRegex.test(value)) return;
+    if (!AMOUNT_REGEX.test(value)) return;
     setAmount(value);
     setAmountError("");
 
@@ -156,8 +162,10 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
             <h1 className="text-2xl font-bold text-white mb-2">
               Receive Payment
             </h1>
-            <p className="text-gray-400 text-sm">
-              Share your address to receive payments
+            <p className="text-gray-400 text-sm px-5">
+              {!isPublicPayment
+                ? "Receive payments from ZeroLedger users"
+                : "Receive payments from external wallet via one-time address"}
             </p>
           </div>
 

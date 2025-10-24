@@ -11,18 +11,13 @@ export const PaymentTypeToggle = ({
   onChange,
 }: PaymentTypeToggleProps) => {
   return (
-    <div className="mb-6 hidden">
+    <div className="mb-6">
       <Field>
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <Label className="text-base/6 font-medium text-white">
-              Public Payment (Invoice)
+              Receive from external wallet
             </Label>
-            <p className="text-sm text-white/70 mt-1">
-              {isPublicPayment
-                ? "Receive via direct ERC20 transfer to one-time address"
-                : "Receive via ZeroLedger (private with message support)"}
-            </p>
           </div>
           <Switch
             checked={isPublicPayment}

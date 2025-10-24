@@ -1,10 +1,9 @@
 import { useState, useContext } from "react";
-import { keccak256, toHex } from "viem";
-import { deriveStealthAccount } from "@zeroledger/vycrypt";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
+import type { DepositFeesData } from "@src/services/ledger/Fees";
 
-export const useInvoiceGeneration = () => {
-  const { viewAccount } = useContext(LedgerContext);
+export const useInvoiceGeneration = (feesData: DepositFeesData) => {
+  const { ledger } = useContext(LedgerContext);
   const [invoiceAddress, setInvoiceAddress] = useState<`0x${string}` | null>(
     null,
   );
@@ -23,28 +22,17 @@ export const useInvoiceGeneration = () => {
       return false;
     }
 
-    // Validate that view account is available
-    if (!viewAccount) {
-      console.error("View account not available");
-      return false;
-    }
-
-    const viewPrivateKey = viewAccount.viewPrivateKey();
-    if (!viewPrivateKey) {
-      console.error("View account private key not available");
-      return false;
-    }
-
     setIsGenerating(true);
-
     try {
-      // 1. Generate random as hash of amount & message
-      const random = keccak256(toHex(`${amount}${message}`));
-
-      // 2. Derive stealth account using view account private key
-      const account = deriveStealthAccount(viewPrivateKey, random);
-
-      setInvoiceAddress(account.address as `0x${string}`);
+      setInvoiceAddress(
+        (
+          await ledger?.invoicing?.generateInvoice(
+            BigInt(amount),
+            message,
+            feesData,
+          )
+        )?.invoiceAddress || null,
+      );
       setIsGenerating(false);
 
       return true;

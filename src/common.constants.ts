@@ -30,7 +30,12 @@ export const INIT_SYNC_BLOCK: bigint = BigInt(
   import.meta.env.VITE_INIT_SYNC_BLOCK,
 );
 
+export const AMOUNT_REGEX = /^\d*\.?\d*$/;
+
 export const VAULT_ADDRESS: Address = import.meta.env.VITE_VAULT_ADDRESS;
+
+export const INVOICE_FACTORY_ADDRESS: Address = import.meta.env
+  .VITE_INVOICE_FACTORY_ADDRESS;
 
 export const ENABLE_EMBEDDED_WALLETS: boolean =
   import.meta.env.VITE_ENABLE_EMBEDDED_WALLETS === "true";

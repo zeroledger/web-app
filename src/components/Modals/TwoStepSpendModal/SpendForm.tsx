@@ -19,8 +19,7 @@ import { QRScannerModal } from "./QRScannerModal";
 import { CameraIcon } from "@src/components/svg";
 import { primaryInputStyle } from "@src/components/styles/Input.styles";
 import clsx from "clsx";
-
-const amountRegex = /^\d*\.?\d*$/;
+import { AMOUNT_REGEX } from "@src/common.constants";
 
 interface SpendFormData {
   recipient?: string;
@@ -222,13 +221,13 @@ export const SpendForm = ({
           {...register("amount", {
             required: "Amount is required",
             pattern: {
-              value: amountRegex,
+              value: AMOUNT_REGEX,
               message: "Amount must be a positive number",
             },
           })}
           placeholder="0.00"
           onChange={(e) => {
-            if (!amountRegex.test(e.target.value)) return;
+            if (!AMOUNT_REGEX.test(e.target.value)) return;
             const value = getMaxFormattedValue(
               e.target.value,
               decimals,

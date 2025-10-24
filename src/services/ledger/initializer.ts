@@ -18,6 +18,7 @@ export const initialize = async (
   tesUrl: string,
   vaultAddress: Address,
   tokenAddress: Address,
+  invoiceFactoryAddress: Address,
   faucetUrl: string,
   initSyncBlock: bigint,
 ) => {
@@ -33,6 +34,7 @@ export const initialize = async (
     { Transactions },
     { Fees },
     { Watcher },
+    { Invoicing },
   ] = await Promise.all([
     import("@src/services/core/queue"),
     import("@src/services/core/rpc"),
@@ -44,6 +46,7 @@ export const initialize = async (
     import("./Transactions"),
     import("./Fees"),
     import("./Watcher"),
+    import("./Invoicing"),
   ]);
 
   // Create lightweight dependencies immediately
@@ -88,6 +91,14 @@ export const initialize = async (
       faucetRpcClient,
       queue,
       commitments,
+      tesService,
+    ),
+    invoicing: new Invoicing(
+      evmClients,
+      vaultAddress,
+      tokenAddress,
+      invoiceFactoryAddress,
+      queue,
       tesService,
     ),
     tesService,

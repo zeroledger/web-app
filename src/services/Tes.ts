@@ -16,6 +16,8 @@ import type { MemoryQueue } from "@src/services/core/queue";
 import type { SignedMetaTransaction } from "@src/utils/metatx";
 import type { AxiosInstance } from "axios";
 import type { ViewAccount } from "@src/services/Account";
+import type { DepositCommitmentParamsStruct } from "@src/utils/vault/types";
+import type { Proof } from "@src/utils/prover";
 
 export const AUTH_TOKEN_ABI = parseAbiParameters(
   "address viewAddr,bytes challengeSignature, address ownerAddr,bytes ownerAccDelegationSignature",
@@ -312,26 +314,45 @@ export class Tes {
     return data;
   }
 
-  async registerInvoiceAddress(
+  async registerInvoice(
     invoiceAddress: Address,
+    vault: Address,
+    token: Address,
+    amount: bigint,
+    executionFee: bigint,
+    commitmentParams: [
+      DepositCommitmentParamsStruct,
+      DepositCommitmentParamsStruct,
+      DepositCommitmentParamsStruct,
+    ],
+    proof: Proof,
     mainAccountAddress: Address,
   ) {
     return backOff(async () => {
       await this.manageAuth(mainAccountAddress);
-      return true;
-      // await this.axios.post(
-      //   `${this.tesUrl}/invoiceAddress/register`,
-      //   {
-      //     invoiceAddress,
-      //   },
-      //   {
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //       "x-custom-tes-csrf": this.csrf,
-      //     },
-      //     withCredentials: true,
-      //   },
-      // );
+      await this.axios.put(
+        `${this.tesUrl}/invoicing`,
+        {
+          invoiceAddress,
+          vault,
+          token,
+          amount: amount.toString(),
+          executionFee: executionFee.toString(),
+          commitmentParams: commitmentParams.map((param) => ({
+            poseidonHash: param.poseidonHash.toString(),
+            owner: param.owner,
+            metadata: param.metadata,
+          })),
+          proof: proof.map((p) => p.toString()),
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "x-custom-tes-csrf": this.csrf,
+          },
+          withCredentials: true,
+        },
+      );
     }, backoffOptions);
   }
 

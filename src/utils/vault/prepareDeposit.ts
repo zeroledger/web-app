@@ -9,7 +9,7 @@ import {
   DepositProofData,
   DepositStruct,
 } from "./types";
-import { shuffle } from "@src/utils/common";
+import { createRandomString, shuffle } from "@src/utils/common";
 import { encode } from "./metadata";
 
 async function createDepositStruct(
@@ -31,6 +31,7 @@ async function generateDepositCommitmentData(
   userAddress: Address,
   userEncryptionPublicKey: Hex,
   tesUrl: string,
+  messageToReceiver?: string,
   twoDecoys?: DecoyParams[],
 ): Promise<DepositCommitmentData> {
   const amounts: bigint[] = [];
@@ -55,6 +56,10 @@ async function generateDepositCommitmentData(
             tesUrl: i === 0 ? tesUrl : "",
             userEncryptionPublicKey:
               i === 0 ? userEncryptionPublicKey : twoDecoys[i - 1].publicKey,
+            messageToReceiver:
+              i === 0
+                ? messageToReceiver
+                : createRandomString(messageToReceiver?.length || 0),
           };
         }),
       ),
@@ -71,6 +76,7 @@ async function generateDepositCommitmentData(
             { amount: param.amount, sValue: param.sValue },
             param.tesUrl,
             param.userEncryptionPublicKey,
+            param.messageToReceiver,
           ),
         };
       }),
@@ -109,6 +115,7 @@ async function generateDepositCommitmentData(
         { amount: amounts[0], sValue: sValues[0] },
         tesUrl,
         userEncryptionPublicKey,
+        messageToReceiver,
       ),
     },
     {
@@ -168,6 +175,7 @@ export default async function prepareDeposit(
   forwarderFee: bigint,
   forwarderFeeRecipient: Address,
   tesUrl = "",
+  messageToReceiver?: string,
   decoyParams?: DecoyParams[],
 ) {
   const valueLeftForUser = value - protocolDepositFee - forwarderFee;
@@ -177,6 +185,7 @@ export default async function prepareDeposit(
     user,
     userEncryptionPublicKey,
     tesUrl,
+    messageToReceiver,
     decoyParams,
   );
 

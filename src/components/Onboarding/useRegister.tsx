@@ -11,6 +11,7 @@ import {
   WS_RPC,
   VAULT_ADDRESS,
   INIT_SYNC_BLOCK,
+  INVOICE_FACTORY_ADDRESS,
 } from "@src/common.constants";
 import { EvmClients } from "@src/services/Clients";
 import { initialize } from "@src/services/ledger";
@@ -76,6 +77,7 @@ export const useRegister = () => {
           TES_URL,
           VAULT_ADDRESS,
           tokenAddress,
+          INVOICE_FACTORY_ADDRESS,
           FAUCET_URL,
           INIT_SYNC_BLOCK,
         );

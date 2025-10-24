@@ -151,6 +151,7 @@ export class Transactions {
             feesData.fee,
             feesData.paymasterAddress,
             tesUrl,
+            "deposit",
           );
 
         const client = this.evmClients.externalClient();

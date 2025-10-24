@@ -16,6 +16,7 @@ import {
   TES_URL,
   VAULT_ADDRESS,
   INIT_SYNC_BLOCK,
+  INVOICE_FACTORY_ADDRESS,
 } from "@src/common.constants";
 import { usePrivateBalance } from "./usePrivateBalance";
 import { useConsolidationRatio } from "./useConsolidationRatio";
@@ -99,6 +100,7 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
         TES_URL,
         VAULT_ADDRESS,
         tokenAddress,
+        INVOICE_FACTORY_ADDRESS,
         FAUCET_URL,
         INIT_SYNC_BLOCK,
       );
