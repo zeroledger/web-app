@@ -1,0 +1,9 @@
+export { default as TrashIcon } from "./TrashIcon";
+export { default as LogoutIcon } from "./LogoutIcon";
+export { default as BackupIcon } from "./BackupIcon";
+export { default as QuestionIcon } from "./QuestionIcon";
+export { default as TelegramIcon } from "./TelegramIcon";
+export { default as ArrowIcon } from "./ArrowIcon";
+export { default as CheckCircleIcon } from "./CheckCircleIcon";
+export { default as WalletIcon } from "./WalletIcon";
+export { default as CameraIcon } from "./CameraIcon";

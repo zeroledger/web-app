@@ -1,0 +1,10 @@
+export { default as prepareDeposit } from "./prepareDeposit";
+export { default as prepareSpend } from "./prepareSpend";
+export { watchVault, getMissedEvents } from "./watcher";
+export { encode, decodeMetadata, decryptCommitment } from "./metadata";
+export * from "./deposit";
+export * from "./spend";
+export * from "./withdraw";
+export * from "./types";
+export * from "./getContracts";
+export * from "./depositWithPermit";

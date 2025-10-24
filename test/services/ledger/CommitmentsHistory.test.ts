@@ -1,0 +1,177 @@
+import CommitmentsHistory from "@src/services/ledger/CommitmentsHistory";
+import {
+  HistoryRecordDto,
+  LedgerRecordDto,
+} from "@src/services/ledger/ledger.dto";
+import { createMockDataSource } from "@test/mocks/mockDataSource";
+import { zeroAddress } from "viem";
+
+describe("CommitmentsHistory", () => {
+  let service: CommitmentsHistory;
+
+  const createMockHistoryRecord = (
+    status: "added" | "spend" = "added",
+    transactionHash: `0x${string}` | null = "0x1234567890abcdef",
+    value: string = "1000000000000000000",
+    sValue: string = "123456789",
+    hash: string = "987654321",
+    blockNumber: string = "0",
+    transactionIndex: number = 0,
+  ): HistoryRecordDto => {
+    const record = LedgerRecordDto.from(
+      BigInt(hash),
+      BigInt(value),
+      BigInt(sValue),
+    );
+    return new HistoryRecordDto(
+      status,
+      transactionHash,
+      record,
+      blockNumber,
+      transactionIndex,
+    );
+  };
+
+  beforeEach(() => {
+    service = new CommitmentsHistory(createMockDataSource(), zeroAddress);
+  });
+
+  afterEach(async () => {
+    await service.clean();
+  });
+
+  describe("isEmpty", () => {
+    it("should return true for empty service", async () => {
+      expect(await service.isEmpty()).toBe(true);
+    });
+
+    it("should return false when records exist", async () => {
+      const record = createMockHistoryRecord();
+      await service.add(record);
+      expect(await service.isEmpty()).toBe(false);
+    });
+  });
+
+  describe("add", () => {
+    it("should add first record and set as head and tail", async () => {
+      const record = createMockHistoryRecord();
+      const result = await service.add(record);
+
+      expect(result).toBe(true);
+      expect(await service.isEmpty()).toBe(false);
+      expect(await service.has(record.id)).toBe(true);
+    });
+
+    it("should add records in correct order", async () => {
+      const record1 = createMockHistoryRecord(
+        "added",
+        "0x111",
+        "100",
+        "1",
+        "1001",
+      );
+      const record2 = createMockHistoryRecord(
+        "spend",
+        "0x222",
+        "200",
+        "2",
+        "1002",
+      );
+      const record3 = createMockHistoryRecord(
+        "added",
+        "0x333",
+        "300",
+        "3",
+        "1003",
+      );
+      const result1 = await service.add(record1);
+      const result2 = await service.add(record2);
+      const result3 = await service.add(record3);
+
+      expect(result1).toBe(true);
+      expect(result2).toBe(true);
+      expect(result3).toBe(true);
+      expect(await service.isEmpty()).toBe(false);
+      expect(await service.has(record1.id)).toBe(true);
+      expect(await service.has(record2.id)).toBe(true);
+      expect(await service.has(record3.id)).toBe(true);
+      // With sorting, the newest record (record3) should be at the head
+      expect((await service.getHeadNode())?.data).toEqual(record3);
+      expect((await service.getTailNode())?.data).toEqual(record1);
+    });
+
+    it("should not add duplicate records", async () => {
+      const record = createMockHistoryRecord();
+      await service.add(record);
+      const result = await service.add(record);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe("has", () => {
+    it("should return false for non-existent record", async () => {
+      const record = createMockHistoryRecord();
+      expect(await service.has(record.id)).toBe(false);
+    });
+
+    it("should return true for existing record", async () => {
+      const record1 = createMockHistoryRecord(
+        "added",
+        "0x111",
+        "100",
+        "1",
+        "1001",
+      );
+      const record2 = createMockHistoryRecord(
+        "spend",
+        "0x222",
+        "200",
+        "2",
+        "1002",
+      );
+      const result1 = await service.add(record1);
+      const result2 = await service.add(record2);
+
+      expect(result1).toBe(true);
+      expect(result2).toBe(true);
+      expect(await service.has(record1.id)).toBe(true);
+      expect(await service.has(record2.id)).toBe(true);
+    });
+  });
+
+  describe("all", () => {
+    it("should return empty array for empty list", async () => {
+      const allRecords = await service.all();
+      expect(allRecords).toEqual([]);
+    });
+
+    it("should return all records in correct order", async () => {
+      const records = [
+        createMockHistoryRecord("added", "0x1111111111111111", "100", "1", "1"),
+        createMockHistoryRecord("spend", "0x2222222222222222", "200", "2", "2"),
+        createMockHistoryRecord("added", "0x3333333333333333", "300", "3", "3"),
+      ];
+
+      for (const record of records) {
+        await service.add(record);
+      }
+
+      const allRecords = await service.all();
+      expect(allRecords).toHaveLength(3);
+      expect(allRecords.map((r) => r.id)).toEqual(records.map((r) => r.id));
+    });
+  });
+
+  describe("clean", () => {
+    it("should clear all data", async () => {
+      const record = createMockHistoryRecord();
+      await service.add(record);
+      expect(await service.isEmpty()).toBe(false);
+
+      await service.clean();
+      expect(await service.isEmpty()).toBe(true);
+      expect(await service.has(record.id)).toBe(false);
+    });
+  });
+});

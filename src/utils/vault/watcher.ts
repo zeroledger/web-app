@@ -1,0 +1,43 @@
+import { Log, PublicClient } from "viem";
+import { Address } from "viem";
+import { VAULT_ABI_EVENTS } from "./vault.abi";
+import { VaultEvent } from "./types";
+import { format } from "../common";
+
+export const watchVault = (
+  client: PublicClient,
+  contractAddress: Address,
+  subscriber: (events: VaultEvent[]) => void | Promise<void>,
+  pollingInterval = 5_000,
+) => {
+  const unwatch = client.watchContractEvent({
+    address: contractAddress,
+    abi: VAULT_ABI_EVENTS,
+    onLogs: (events: Log[]) => subscriber(format(events) as VaultEvent[]),
+    pollingInterval,
+  });
+  return unwatch;
+};
+
+export const getMissedEvents = async (
+  client: PublicClient,
+  contractAddress: Address,
+  owner: Address,
+  token: Address,
+  eventName: "CommitmentCreated" | "CommitmentRemoved",
+  fromBlock: bigint,
+  toBlock: bigint,
+) => {
+  const events = await client.getContractEvents({
+    address: contractAddress,
+    abi: VAULT_ABI_EVENTS,
+    eventName,
+    args: {
+      owner,
+      token,
+    },
+    fromBlock,
+    toBlock,
+  });
+  return events;
+};
