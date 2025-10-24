@@ -100,6 +100,7 @@ export const DepositForm = ({
               decimals,
               publicBalance,
             );
+            console.log("value", value);
             setValue("amount", value);
             clearErrors("amount");
           }}

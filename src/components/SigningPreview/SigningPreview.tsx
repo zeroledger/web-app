@@ -21,7 +21,6 @@ export interface SigningPreviewProps {
   onError?: (error: Error) => void;
   buttonText?: string;
   successText?: string;
-  warningText?: string;
   extraContent?: ReactNode;
 }
 
@@ -35,7 +34,6 @@ export default function SigningPreview({
   onSign,
   buttonText = "Sign",
   successText = "Success!",
-  warningText,
   extraContent,
 }: SigningPreviewProps) {
   return (
@@ -115,7 +113,7 @@ export default function SigningPreview({
       {extraContent}
 
       {/* Sign Button */}
-      <div className="flex justify-center">
+      <div className="flex justify-center mb-4">
         <Button
           className={clsx(
             primaryButtonStyle,
@@ -138,13 +136,6 @@ export default function SigningPreview({
           )}
         </Button>
       </div>
-
-      {/* Warning */}
-      {warningText && (
-        <div className="text-center mt-2">
-          <p className="text-gray-500 text-xs">{warningText}</p>
-        </div>
-      )}
     </form>
   );
 }

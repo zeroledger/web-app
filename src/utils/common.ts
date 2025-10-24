@@ -108,18 +108,10 @@ export const getMaxFormattedValue = (
     return value;
   }
 
-  // Handle partial decimal numbers
-  let normalizedValue = value;
-  if (value.endsWith(".")) {
-    normalizedValue = value + "0";
-  }
-
   try {
-    const rawValue = parseUnits(normalizedValue, decimals);
+    const rawValue = parseUnits(value, decimals);
     const amount =
-      rawValue > privateBalance
-        ? formatUnits(privateBalance, decimals)
-        : formatUnits(rawValue, decimals);
+      rawValue > privateBalance ? formatUnits(privateBalance, decimals) : value;
     return amount;
   } catch {
     // If parsing fails, return the original value

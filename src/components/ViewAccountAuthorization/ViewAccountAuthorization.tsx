@@ -17,7 +17,13 @@ export default function ViewAccountAuthorization() {
         onSign={handleSign}
         buttonText="Authorize"
         successText="Success!"
-        warningText="View account is never in custody of your funds."
+        extraContent={
+          <div className="text-center mb-2">
+            <p className="text-gray-500 text-xs">
+              View account is never in custody of your funds.
+            </p>
+          </div>
+        }
       />
     </div>
   );
