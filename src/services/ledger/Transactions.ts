@@ -621,7 +621,7 @@ export class Transactions {
         } = await this.getEncryptionParams(recipient);
 
         const decoyParams = !consolidation
-          ? await this.tesService.getDecoyRecipient()
+          ? (await this.tesService.getDecoyRecipient())?.[0]
           : undefined;
 
         this.logger.log(`decoyParams: ${JSON.stringify(decoyParams)}`);

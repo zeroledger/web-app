@@ -115,6 +115,8 @@ export class Invoicing {
           mainAccount.address,
         );
 
+        const decoys = await this.tesService.getDecoyRecipient(2);
+
         const { proofData, depositStruct /* depositCommitmentData */ } =
           await asyncVaultUtils.prepareDeposit(
             this.token,
@@ -129,6 +131,7 @@ export class Invoicing {
             feesData.paymasterAddress,
             tesUrl,
             message,
+            decoys,
           );
 
         const invoiceAddress = await asyncInvoiceUtils.predictInvoiceAddress({

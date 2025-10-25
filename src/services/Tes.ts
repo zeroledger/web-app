@@ -265,10 +265,13 @@ export class Tes {
 
   async getDecoyRecipient(amount = 1) {
     return backOff(async () => {
-      const { data } = await this.axios.get<{
-        publicKey: Hex;
-        address: Address;
-      } | null>(`${this.tesUrl}/userMetadata/decoyRecipient?amount=${amount}`);
+      const { data } = await this.axios.get<
+        | {
+            publicKey: Hex;
+            address: Address;
+          }[]
+        | null
+      >(`${this.tesUrl}/userMetadata/decoyRecipient?amount=${amount}`);
       return !data ? undefined : data;
     }, backoffOptions);
   }
