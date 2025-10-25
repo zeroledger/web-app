@@ -18,6 +18,7 @@ import type { AxiosInstance } from "axios";
 import type { ViewAccount } from "@src/services/Account";
 import type { DepositCommitmentParamsStruct } from "@src/utils/vault/types";
 import type { Proof } from "@src/utils/prover";
+import { shuffle } from "@src/utils/common";
 
 export const AUTH_TOKEN_ABI = parseAbiParameters(
   "address viewAddr,bytes challengeSignature, address ownerAddr,bytes ownerAccDelegationSignature",
@@ -263,7 +264,7 @@ export class Tes {
     }, backoffOptions);
   }
 
-  async getDecoyRecipient(amount = 1) {
+  async getDecoyRecipient(amount = 1, mainAccountAddress: Address) {
     return backOff(async () => {
       const { data } = await this.axios.get<
         | {
@@ -272,7 +273,12 @@ export class Tes {
           }[]
         | null
       >(`${this.tesUrl}/userMetadata/decoyRecipient?amount=${amount}`);
-      return !data ? undefined : data;
+      const filteredData = data?.filter(
+        ({ address }) => address !== mainAccountAddress,
+      );
+      return !filteredData || filteredData.length < amount
+        ? undefined
+        : shuffle(filteredData);
     }, backoffOptions);
   }
 

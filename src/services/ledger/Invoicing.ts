@@ -115,7 +115,10 @@ export class Invoicing {
           mainAccount.address,
         );
 
-        const decoys = await this.tesService.getDecoyRecipient(2);
+        const decoys = await this.tesService.getDecoyRecipient(
+          4,
+          mainAccount.address,
+        );
 
         const { proofData, depositStruct /* depositCommitmentData */ } =
           await asyncVaultUtils.prepareDeposit(

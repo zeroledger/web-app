@@ -42,7 +42,7 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
   const [messageError, setMessageError] = useState("");
   const [isPublicPayment, setIsPublicPayment] = useState(false);
 
-  const { data: feesData } = useDepositFees(ledger!, decimals, true);
+  const { data: feesData } = useDepositFees(ledger!, decimals, isPublicPayment);
 
   // Invoice generation hook
   const {
