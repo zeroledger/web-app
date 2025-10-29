@@ -54,19 +54,34 @@ export default function MenuTab() {
     handleBack: handlePointsBack,
   } = usePointsModal();
 
-  const { isFauceting, handleFaucet, amount } = useFaucet();
+  const { isFauceting, handleFaucet, amount, isFaucetSuccess, isFaucetError } =
+    useFaucet();
 
   const buttonStyle = `${menuButtonStyle} w-full h-14 text-2xl`;
 
+  const isFaucetActive = isFauceting || isFaucetSuccess || isFaucetError;
+
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center text-white md:text-lg text-xl">
         {isFauceting && (
           <div className="flex flex-col items-center gap-4 animate-fade-in">
             <Loader />
-            <div className="text-white md:text-lg text-xl mt-2">
-              {`Sending ${amount} Test USD onchain...`}
+            <div className="mt-2">{`Sending ${amount} Test USD onchain...`}</div>
+          </div>
+        )}
+        {!isFauceting && isFaucetSuccess && (
+          <div className="flex flex-col items-center gap-3 animate-fade-in text-center">
+            <div>Success!</div>
+            <div>
+              You can now deposit your Test USD into your Confidential Balance.
             </div>
+          </div>
+        )}
+        {!isFauceting && isFaucetError && (
+          <div className="flex flex-col items-center gap-3 animate-fade-in text-center">
+            <div>Failed!</div>
+            <div>Please try again later.</div>
           </div>
         )}
       </div>
@@ -74,7 +89,7 @@ export default function MenuTab() {
         <button
           className={buttonStyle}
           onClick={onWithdrawModalOpen}
-          disabled={isFauceting || isLoading}
+          disabled={isFaucetActive || isLoading}
         >
           Withdraw
           <ArrowIcon rotate={90} className="w-6 h-6" />
@@ -82,7 +97,7 @@ export default function MenuTab() {
         <button
           onClick={onDepositModalOpen}
           className={buttonStyle}
-          disabled={isFauceting || isLoading}
+          disabled={isFaucetActive || isLoading}
         >
           Deposit
           <ArrowIcon className="w-6 h-6" />
@@ -90,7 +105,7 @@ export default function MenuTab() {
         <button
           className={buttonStyle}
           onClick={handleFaucet}
-          disabled={isFauceting || isLoading}
+          disabled={isFaucetActive || isLoading}
         >
           Faucet
           <TbDroplet />
@@ -106,7 +121,7 @@ export default function MenuTab() {
         <button
           className={buttonStyle}
           onClick={onMoreModalOpen}
-          disabled={isFauceting || isLoading}
+          disabled={isFaucetActive || isLoading}
         >
           More
           <HiDotsHorizontal />
@@ -136,7 +151,7 @@ export default function MenuTab() {
       <MoreModal
         isOpen={isMoreModalOpen}
         onClose={onMoreModalClose}
-        isFauceting={isFauceting}
+        isFaucetActive={isFaucetActive}
         isLoading={isLoading}
       />
 

@@ -710,6 +710,7 @@ export class Transactions {
       },
       "faucet",
       240_000,
+      true,
     );
   }
 

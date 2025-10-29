@@ -1,6 +1,6 @@
 import { useState, useMemo, ReactNode, useEffect, useCallback } from "react";
 import { LedgerContext } from "./ledger.context";
-import { APP_PREFIX_KEY, TOKEN_ADDRESS } from "@src/common.constants";
+import { APP_PREFIX_KEY, TOKEN_ADDRESS, SCAN_URL } from "@src/common.constants";
 import { type Ledger } from "@src/services/ledger";
 import { EvmClients } from "@src/services/Clients";
 import { useViewAccountAuthorization } from "./useViewAccountAuthorization";
@@ -80,6 +80,8 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       reset,
       // Token Address
       tokenAddress: TOKEN_ADDRESS,
+      // Explorer base URL for current chain
+      scanUrl: SCAN_URL[targetChain.id] ?? "",
     }),
     [
       ledger,

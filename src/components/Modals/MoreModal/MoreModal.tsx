@@ -20,14 +20,14 @@ import debounce from "debounce";
 interface MoreModalProps {
   isOpen: boolean;
   onClose: () => void;
-  isFauceting: boolean;
+  isFaucetActive: boolean;
   isLoading: boolean;
 }
 
 export default function MoreModal({
   isOpen,
   onClose,
-  isFauceting,
+  isFaucetActive,
   isLoading,
 }: MoreModalProps) {
   const {
@@ -123,7 +123,7 @@ export default function MoreModal({
                 <button
                   className={buttonStyle}
                   onClick={handleBackupPrivateKey}
-                  disabled={isFauceting || isLoading}
+                  disabled={isFaucetActive || isLoading}
                 >
                   Backup Keys
                   <BackupIcon className="w-6 h-6" />
@@ -133,7 +133,7 @@ export default function MoreModal({
               <button
                 className={buttonStyle}
                 onClick={onResetWalletModalOpen}
-                disabled={isFauceting || isLoading}
+                disabled={isFaucetActive || isLoading}
               >
                 Reset Wallet
                 <TrashIcon className="w-6 h-6" />
@@ -142,7 +142,7 @@ export default function MoreModal({
               <button
                 className={buttonStyle}
                 onClick={handleLogout}
-                disabled={isFauceting || isLoading}
+                disabled={isFaucetActive || isLoading}
               >
                 Logout
                 <LogoutIcon className="w-6 h-6" />

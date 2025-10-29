@@ -38,6 +38,8 @@ export const LedgerContext = createContext<{
   reset: () => void;
   // Token Address
   tokenAddress: Address;
+  // Explorer base URL for current chain
+  scanUrl: string;
 }>({
   // Ledger
   ledger: undefined,
@@ -67,4 +69,6 @@ export const LedgerContext = createContext<{
   reset: () => {},
   // Token Address
   tokenAddress: TOKEN_ADDRESS,
+  // Explorer base URL for current chain (default empty)
+  scanUrl: "",
 });

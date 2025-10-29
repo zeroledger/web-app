@@ -13,8 +13,6 @@ import { useCopyAddress } from "@src/components/Modals/ReceiveModal";
 
 import { formatBalance } from "@src/utils/common";
 
-import { SCAN_URL } from "@src/common.constants";
-
 import { useTwoStepSpendModal } from "./hooks/useSpendModal";
 import { useReceiveModal } from "./hooks/useReceiveModal";
 import { Avatar } from "../EnsProfile/Avatar";
@@ -31,7 +29,7 @@ export default function WalletTab() {
     balanceForConsolidation,
   } = useContext(PanelContext);
   const { wallet } = useWalletAdapter();
-  const { ensProfile, isEnsLoading, targetChain } = useContext(LedgerContext);
+  const { ensProfile, isEnsLoading, scanUrl } = useContext(LedgerContext);
 
   const address = wallet?.address as Address | undefined;
 
@@ -52,7 +50,7 @@ export default function WalletTab() {
   return (
     <div className="flex flex-col items-center gap-4 justify-center h-full px-4 pt-4">
       <a
-        href={`${SCAN_URL[targetChain.id]}/address/${address}`}
+        href={`${scanUrl}/address/${address}`}
         target="_blank"
         rel="noopener noreferrer"
         className="flex flex-col items-center gap-4 relative hover:cursor-pointer"
@@ -63,7 +61,7 @@ export default function WalletTab() {
           // Open the link after a short delay to show the copy feedback
           setTimeout(() => {
             window.open(
-              `${SCAN_URL[targetChain.id]}/address/${address}`,
+              `${scanUrl}/address/${address}`,
               "_blank",
               "noopener,noreferrer",
             );
