@@ -4,14 +4,14 @@ interface FaucetStatusProps {
   isFauceting: boolean;
   amount?: string;
   isFaucetSuccess: boolean;
-  isFaucetError: boolean;
+  errorMessage: string | undefined;
 }
 
 export default function FaucetStatus({
   isFauceting,
   amount,
   isFaucetSuccess,
-  isFaucetError,
+  errorMessage,
 }: FaucetStatusProps) {
   return (
     <div className="flex-1 flex items-center justify-center text-white md:text-lg text-xl">
@@ -29,10 +29,10 @@ export default function FaucetStatus({
           </div>
         </div>
       )}
-      {!isFauceting && isFaucetError && (
+      {!isFauceting && errorMessage && (
         <div className="flex flex-col items-center gap-3 animate-fade-in text-center">
           <div>Failed!</div>
-          <div>Please try again later.</div>
+          <div>{errorMessage}</div>
         </div>
       )}
     </div>
