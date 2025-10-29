@@ -4,7 +4,8 @@ import PointsModal from "@src/components/Modals/PointsModal";
 import { HiOutlineSparkles, HiDotsHorizontal } from "react-icons/hi";
 import { ArrowIcon } from "@src/components/svg";
 import { TbDroplet } from "react-icons/tb";
-import { Loader } from "@src/components/Loader";
+// Loader moved into FaucetStatus
+import FaucetStatus from "@src/components/Panel/FaucetStatus";
 
 import { useFaucet } from "./hooks/useFaucet";
 import { useContext } from "react";
@@ -63,28 +64,12 @@ export default function MenuTab() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 flex items-center justify-center text-white md:text-lg text-xl">
-        {isFauceting && (
-          <div className="flex flex-col items-center gap-4 animate-fade-in">
-            <Loader />
-            <div className="mt-2">{`Sending ${amount} Test USD onchain...`}</div>
-          </div>
-        )}
-        {!isFauceting && isFaucetSuccess && (
-          <div className="flex flex-col items-center gap-3 animate-fade-in text-center">
-            <div>Success!</div>
-            <div>
-              You can now deposit your Test USD into your Confidential Balance.
-            </div>
-          </div>
-        )}
-        {!isFauceting && isFaucetError && (
-          <div className="flex flex-col items-center gap-3 animate-fade-in text-center">
-            <div>Failed!</div>
-            <div>Please try again later.</div>
-          </div>
-        )}
-      </div>
+      <FaucetStatus
+        isFauceting={isFauceting}
+        amount={amount}
+        isFaucetSuccess={isFaucetSuccess}
+        isFaucetError={isFaucetError}
+      />
       <div className="flex flex-col w-full mt-auto px-6">
         <button
           className={buttonStyle}
