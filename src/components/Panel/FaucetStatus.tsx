@@ -5,6 +5,7 @@ interface FaucetStatusProps {
   amount?: string;
   isFaucetSuccess: boolean;
   errorMessage: string | undefined;
+  symbol: string;
 }
 
 export default function FaucetStatus({
@@ -12,20 +13,22 @@ export default function FaucetStatus({
   amount,
   isFaucetSuccess,
   errorMessage,
+  symbol,
 }: FaucetStatusProps) {
   return (
     <div className="flex-1 flex items-center justify-center text-white md:text-lg text-xl">
       {isFauceting && (
         <div className="flex flex-col items-center gap-4 animate-fade-in">
           <Loader />
-          <div className="mt-2">{`Sending ${amount} Test USD onchain...`}</div>
+          <div className="mt-2">{`Sending ${amount} ${symbol} tokens onchain...`}</div>
         </div>
       )}
       {!isFauceting && isFaucetSuccess && (
         <div className="flex flex-col items-center gap-3 animate-fade-in text-center">
           <div>Success!</div>
           <div>
-            You can now deposit your Test USD into your Confidential Balance.
+            You can now deposit your {symbol} tokens into your Confidential
+            Balance.
           </div>
         </div>
       )}

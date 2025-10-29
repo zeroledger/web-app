@@ -18,7 +18,8 @@ import { useModal } from "@src/hooks/useModal";
 import { menuButtonStyle } from "@src/components/styles/Button.styles";
 
 export default function MenuTab() {
-  const { decimals, isLoading, publicBalance } = useContext(PanelContext);
+  const { decimals, isLoading, publicBalance, symbol } =
+    useContext(PanelContext);
   const {
     state: depositState,
     form: depositForm,
@@ -61,7 +62,7 @@ export default function MenuTab() {
     amount,
     isFaucetSuccess,
     faucetErrorMessage,
-  } = useFaucet(publicBalance);
+  } = useFaucet(publicBalance, symbol);
 
   const buttonStyle = `${menuButtonStyle} w-full h-14 text-2xl`;
 
@@ -74,6 +75,7 @@ export default function MenuTab() {
         amount={amount}
         isFaucetSuccess={isFaucetSuccess}
         errorMessage={faucetErrorMessage}
+        symbol={symbol}
       />
       <div className="flex flex-col w-full mt-auto px-6">
         <button

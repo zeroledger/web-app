@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from "react";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import debounce from "debounce";
 
-export const useFaucet = (publicBalance: bigint) => {
+export const useFaucet = (publicBalance: bigint, symbol: string) => {
   const [isFauceting, setIsFauceting] = useState(false);
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const [isFaucetSuccess, setIsFaucetSuccess] = useState(false);
@@ -14,7 +14,7 @@ export const useFaucet = (publicBalance: bigint) => {
     setIsFauceting(true);
     if (publicBalance !== 0n) {
       setFaucetErrorMessage(
-        "You have Test USD in your public balance. Please deposit them first.",
+        `You already have ${symbol} tokens in your public balance. Please deposit them first.`,
       );
       setIsFauceting(false);
       return;
@@ -26,7 +26,7 @@ export const useFaucet = (publicBalance: bigint) => {
       setIsFaucetSuccess(true);
     } catch {
       setFaucetErrorMessage(
-        "Failed to obtain Test USD. Please try again later.",
+        "Failed to obtain test tokens. Please try again later.",
       );
     } finally {
       setIsFauceting(false);
