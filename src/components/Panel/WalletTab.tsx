@@ -30,8 +30,6 @@ export default function WalletTab() {
     balanceForConsolidation,
     symbol,
   } = useContext(PanelContext);
-  // const isLoading = true;
-  // const blocksToSync = 100;
   const { wallet } = useWalletAdapter();
   const { ensProfile, isEnsLoading, scanUrl } = useContext(LedgerContext);
 
@@ -54,7 +52,7 @@ export default function WalletTab() {
   const balanceReady = !isLoading && !error;
   const shouldShowConsolidate = balanceReady && consolidationRatio < 1;
   const showZeroBalanceMessage = balanceReady && privateBalance === 0n;
-  const disableButtons = privateBalance === 0n || !balanceReady;
+  const disableSpend = privateBalance === 0n || !balanceReady;
 
   return (
     <div className="flex flex-col items-center gap-4 justify-center h-full px-4 pt-4">
@@ -109,83 +107,71 @@ export default function WalletTab() {
           </div>
         )}
       </a>
-      <div className="flex flex-col items-center gap-4 transition-all duration-300 ease-in-out min-h-45">
-        {error && <div className="text-white">{error.message}</div>}
-        {isLoading && (
-          <>
-            <div className="h-10 animate-pulse flex items-center justify-center text-lg">
-              {blocksToSync && blocksToSync > 0n
-                ? `Syncing ${blocksToSync.toString()} blocks...`
-                : ""}
-            </div>
-          </>
-        )}
-        {balanceReady && (
-          <div className="text-4xl h-10 font-extrabold text-white">{`$${formatBalance(privateBalance, decimals)}`}</div>
-        )}
-        {shouldShowConsolidate && (
-          <div className="text-sm text-yellow-100/70 text-center px-4">
-            To spend more than {Math.round(consolidationRatio * 100)}% of
-            account balance you need first{" "}
-            <button
-              onClick={onConsolidationOpen}
-              className="text-white/70 hover:cursor-pointer underline hover:text-white"
-            >
-              consolidate
-            </button>{" "}
-            your commitments.
-          </div>
-        )}
-        {showZeroBalanceMessage && (
-          <div className="text-center px-4 space-y-3 max-w-md">
-            <p className="text-white/80 text-base">
-              You need to deposit {symbol} tokens into your Confidential Balance
-              first.
-            </p>
-            {ENV !== "prod" && (
-              <p className="text-white/60 text-sm">
-                Tip: Use the faucet to mint test {symbol} tokens.
-              </p>
-            )}
-          </div>
-        )}
-        {!disableButtons && (
-          <div className="flex gap-6 mt-2">
-            <button
-              onClick={onModalOpen}
-              className={primaryButtonStyle}
-              disabled={disableButtons}
-            >
-              Send
-            </button>
-            <button
-              onClick={onReceiveModalOpen}
-              className={primaryButtonStyle}
-              disabled={disableButtons}
-            >
-              Receive
-            </button>
-          </div>
-        )}
-      </div>
-
-      {!disableButtons && (
-        <>
-          <TwoStepSpendModal
-            state={state}
-            setState={setState}
-            onFormSubmit={handleFormSubmit}
-            onSign={handleSign}
-            onBack={handleBack}
-            formMethods={form}
-            type="Payment"
-          />
-          <ReceiveModal
-            isOpen={isReceiveModalOpen}
-            onClose={onReceiveModalClose}
-          />
-        </>
+      {error && <div className="text-white">{error.message}</div>}
+      {isLoading && (
+        <div className="animate-pulse flex items-center justify-center text-lg">
+          {blocksToSync && blocksToSync > 0n
+            ? `Syncing ${blocksToSync.toString()} blocks...`
+            : ""}
+        </div>
       )}
+      {balanceReady && (
+        <div className="text-4xl font-extrabold text-white">{`$${formatBalance(privateBalance, decimals)}`}</div>
+      )}
+      {shouldShowConsolidate && (
+        <div className="text-sm text-yellow-100/70 text-center px-4">
+          To spend more than {Math.round(consolidationRatio * 100)}% of account
+          balance you need first{" "}
+          <button
+            onClick={onConsolidationOpen}
+            className="text-white/70 hover:cursor-pointer underline hover:text-white"
+          >
+            consolidate
+          </button>{" "}
+          your commitments.
+        </div>
+      )}
+      {showZeroBalanceMessage && (
+        <div className="text-center px-4 space-y-3 max-w-md">
+          <p className="text-white/80 text-sm">
+            Your Confidential Balance is empty. Deposit{" "}
+            {ENV !== "prod" ? `test tokens (${symbol})` : symbol} or request a{" "}
+            payment.
+          </p>
+          {ENV !== "prod" && (
+            <p className="text-white/60 text-sm">
+              Tip: Use the faucet to mint {symbol} to your public balance.
+            </p>
+          )}
+        </div>
+      )}
+      {balanceReady && (
+        <div className="flex gap-6 mt-2">
+          <button
+            onClick={onModalOpen}
+            className={primaryButtonStyle}
+            disabled={disableSpend}
+          >
+            Send
+          </button>
+          <button onClick={onReceiveModalOpen} className={primaryButtonStyle}>
+            Receive
+          </button>
+        </div>
+      )}
+
+      {!disableSpend && (
+        <TwoStepSpendModal
+          state={state}
+          setState={setState}
+          onFormSubmit={handleFormSubmit}
+          onSign={handleSign}
+          onBack={handleBack}
+          formMethods={form}
+          type="Payment"
+        />
+      )}
+      <ReceiveModal isOpen={isReceiveModalOpen} onClose={onReceiveModalClose} />
     </div>
   );
 }
