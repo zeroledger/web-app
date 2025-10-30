@@ -27,8 +27,7 @@ export default function FaucetStatus({
         <div className="flex flex-col items-center gap-3 animate-fade-in text-center">
           <div>Success!</div>
           <div>
-            You can now deposit your {symbol} tokens into your Confidential
-            Balance.
+            You can now deposit your {symbol} tokens into your Private Balance.
           </div>
         </div>
       )}

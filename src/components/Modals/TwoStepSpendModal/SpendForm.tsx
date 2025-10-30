@@ -19,7 +19,10 @@ import { QRScannerModal } from "./QRScannerModal";
 import { CameraIcon } from "@src/components/svg";
 import { primaryInputStyle } from "@src/components/styles/Input.styles";
 import clsx from "clsx";
-import { AMOUNT_REGEX } from "@src/common.constants";
+import {
+  AMOUNT_REGEX,
+  SUPPORT_COMMITMENTS_DISCLOSURE,
+} from "@src/common.constants";
 
 interface SpendFormData {
   recipient?: string;
@@ -234,10 +237,14 @@ export const SpendForm = ({
               privateBalance,
             );
             setValue("amount", value);
-            setWithdrawAll(
-              value === formatUnits(privateBalance, decimals) &&
-                type === "Withdraw",
-            );
+
+            if (SUPPORT_COMMITMENTS_DISCLOSURE) {
+              setWithdrawAll(
+                value === formatUnits(privateBalance, decimals) &&
+                  type === "Withdraw",
+              );
+            }
+
             clearErrors("amount");
           }}
         />

@@ -79,3 +79,10 @@ export const pollingInterval: { [prop: number]: number } = {
   [hardhatBaseFork.id]: 2_000,
   [base.id]: 10_000,
 };
+
+/**
+ * @note: we should avoid withdraw-all, because it calls `withdraw` contract method
+ * that discloses commitments and weakens the overall protocol privacy.
+ * The downside of this is that users need to manually consolidate their commitments before withdrawing.
+ */
+export const SUPPORT_COMMITMENTS_DISCLOSURE: boolean = false;

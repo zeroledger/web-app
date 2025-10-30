@@ -120,21 +120,21 @@ export default function WalletTab() {
       )}
       {shouldShowConsolidate && (
         <div className="text-sm text-yellow-100/70 text-center px-4">
-          To spend more than {Math.round(consolidationRatio * 100)}% of account
-          balance you need first{" "}
+          To spend or withdraw more than {Math.round(consolidationRatio * 100)}%
+          of Private Balance, you need to
           <button
             onClick={onConsolidationOpen}
             className="text-white/70 hover:cursor-pointer underline hover:text-white"
           >
             consolidate
           </button>{" "}
-          your commitments.
+          it.
         </div>
       )}
       {showZeroBalanceMessage && (
         <div className="text-center px-4 space-y-3 max-w-md">
           <p className="text-white/80 text-sm">
-            Your Confidential Balance is empty. Deposit{" "}
+            Your Private Balance is empty. Deposit{" "}
             {ENV !== "prod" ? `test tokens (${symbol})` : symbol} or request a{" "}
             payment.
           </p>

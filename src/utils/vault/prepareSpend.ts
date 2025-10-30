@@ -75,7 +75,6 @@ async function createOutputs(
     },
   ];
 
-  // Create change output if needed
   if (hasChange) {
     const changeSValue = BigInt(generatePrivateKey());
     const changeHash = await computePoseidon({

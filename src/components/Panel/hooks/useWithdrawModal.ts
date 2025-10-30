@@ -17,6 +17,7 @@ import {
   type MultiStepModalState,
 } from "@src/hooks/useMultiStepModal";
 import debounce from "debounce";
+import { SUPPORT_COMMITMENTS_DISCLOSURE } from "@src/common.constants";
 
 interface WithdrawFormData {
   amount: string;
@@ -81,15 +82,14 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
           const amount = parseUnits(data.amount, decimals);
           let metaTransactionData;
 
-          if (amount === privateBalance) {
+          if (amount === privateBalance && SUPPORT_COMMITMENTS_DISCLOSURE) {
             // Full withdraw
-            const fullWithdrawData =
+            metaTransactionData =
               await ledger!.transactions.prepareWithdrawMetaTransaction(
                 recipient,
                 state.withdrawFees,
                 state.itemsToWithdraw,
               );
-            metaTransactionData = fullWithdrawData;
           } else {
             // Partial withdraw
             metaTransactionData =
