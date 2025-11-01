@@ -6,6 +6,9 @@ const Root = lazy(() => import("./routes/Root"));
 const RequireWalletAdapter = lazy(
   () => import("./routes/RequireWalletAdapter"),
 );
+const RequireEmbeddedWallet = lazy(
+  () => import("./routes/RequireEmbeddedWallet"),
+);
 const LinkWalletRoute = lazy(() => import("./routes/LinkWalletRoute"));
 const InitializingRoute = lazy(() => import("./routes/InitializingRoute"));
 const RequireLinkWalletChoice = lazy(
@@ -29,18 +32,24 @@ const Router = createBrowserRouter([
         errorElement: <Error />,
       },
       {
-        path: "/link-wallet",
-        element: <LinkWalletRoute />,
-        errorElement: <Error />,
-      },
-      {
         // Route guard: Requires user to have made link-wallet choice
-        element: <RequireLinkWalletChoice />,
+        element: <RequireEmbeddedWallet />,
         children: [
           {
-            path: "/initializing",
-            element: <InitializingRoute />,
+            path: "/link-wallet",
+            element: <LinkWalletRoute />,
             errorElement: <Error />,
+          },
+          {
+            // Route guard: Requires user to have made link-wallet choice
+            element: <RequireLinkWalletChoice />,
+            children: [
+              {
+                path: "/initializing",
+                element: <InitializingRoute />,
+                errorElement: <Error />,
+              },
+            ],
           },
         ],
       },

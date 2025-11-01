@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect, useCallback } from "react";
+import { useContext, useState, useEffect, useCallback, useRef } from "react";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { useNavigate } from "react-router-dom";
@@ -25,6 +25,7 @@ export const useInitialization = () => {
     getPrimaryProvider,
     getEmbeddedAccount,
     getEmbeddedProvider,
+    isWalletChanged,
   } = useWalletAdapter();
   const {
     setEvmClients,
@@ -37,14 +38,22 @@ export const useInitialization = () => {
 
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<Error>();
+  const initializationAttempted = useRef(false);
 
   const navigate = useNavigate();
 
   const init = useCallback(async () => {
-    if (!targetChain || !embeddedWallet || !primaryWallet || isConnecting) {
+    if (!targetChain || !embeddedWallet || !primaryWallet) {
       return;
     }
+
+    // Prevent multiple simultaneous initializations
+    if (initializationAttempted.current) {
+      return;
+    }
+
     try {
+      initializationAttempted.current = true;
       setIsConnecting(true);
 
       const primaryWalletAddress = primaryWallet.address as Address;
@@ -122,11 +131,13 @@ export const useInitialization = () => {
       const err = e as Error;
       console.error(err);
       setError(err);
+      // Reset flag on error to allow retry
+      initializationAttempted.current = false;
     } finally {
       setIsConnecting(false);
     }
   }, [
-    isConnecting,
+    // Removed isConnecting from dependencies to prevent re-creation
     embeddedWallet,
     primaryWallet,
     targetChain,
@@ -142,10 +153,19 @@ export const useInitialization = () => {
     getEmbeddedProvider,
   ]);
 
-  // Run registration logic when triggered
+  // Run initialization once when component mounts and dependencies are ready
   useEffect(() => {
-    init();
-  }, [init]);
+    if (!isConnecting) {
+      init();
+    }
+  }, [isConnecting, init]);
+
+  // Reset initialization flag when wallet or network actually changes
+  useEffect(() => {
+    if (isWalletChanged) {
+      initializationAttempted.current = false;
+    }
+  }, [isWalletChanged]);
 
   return { isConnecting, error, setError, init };
 };

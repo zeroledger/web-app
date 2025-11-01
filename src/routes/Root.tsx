@@ -8,10 +8,10 @@ import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
  * Shows SignIn if no wallets, otherwise redirects to /initializing.
  */
 export default function Root() {
-  const { wallets } = useWalletAdapter();
+  const { embeddedWallet } = useWalletAdapter();
 
   // Show SignIn if no wallets
-  if (wallets.length === 0) {
+  if (!embeddedWallet) {
     return (
       <PageContainer>
         <SignIn />
@@ -19,7 +19,7 @@ export default function Root() {
     );
   }
 
-  // User has wallets, redirect to initializing route
+  // User has an embedded wallet, redirect to initializing route
   // (which will handle link-wallet check via route guard)
   return <Navigate to="/initializing" replace />;
 }

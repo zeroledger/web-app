@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
-import { getLinkWalletPreference } from "@src/components/Onboarding/linkWalletPreference";
+import { getLinkWalletPreference } from "@src/services/linkWalletPreference";
 
 /**
  * Route guard that ensures user has made a choice about linking external wallet.
@@ -10,11 +10,11 @@ import { getLinkWalletPreference } from "@src/components/Onboarding/linkWalletPr
  * - User hasn't made a choice yet (preference is null)
  */
 export default function RequireLinkWalletChoice() {
-  const { embeddedWallet, externalWallet } = useWalletAdapter();
+  const { externalWallet } = useWalletAdapter();
   const linkWalletPref = getLinkWalletPreference();
 
   // If user has embedded wallet but no external wallet and hasn't chosen yet
-  if (embeddedWallet && !externalWallet && linkWalletPref === null) {
+  if (!externalWallet && linkWalletPref === null) {
     return <Navigate to="/link-wallet" replace />;
   }
 

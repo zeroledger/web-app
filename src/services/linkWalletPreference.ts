@@ -11,3 +11,7 @@ export const getLinkWalletPreference = (): boolean | null => {
 export const setLinkWalletPreference = (value: boolean) => {
   localStorage.setItem(LINK_WALLET_PREF_KEY, value.toString());
 };
+
+export const resetLinkWalletPreference = () => {
+  localStorage.removeItem(LINK_WALLET_PREF_KEY);
+};

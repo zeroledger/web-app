@@ -3,15 +3,13 @@ import { catchService } from "@src/services/core/catch.service";
 import debounce from "debounce";
 
 export const useLogout = () => {
-  const { logout, wallet } = useWalletAdapter();
+  const { logout, primaryWallet } = useWalletAdapter();
 
   const handleLogout = debounce(async () => {
     try {
       await logout();
-      if (wallet?.walletClientType !== "privy") {
-        wallet?.disconnect();
-        window.location.reload();
-      }
+      primaryWallet?.disconnect();
+      window.location.reload();
     } catch (error) {
       catchService.catch(error as Error);
     }

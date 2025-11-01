@@ -8,7 +8,7 @@ import { SiWalletconnect } from "react-icons/si";
 import clsx from "clsx";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { setLinkWalletPreference } from "./linkWalletPreference";
+import { setLinkWalletPreference } from "@src/services/linkWalletPreference";
 
 export default function LinkWallet() {
   const { linkExternalWallet } = useWalletAdapter();

@@ -37,7 +37,7 @@ export default function MoreModal({
     handleResetWallet,
   } = useResetWalletModal();
 
-  const { handleBackupPrivateKey, isEmbeddedWallet } = useBackupPrivateKey();
+  const { handleBackupPrivateKey } = useBackupPrivateKey();
   const { handleLogout } = useLogout();
   const { settings, updateSettings } = useSettings();
 
@@ -119,16 +119,14 @@ export default function MoreModal({
                 </div>
               </label>
 
-              {isEmbeddedWallet && (
-                <button
-                  className={buttonStyle}
-                  onClick={handleBackupPrivateKey}
-                  disabled={isFaucetActive || isLoading}
-                >
-                  Backup Keys
-                  <BackupIcon className="w-6 h-6" />
-                </button>
-              )}
+              <button
+                className={buttonStyle}
+                onClick={handleBackupPrivateKey}
+                disabled={isFaucetActive || isLoading}
+              >
+                Backup Embedded Wallet Keys
+                <BackupIcon className="w-6 h-6" />
+              </button>
 
               <button
                 className={buttonStyle}
