@@ -3,7 +3,6 @@ import {
   type Hex,
   Hash,
   keccak256,
-  toHex,
   Address,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -21,17 +20,29 @@ export type EncryptedAccountsStore = Record<
   }
 >;
 
-const domain = {
+const authorizationDomain = {
   name: "View Account Authorization",
   version: "0.0.1",
 } as const;
 
-// The named list of all type definitions
-const types = {
+const authorizationTypes = {
   Authorize: [
     { name: "protocol", type: "string" },
     { name: "main_account", type: "address" },
     { name: "view_account", type: "address" },
+  ],
+} as const;
+
+const viewAccountCreationDomain = {
+  name: "View Account Creation",
+  version: "0.0.1",
+} as const;
+
+const viewAccountCreationTypes = {
+  Create: [
+    { name: "primaryWalletAddress", type: "address" },
+    { name: "protocol", type: "string" },
+    { name: "vaultAddress", type: "address" },
   ],
 } as const;
 
@@ -46,25 +57,9 @@ export class ViewAccount {
     this.PKS_STORE_KEY = `${this.appPrefixKey}.encodedAccountData`;
   }
 
-  /*********
-   * Utils *
-   *********/
-
-  private deriveEphemeralEncryptionKeys(password: string) {
-    const pk = keccak256(toHex(password));
-    const pubK = privateKeyToAccount(pk).publicKey;
-    return { pk, pubK };
-  }
-
   /****************
    * View account *
    ****************/
-
-  private encryptedViewPrivateKey(mainAccountAddress: Address) {
-    return localStorage.getItem(
-      `${this.PKS_STORE_KEY}.view.${mainAccountAddress}`,
-    ) as Hex | null;
-  }
 
   private encryptedDelegationSignature(mainAccountAddress: Address) {
     return localStorage.getItem(
@@ -84,51 +79,65 @@ export class ViewAccount {
     return this._delegationSignature;
   }
 
-  hasEncryptedViewAccount(mainAccountAddress: Address) {
-    return (
-      this.encryptedViewPrivateKey(mainAccountAddress) &&
-      this.encryptedDelegationSignature(mainAccountAddress)
-    );
+  hasAuthorization(mainAccountAddress: Address) {
+    return !!this.encryptedDelegationSignature(mainAccountAddress);
   }
 
-  async unlockViewAccount(mainAccountAddress: Address, password: string) {
-    const encryptedViewPk = this.encryptedViewPrivateKey(mainAccountAddress);
+  async createFromSignature(signature: Hex) {
+    this._viewPk = keccak256(signature);
+    this._viewAccount = privateKeyToAccount(this._viewPk);
+  }
+
+  async signViewAccountCreation(
+    evmClients: EvmClients,
+    primaryWalletAddress: Address,
+    vaultAddress: Address,
+  ): Promise<Hex> {
+    const embeddedClient = evmClients.embeddedClient();
+    const obj = {
+      domain: viewAccountCreationDomain,
+      types: viewAccountCreationTypes,
+      primaryType: "Create" as const,
+      message: {
+        primaryWalletAddress,
+        protocol: "zeroledger",
+        vaultAddress,
+      },
+    };
+    return await signTypedData(embeddedClient, obj);
+  }
+
+  async loadAuthorization(mainAccountAddress: Address) {
     const encryptedDelegationSignature =
       this.encryptedDelegationSignature(mainAccountAddress);
-    const { pk } = this.deriveEphemeralEncryptionKeys(password);
-    this._viewPk = (await decrypt(pk, encryptedViewPk!)) as Hash;
-    this._viewAccount = privateKeyToAccount(this._viewPk);
+
+    if (!encryptedDelegationSignature || !this._viewPk) {
+      throw new Error("No authorization found or ViewAccount not initialized");
+    }
     this._delegationSignature = (await decrypt(
-      pk,
-      encryptedDelegationSignature!,
+      this._viewPk,
+      encryptedDelegationSignature,
     )) as Hex;
   }
 
-  prepareViewAccount(mainAccountAddress: Address, password: string) {
-    this._viewPk = keccak256(
-      keccak256(toHex(`zeroledger_${password}_${mainAccountAddress}`)),
-    );
-    this._viewAccount = privateKeyToAccount(this._viewPk);
-  }
+  async authorize(evmClients: EvmClients) {
+    if (!this._viewPk || !this._viewAccount) {
+      throw new Error("ViewAccount not initialized");
+    }
 
-  async authorize(evmClients: EvmClients, password: string) {
-    const { pubK } = this.deriveEphemeralEncryptionKeys(password);
+    const pubK = privateKeyToAccount(this._viewPk).publicKey;
     const externalClient = evmClients.externalClient();
     const obj = {
-      domain,
-      types,
+      domain: authorizationDomain,
+      types: authorizationTypes,
       primaryType: "Authorize" as const,
       message: {
         protocol: "zeroledger",
         main_account: externalClient.account.address,
-        view_account: this._viewAccount!.address,
+        view_account: this._viewAccount.address,
       },
     };
     this._delegationSignature = await signTypedData(externalClient, obj);
-    localStorage.setItem(
-      `${this.PKS_STORE_KEY}.view.${externalClient.account.address}`,
-      await encrypt(this._viewPk!, pubK),
-    );
     localStorage.setItem(
       `${this.PKS_STORE_KEY}.delegation.${externalClient.account.address}`,
       await encrypt(this._delegationSignature, pubK),
@@ -139,7 +148,6 @@ export class ViewAccount {
     delete this._viewAccount;
     delete this._viewPk;
     delete this._delegationSignature;
-    localStorage.removeItem(`${this.PKS_STORE_KEY}.view.${mainAccountAddress}`);
     localStorage.removeItem(
       `${this.PKS_STORE_KEY}.delegation.${mainAccountAddress}`,
     );

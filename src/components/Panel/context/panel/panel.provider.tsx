@@ -32,8 +32,15 @@ import { useMetadata } from "@src/hooks/useMetadata";
 export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
   children,
 }) => {
-  const { wallet, isWalletChanged, chainSupported, getAccount, getProvider } =
-    useWalletAdapter();
+  const {
+    primaryWallet,
+    isWalletChanged,
+    chainSupported,
+    getPrimaryAccount,
+    getPrimaryProvider,
+    getEmbeddedAccount,
+    getEmbeddedProvider,
+  } = useWalletAdapter();
   const {
     ledger,
     evmClients,
@@ -42,7 +49,6 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
     setAuthorized,
     setLedger,
     targetChain,
-    password,
     reset,
     tokenAddress,
   } = useContext(LedgerContext);
@@ -59,7 +65,7 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
     mutate,
   } = useMetadata(
     tokenAddress,
-    wallet?.address as Address,
+    primaryWallet?.address as Address,
     chainSupported,
     evmClients,
   );
@@ -71,29 +77,46 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
   const accountSwitch = useCallback(async () => {
     try {
       setIsConnecting(true);
-      const [account, provider] = await Promise.all([
-        getAccount(),
-        getProvider(),
+      const [
+        primaryAccount,
+        primaryProvider,
+        embeddedAccount,
+        embeddedProvider,
+      ] = await Promise.all([
+        getPrimaryAccount(),
+        getPrimaryProvider(),
+        getEmbeddedAccount(),
+        getEmbeddedProvider(),
       ]);
+
       const newEvmClientService = new EvmClients(
         WS_RPC[targetChain.id],
         RPC[targetChain.id],
         pollingInterval[targetChain.id],
         targetChain,
         {
-          account,
-          provider,
+          account: primaryAccount,
+          provider: primaryProvider,
+        },
+        {
+          account: embeddedAccount,
+          provider: embeddedProvider,
         },
       );
       setEvmClients(newEvmClientService);
       await ledger?.watcher.softReset();
       const externalClient = newEvmClientService.externalClient();
+
+      // Regenerate ViewAccount from embedded wallet signature
+      // Note: This requires embedded wallet to be available
+      // The signature will be the same as during registration
       await viewAccount!
-        .unlockViewAccount(externalClient.account.address, password!)
+        .loadAuthorization(externalClient.account.address)
         .catch(reset);
       setAuthorized(true);
+
       const newLedger = await initialize(
-        wallet!,
+        primaryWallet!,
         viewAccount!,
         newEvmClientService!,
         APP_PREFIX_KEY,
@@ -111,8 +134,7 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
       setIsConnecting(false);
     }
   }, [
-    password,
-    wallet,
+    primaryWallet,
     viewAccount,
     setEvmClients,
     setAuthorized,
@@ -121,8 +143,10 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
     ledger,
     reset,
     tokenAddress,
-    getAccount,
-    getProvider,
+    getPrimaryAccount,
+    getPrimaryProvider,
+    getEmbeddedAccount,
+    getEmbeddedProvider,
   ]);
 
   useEffect(() => {
@@ -135,11 +159,11 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
   }, [ledger, syncLedger]);
 
   useEffect(() => {
-    if (!isWalletChanged || !wallet) {
+    if (!isWalletChanged || !primaryWallet) {
       return;
     }
-    const unregisteredAccount = !viewAccount!.hasEncryptedViewAccount(
-      wallet.address as Address,
+    const unregisteredAccount = !viewAccount!.hasAuthorization(
+      primaryWallet.address as Address,
     );
 
     if (unregisteredAccount) {
@@ -154,7 +178,7 @@ export const PanelProvider: React.FC<{ children?: ReactNode }> = ({
     isWalletChanged,
     accountSwitch,
     viewAccount,
-    wallet,
+    primaryWallet,
     reset,
     chainSupported,
     isConnecting,

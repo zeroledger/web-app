@@ -1,64 +1,73 @@
 import { createBrowserRouter } from "react-router-dom";
 import Error from "@src/components/Error";
-import { LoadingScreen } from "./components/LoadingScreen";
 import { lazy } from "react";
 
 const Root = lazy(() => import("./routes/Root"));
-const PrivateRoutes = lazy(() => import("./routes/PrivateRoutes"));
+const RequireWalletAdapter = lazy(
+  () => import("./routes/RequireWalletAdapter"),
+);
+const LinkWalletRoute = lazy(() => import("./routes/LinkWalletRoute"));
+const InitializingRoute = lazy(() => import("./routes/InitializingRoute"));
+const RequireLinkWalletChoice = lazy(
+  () => import("./routes/RequireLinkWalletChoice"),
+);
+const RequireViewAccount = lazy(() => import("./routes/RequireViewAccount"));
 const PanelRoute = lazy(() => import("./routes/PanelRoute"));
 const Authorization = lazy(() => import("./routes/Authorization"));
-const AuthorizedRoutes = lazy(() => import("./routes/AuthorizedRoutes"));
+const RequireAuthorization = lazy(
+  () => import("./routes/RequireAuthorization"),
+);
 
 const Router = createBrowserRouter([
   {
-    path: "/",
-    element: (
-      <LoadingScreen>
-        <Root />
-      </LoadingScreen>
-    ),
-    errorElement: <Error />,
-  },
-  {
-    element: (
-      <LoadingScreen>
-        <PrivateRoutes />
-      </LoadingScreen>
-    ),
-    errorElement: <Error />,
+    // Route guard: Requires Privy adapter to be ready
+    element: <RequireWalletAdapter />,
     children: [
       {
-        path: "/authorization",
-        element: (
-          <LoadingScreen>
-            <Authorization />
-          </LoadingScreen>
-        ),
+        path: "/",
+        element: <Root />,
         errorElement: <Error />,
       },
       {
-        element: (
-          <LoadingScreen>
-            <AuthorizedRoutes />
-          </LoadingScreen>
-        ),
+        path: "/link-wallet",
+        element: <LinkWalletRoute />,
+        errorElement: <Error />,
+      },
+      {
+        // Route guard: Requires user to have made link-wallet choice
+        element: <RequireLinkWalletChoice />,
+        children: [
+          {
+            path: "/initializing",
+            element: <InitializingRoute />,
+            errorElement: <Error />,
+          },
+        ],
+      },
+      {
+        // Route guard: Requires ViewAccount to exist
+        element: <RequireViewAccount />,
         errorElement: <Error />,
         children: [
           {
-            path: "/panel",
-            element: (
-              <LoadingScreen>
-                <PanelRoute />
-              </LoadingScreen>
-            ),
+            path: "/authorization",
+            element: <Authorization />,
+            errorElement: <Error />,
           },
           {
-            path: "/panel/:tab",
-            element: (
-              <LoadingScreen>
-                <PanelRoute />
-              </LoadingScreen>
-            ),
+            // Route guard: Requires authorization
+            element: <RequireAuthorization />,
+            errorElement: <Error />,
+            children: [
+              {
+                path: "/panel",
+                element: <PanelRoute />,
+              },
+              {
+                path: "/panel/:tab",
+                element: <PanelRoute />,
+              },
+            ],
           },
         ],
       },

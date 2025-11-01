@@ -19,9 +19,6 @@ export const LedgerContext = createContext<{
   // EVM Clients
   evmClients: EvmClients | undefined;
   setEvmClients: (evmClients: EvmClients | undefined) => void;
-  // Password
-  password: string | undefined;
-  setPassword: (password: string | undefined) => void;
   // Authorization
   authorized: boolean;
   setAuthorized: (authorized: boolean) => void;
@@ -53,9 +50,6 @@ export const LedgerContext = createContext<{
   // EVM Clients
   evmClients: undefined,
   setEvmClients: () => {},
-  // Password
-  password: undefined,
-  setPassword: () => {},
   // Authorization
   authorized: false,
   setAuthorized: () => {},

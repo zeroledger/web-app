@@ -38,7 +38,7 @@ const config = {
     requireUserPasswordOnCreate: false,
     showWalletUIs: false,
     ethereum: {
-      createOnLogin: "users-without-wallets",
+      createOnLogin: "all-users",
     },
   } as const,
   mfa: {

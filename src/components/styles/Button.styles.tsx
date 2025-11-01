@@ -1,13 +1,20 @@
-export const primaryButtonStyle = `inline-flex items-center 
-  justify-center gap-2 rounded-md bg-gray-700 py-2.5 px-3.5 
-  text-base/6 font-semibold text-white 
-  shadow-inner shadow-white/10 focus:outline-none 
-  hover:bg-gray-600 hover:cursor-pointer
-  disabled:opacity-50 disabled:cursor-default disabled:hover:bg-gray-700
-  transition duration-150 ease-in-out w-32 h-12`;
+const baseButtonStyle = `inline-flex items-center justify-center gap-2 font-semibold focus:outline-none disabled:opacity-50 disabled:cursor-default transition duration-150 ease-in-out`;
 
-export const linkButtonStyle =
-  "inline-flex items-center justify-center gap-2 py-1.5 px-1.5 text-xs/4 font-semibold text-slate-300 hover:text-slate-200 focus:outline-none";
+const basePrimaryButtonStyle = `
+  ${baseButtonStyle} rounded-md bg-gray-700 hover:cursor-pointer
+  text-white shadow-inner shadow-white/10 
+  hover:bg-gray-600 disabled:hover:bg-gray-700 
+`;
 
-export const menuButtonStyle =
-  "w-full flex items-center justify-between text-white/80 hover:text-white/90 bg-transparent font-semibold focus:outline-none transition hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";
+export const primaryButtonStyles = {
+  regular: `${basePrimaryButtonStyle} py-2.5 px-3.5 text-base/6 w-32 h-12`,
+  small: `${basePrimaryButtonStyle} py-3.5 px-5.5 text-sm/4`,
+};
+
+export const linkButtonStyle = `
+  ${baseButtonStyle} py-2.5 px-2.5 text-xs/4  
+  text-slate-300 hover:text-slate-200`;
+
+export const menuButtonStyle = `
+  ${baseButtonStyle} w-full text-white/80 bg-transparent 
+  hover:text-white/90 hover:cursor-pointer`;

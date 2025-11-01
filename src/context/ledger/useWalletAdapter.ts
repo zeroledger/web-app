@@ -5,21 +5,34 @@ import { useCallback, useEffect, useState } from "react";
 import { SUPPORTED_CHAINS } from "@src/common.constants";
 
 export function useWalletAdapter() {
-  const { wallets } = useWallets();
-  const { logout, exportWallet, authenticated, login: privyLogin } = usePrivy();
-  // const { connectWallet } = useConnectWallet();
+  const { wallets, ready } = useWallets();
+  const {
+    logout,
+    exportWallet,
+    authenticated,
+    login: privyLogin,
+    linkWallet,
+  } = usePrivy();
   const [targetChain, setTargetChain] = useState<Chain>(SUPPORTED_CHAINS[0]);
 
-  const wallet = wallets[0];
+  // Embedded wallet is always the Privy-created wallet
+  const embeddedWallet = wallets.find((w) => w.walletClientType === "privy");
 
-  const prevWallet = usePrevious(wallet);
+  // Primary wallet is the external wallet if linked, otherwise the embedded wallet
+  const externalWallet = wallets.find((w) => w.walletClientType !== "privy");
+  const primaryWallet = externalWallet ?? embeddedWallet;
 
-  const isWalletNetworkChanged = wallet?.chainId !== prevWallet?.chainId;
-  const isWalletAddressChanged = wallet?.address !== prevWallet?.address;
+  // For backward compatibility, keep 'wallet' as primary wallet
+  const wallet = primaryWallet;
+
+  const prevWallet = usePrevious(primaryWallet);
+
+  const isWalletNetworkChanged = primaryWallet?.chainId !== prevWallet?.chainId;
+  const isWalletAddressChanged = primaryWallet?.address !== prevWallet?.address;
 
   const isWalletChanged = isWalletNetworkChanged || isWalletAddressChanged;
 
-  const walletChainId = Number(wallet?.chainId.split(":")[1]);
+  const walletChainId = Number(primaryWallet?.chainId.split(":")[1]);
   const chainSupported = targetChain.id === walletChainId;
 
   useEffect(() => {
@@ -45,21 +58,36 @@ export function useWalletAdapter() {
     privyLogin({ loginMethods: ["email"] });
   }, [authenticated, privyLogin, logout]);
 
-  const getAccount = useCallback(() => {
-    return wallet.walletClientType === "privy"
-      ? toViemAccount({ wallet })
-      : (wallet.address as Address);
-  }, [wallet]);
-  const getProvider = useCallback(
-    () => wallet?.getEthereumProvider(),
-    [wallet],
-  );
+  const linkExternalWallet = linkWallet;
 
+  const getPrimaryAccount = useCallback(() => {
+    return primaryWallet!.walletClientType === "privy"
+      ? toViemAccount({ wallet: primaryWallet! })
+      : (primaryWallet!.address as Address);
+  }, [primaryWallet]);
+  const getPrimaryProvider = useCallback(
+    () => primaryWallet?.getEthereumProvider(),
+    [primaryWallet],
+  );
+  const getEmbeddedAccount = useCallback(
+    () => toViemAccount({ wallet: embeddedWallet! }),
+    [embeddedWallet],
+  );
+  const getEmbeddedProvider = useCallback(
+    () => embeddedWallet?.getEthereumProvider(),
+    [embeddedWallet],
+  );
   return {
     wallets,
     wallet,
-    getAccount,
-    getProvider,
+    embeddedWallet,
+    primaryWallet,
+    externalWallet,
+    adapterReady: ready,
+    getPrimaryAccount,
+    getPrimaryProvider,
+    getEmbeddedAccount,
+    getEmbeddedProvider,
     prevWallet,
     isWalletChanged,
     isWalletNetworkChanged,
@@ -72,5 +100,6 @@ export function useWalletAdapter() {
     exportWallet,
     connect,
     signIn,
+    linkExternalWallet,
   };
 }

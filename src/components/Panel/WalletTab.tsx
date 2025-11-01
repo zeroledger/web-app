@@ -17,7 +17,7 @@ import { useReceiveModal } from "./hooks/useReceiveModal";
 import { Avatar } from "../EnsProfile/Avatar";
 import { Name } from "../EnsProfile/Name";
 import { ENV } from "@src/common.constants";
-import { primaryButtonStyle } from "../styles/Button.styles";
+import { primaryButtonStyles } from "../styles/Button.styles";
 
 export default function WalletTab() {
   const {
@@ -149,12 +149,15 @@ export default function WalletTab() {
         <div className="flex gap-6 mt-2">
           <button
             onClick={onModalOpen}
-            className={primaryButtonStyle}
+            className={primaryButtonStyles.regular}
             disabled={disableSpend}
           >
             Send
           </button>
-          <button onClick={onReceiveModalOpen} className={primaryButtonStyle}>
+          <button
+            onClick={onReceiveModalOpen}
+            className={primaryButtonStyles.regular}
+          >
             Receive
           </button>
         </div>

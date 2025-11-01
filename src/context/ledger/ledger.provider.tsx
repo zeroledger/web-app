@@ -16,13 +16,8 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
   children,
 }) => {
   const [ledger, setLedger] = useState<Ledger>();
-  const {
-    password,
-    setPassword,
-    authorized,
-    resetViewAccountAuthorization,
-    setAuthorized,
-  } = useViewAccountAuthorization();
+  const { authorized, resetViewAccountAuthorization, setAuthorized } =
+    useViewAccountAuthorization();
   const [evmClients, setEvmClients] = useState<EvmClients>();
   const { wallet } = useWalletAdapter();
 
@@ -64,9 +59,6 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       // EVM Clients
       evmClients,
       setEvmClients,
-      // Password
-      password,
-      setPassword,
       // Authorization
       authorized,
       setAuthorized,
@@ -90,8 +82,6 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       closeSwitchChainModal,
       setTargetChain,
       targetChain,
-      password,
-      setPassword,
       authorized,
       setAuthorized,
       evmClients,

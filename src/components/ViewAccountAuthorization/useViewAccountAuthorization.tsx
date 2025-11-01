@@ -11,9 +11,8 @@ export const useViewAccountAuthorization = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<Error>();
   const navigate = useNavigate();
-  const { viewAccount, setAuthorized, password, evmClients } =
-    useContext(LedgerContext);
-  const { wallets, isWalletAddressChanged } = useWalletAdapter();
+  const { viewAccount, setAuthorized, evmClients } = useContext(LedgerContext);
+  const { primaryWallet, isWalletAddressChanged } = useWalletAdapter();
 
   const messageData = useMemo(
     (): SigningData[] => [
@@ -23,7 +22,7 @@ export const useViewAccountAuthorization = () => {
       },
       {
         label: "Main Address",
-        value: shortString(wallets[0]?.address) || "",
+        value: shortString(primaryWallet?.address) || "",
       },
       {
         label: "View Address",
@@ -31,13 +30,13 @@ export const useViewAccountAuthorization = () => {
           shortString(viewAccount?.getViewAccount()?.address) || "loading...",
       },
     ],
-    [viewAccount, wallets],
+    [viewAccount, primaryWallet],
   );
 
   const handleSign = debounce(async () => {
     try {
       setIsSigning(true);
-      await viewAccount?.authorize(evmClients!, password!);
+      await viewAccount?.authorize(evmClients!);
       setAuthorized(true);
       setIsSuccess(true);
       setIsSigning(false);

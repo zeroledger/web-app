@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { primaryButtonStyle } from "@src/components/styles/Button.styles";
+import { primaryButtonStyles } from "@src/components/styles/Button.styles";
 import { WalletIcon } from "@src/components/svg";
 import { ReactNode } from "react";
 import { Button } from "@headlessui/react";
@@ -116,8 +116,8 @@ export default function SigningPreview({
       <div className="flex justify-center mb-4">
         <Button
           className={clsx(
-            primaryButtonStyle,
-            "w-full transition-all duration-300 ease-in-out",
+            primaryButtonStyles.regular,
+            "w-full",
             (isSigning || isSuccess) && "opacity-50 cursor-not-allowed",
           )}
           disabled={isSigning || isSuccess}
