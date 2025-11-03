@@ -8,13 +8,16 @@ import { SiWalletconnect } from "react-icons/si";
 import clsx from "clsx";
 import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { setLinkWalletPreference } from "@src/services/linkWalletPreference";
+import {
+  setLinkWalletPreference,
+  getLinkWalletPreference,
+} from "@src/services/linkWalletPreference";
 
 export default function LinkWallet() {
   const { isLinking, linkExternalWallet: handleLink } =
     useContext(LedgerContext);
   const navigate = useNavigate();
-
+  const linkWalletPref = getLinkWalletPreference();
   const handleSkip = () => {
     setLinkWalletPreference(false);
     navigate("/");
@@ -24,12 +27,13 @@ export default function LinkWallet() {
     <div className="mx-auto w-full md:max-w-md px-3">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-white mb-2">
-          Connect External Wallet
+          {linkWalletPref === null
+            ? "Link First External Wallet"
+            : "Link Additional External Wallet"}
         </h2>
         <p className="text-sm text-white/60">
-          Connect an external wallet to use as your primary wallet for
-          transactions. By skipping this step, you will use your email wallet
-          instead.
+          The selected wallet will be used as your primary wallet for
+          transactions.
         </p>
       </div>
       <div className="flex flex-col items-center gap-3 max-w-xs mx-auto">
@@ -56,13 +60,15 @@ export default function LinkWallet() {
             </>
           )}
         </Button>
-        <Button
-          className={clsx(linkButtonStyle, "hover:cursor-pointer")}
-          onClick={handleSkip}
-          disabled={isLinking}
-        >
-          Skip for now
-        </Button>
+        {linkWalletPref === null && (
+          <Button
+            className={clsx(linkButtonStyle, "hover:cursor-pointer")}
+            onClick={handleSkip}
+            disabled={isLinking}
+          >
+            Use Email Wallet
+          </Button>
+        )}
       </div>
     </div>
   );

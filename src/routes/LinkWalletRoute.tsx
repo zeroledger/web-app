@@ -3,7 +3,6 @@ import { useContext } from "react";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import PageContainer from "@src/components/PageContainer";
 import LinkWallet from "@src/components/Onboarding/LinkWallet";
-import { getLinkWalletPreference } from "@src/services/linkWalletPreference";
 import { DumpLoadingScreen } from "@src/components/LoadingScreen";
 
 /**
@@ -11,8 +10,7 @@ import { DumpLoadingScreen } from "@src/components/LoadingScreen";
  * Requirements: User signed in (has evmClients) AND no linking preference set
  */
 export default function LinkWalletRoute() {
-  const { evmClients, initializing } = useContext(LedgerContext);
-  const linkWalletPref = getLinkWalletPreference();
+  const { evmClients, initializing, linkNeeded } = useContext(LedgerContext);
 
   // Still initializing
   if (initializing) {
@@ -25,7 +23,7 @@ export default function LinkWalletRoute() {
   }
 
   // Already made choice - redirect to authorization
-  if (linkWalletPref !== null) {
+  if (!linkNeeded) {
     return <Navigate to="/authorization" replace />;
   }
 

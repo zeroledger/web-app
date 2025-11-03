@@ -24,6 +24,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
     viewAccount,
     authorized,
     setAuthorized,
+    linkNeeded,
   } = useLedgerWallets();
 
   const {
@@ -45,6 +46,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       signIn,
       linkExternalWallet,
       isLinking,
+      linkNeeded,
       viewAccount,
       // Ledger
       initializing,
@@ -88,6 +90,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       reset,
       ensProfile,
       isEnsLoading,
+      linkNeeded,
     ],
   );
 

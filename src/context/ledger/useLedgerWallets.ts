@@ -1,4 +1,9 @@
-import { toViemAccount, usePrivy, useWallets } from "@privy-io/react-auth";
+import {
+  toViemAccount,
+  useLinkAccount,
+  usePrivy,
+  useWallets,
+} from "@privy-io/react-auth";
 import { type Address, Chain } from "viem";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -18,28 +23,43 @@ import { EvmClients } from "@src/services/Clients";
 import { deriveLocalAccount } from "@src/utils/deriveLocalWallet";
 import { initialize, type Ledger } from "@src/services/ledger";
 import { ViewAccount } from "@src/services/Account";
+import {
+  getLinkWalletPreference,
+  setLinkWalletPreference,
+} from "@src/services/linkWalletPreference";
 
 const viewAccount = new ViewAccount(APP_PREFIX_KEY);
 
 export function useLedgerWallets() {
   const { wallets, ready } = useWallets();
-  const {
-    logout,
-    exportWallet,
-    authenticated,
-    login: privyLogin,
-    linkWallet,
-  } = usePrivy();
+  const { logout, exportWallet, authenticated, login: privyLogin } = usePrivy();
+
   const [ledger, setLedger] = useState<Ledger>();
   const [authorized, setAuthorized] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [targetChain, setTargetChain] = useState<Chain>(SUPPORTED_CHAINS[0]);
   const [chainSupported, setChainSupported] = useState<boolean>(true);
   const embeddedWallet = wallets.find((w) => w.walletClientType === "privy");
-  const externalWallet = wallets.find((w) => w.walletClientType !== "privy");
+  const externalWallet = wallets.find(
+    (w) => w.walletClientType !== "privy" && w.linked,
+  );
   const [evmClients, setEvmClients] = useState<EvmClients>();
 
   const [isLinking, setIsLinking] = useState(false);
+  const linkWalletPref = getLinkWalletPreference();
+
+  const linkNeeded =
+    linkWalletPref === null || (linkWalletPref === true && !externalWallet);
+
+  const { linkWallet } = useLinkAccount({
+    onSuccess: () => {
+      setIsLinking(false);
+      setLinkWalletPreference(true);
+    },
+    onError: () => {
+      setIsLinking(false);
+    },
+  });
 
   useEffect(() => {
     if (!embeddedWallet || !ready) {
@@ -54,8 +74,6 @@ export function useLedgerWallets() {
       const walletChainId = externalWallet
         ? Number(externalWallet?.chainId.split(":")[1])
         : SUPPORTED_CHAINS[0].id;
-
-      console.log("walletChainId", walletChainId);
 
       const switchToChain = SUPPORTED_CHAINS.find(
         (c) => c.id === walletChainId,
@@ -181,5 +199,6 @@ export function useLedgerWallets() {
     authorized,
     setAuthorized,
     isLinking,
+    linkNeeded,
   };
 }

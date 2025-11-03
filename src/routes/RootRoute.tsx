@@ -4,15 +4,14 @@ import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { DumpLoadingScreen } from "@src/components/LoadingScreen";
 import PageContainer from "@src/components/PageContainer";
 import SignIn from "@src/components/Onboarding/SignIn";
-import { getLinkWalletPreference } from "@src/services/linkWalletPreference";
 
 /**
  * Root route "/" - Shows sign in if not initialized, redirects to appropriate route if initialized.
  * Requirements: None (always accessible)
  */
 export default function RootRoute() {
-  const { evmClients, initializing, authorized } = useContext(LedgerContext);
-  const linkWalletPref = getLinkWalletPreference();
+  const { evmClients, initializing, authorized, linkNeeded } =
+    useContext(LedgerContext);
 
   // Still initializing
   if (initializing) {
@@ -29,7 +28,7 @@ export default function RootRoute() {
   }
 
   // Signed in - redirect based on state
-  if (linkWalletPref === null) {
+  if (linkNeeded) {
     return <Navigate to="/link-wallet" replace />;
   }
 

@@ -87,7 +87,7 @@ export class EvmClients {
     }
 
     this.logger.log(
-      `init embedded client for ${
+      `init primary client for ${
         typeof primaryClientOptions.account === "object"
           ? primaryClientOptions.account.address
           : primaryClientOptions.account
