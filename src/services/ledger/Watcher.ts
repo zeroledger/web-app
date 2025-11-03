@@ -79,7 +79,7 @@ export class Watcher extends EventEmitter {
   }
 
   mainAccount() {
-    return this.evmClients.externalClient().account;
+    return this.evmClients.primaryClient()!.account;
   }
 
   async getForwarder() {

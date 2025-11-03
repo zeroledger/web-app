@@ -3,12 +3,12 @@ import { privateKeyToAccount } from "viem/accounts";
 import { signTypedData } from "@src/utils/signTypedData";
 import { type CustomClient } from "@src/services/Clients";
 
-const localWalletDomain = {
-  name: "Local Wallet Derivation",
+const localAccountDomain = {
+  name: "Local Account Derivation",
   version: "0.0.1",
 } as const;
 
-const localWalletTypes = {
+const localAccountTypes = {
   Derive: [
     { name: "protocol", type: "string" },
     { name: "rootWallet", type: "address" },
@@ -23,13 +23,13 @@ const localWalletTypes = {
  * @param embeddedWalletAddress - The embedded wallet address
  * @returns The derived local wallet account
  */
-export async function deriveLocalWallet(
+export async function deriveLocalAccount(
   embeddedClient: CustomClient,
   embeddedWalletAddress: Address,
 ) {
   const obj = {
-    domain: localWalletDomain,
-    types: localWalletTypes,
+    domain: localAccountDomain,
+    types: localAccountTypes,
     primaryType: "Derive" as const,
     message: {
       protocol: "zeroledger",
@@ -44,7 +44,7 @@ export async function deriveLocalWallet(
   const privateKey = keccak256(signature);
 
   // Create local wallet account
-  const localWallet = privateKeyToAccount(privateKey);
+  const localAccount = privateKeyToAccount(privateKey);
 
-  return localWallet;
+  return localAccount;
 }

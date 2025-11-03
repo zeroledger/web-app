@@ -1,9 +1,10 @@
-import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
+import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { catchService } from "@src/services/core/catch.service";
 import debounce from "debounce";
+import { useContext } from "react";
 
 export const useBackupPrivateKey = () => {
-  const { exportWallet } = useWalletAdapter();
+  const { exportWallet } = useContext(LedgerContext);
 
   const handleBackupPrivateKey = debounce(async () => {
     try {

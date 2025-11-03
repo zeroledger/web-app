@@ -7,7 +7,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { decrypt, encrypt } from "@zeroledger/vycrypt";
-import { type EvmClients } from "@src/services/Clients";
+import { type CustomClient } from "@src/services/Clients";
 import { signTypedData } from "@src/utils/signTypedData";
 
 export type EncryptedAccountsStore = Record<
@@ -89,11 +89,10 @@ export class ViewAccount {
   }
 
   async signViewAccountCreation(
-    evmClients: EvmClients,
+    embeddedClient: CustomClient,
     primaryWalletAddress: Address,
     vaultAddress: Address,
   ): Promise<Hex> {
-    const embeddedClient = evmClients.embeddedClient();
     const obj = {
       domain: viewAccountCreationDomain,
       types: viewAccountCreationTypes,
@@ -120,26 +119,25 @@ export class ViewAccount {
     )) as Hex;
   }
 
-  async authorize(evmClients: EvmClients) {
+  async authorize(primaryClient: CustomClient) {
     if (!this._viewPk || !this._viewAccount) {
       throw new Error("ViewAccount not initialized");
     }
 
     const pubK = privateKeyToAccount(this._viewPk).publicKey;
-    const externalClient = evmClients.externalClient();
     const obj = {
       domain: authorizationDomain,
       types: authorizationTypes,
       primaryType: "Authorize" as const,
       message: {
         protocol: "zeroledger",
-        main_account: externalClient.account.address,
+        main_account: primaryClient.account.address,
         view_account: this._viewAccount.address,
       },
     };
-    this._delegationSignature = await signTypedData(externalClient, obj);
+    this._delegationSignature = await signTypedData(primaryClient, obj);
     localStorage.setItem(
-      `${this.PKS_STORE_KEY}.delegation.${externalClient.account.address}`,
+      `${this.PKS_STORE_KEY}.delegation.${primaryClient.account.address}`,
       await encrypt(this._delegationSignature, pubK),
     );
   }

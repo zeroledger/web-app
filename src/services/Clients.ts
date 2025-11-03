@@ -16,9 +16,9 @@ import {
 } from "viem";
 import { Logger } from "@src/utils/logger";
 
-export type ExternalClientOptions = {
+export type PrimaryClientOptions = {
   account: Account | Address;
-  provider: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  provider?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 };
 
 export type EmbeddedClientOptions = {
@@ -31,7 +31,7 @@ export type CustomClient = PublicClient<Transport, Chain, Account, RpcSchema> &
 
 export class EvmClients {
   public readonly readClient: PublicClient;
-  private _externalClient?: CustomClient;
+  private _primaryClient?: CustomClient;
   private _embeddedClient?: CustomClient;
   private readonly logger = new Logger(EvmClients.name);
 
@@ -40,8 +40,6 @@ export class EvmClients {
     private readonly httpUrls: string[],
     private readonly pollingInterval: number,
     private readonly chain: Chain,
-    private readonly externalClientOptions: ExternalClientOptions,
-    private readonly embeddedClientOptions: EmbeddedClientOptions,
   ) {
     const transport = fallback([
       ...this.wsUrls.map((wss) => webSocket(wss)),
@@ -54,58 +52,49 @@ export class EvmClients {
     }).extend(publicActions);
   }
 
-  _initExternalClient() {
+  setEmbeddedClient(embeddedClientOptions: EmbeddedClientOptions) {
     const client = createWalletClient({
-      account: this.externalClientOptions.account,
+      account: embeddedClientOptions.account,
       chain: this.chain,
-      transport: custom(this.externalClientOptions.provider),
-    }).extend(publicActions);
-
-    this.logger.log(
-      `init external client for ${
-        typeof this.externalClientOptions.account === "object"
-          ? this.externalClientOptions.account.address
-          : this.externalClientOptions.account
-      }`,
-    );
-    return client;
-  }
-
-  externalClient() {
-    if (!this._externalClient) {
-      this._externalClient = this._initExternalClient();
-    }
-    return this._externalClient;
-  }
-
-  _initEmbeddedClient() {
-    if (
-      this.embeddedClientOptions.account === this.externalClientOptions.account
-    ) {
-      this._embeddedClient = this._initExternalClient();
-      return this._embeddedClient;
-    }
-
-    const client = createWalletClient({
-      account: this.embeddedClientOptions.account,
-      chain: this.chain,
-      transport: custom(this.embeddedClientOptions.provider),
+      transport: custom(embeddedClientOptions.provider),
     }).extend(publicActions);
 
     this.logger.log(
       `init embedded client for ${
-        typeof this.embeddedClientOptions.account === "object"
-          ? this.embeddedClientOptions.account.address
-          : this.embeddedClientOptions.account
+        typeof embeddedClientOptions.account === "object"
+          ? embeddedClientOptions.account.address
+          : embeddedClientOptions.account
       }`,
     );
+    this._embeddedClient = client;
     return client;
   }
 
-  embeddedClient() {
-    if (!this._embeddedClient) {
-      this._embeddedClient = this._initEmbeddedClient();
+  setPrimaryClient(primaryClientOptions: PrimaryClientOptions) {
+    if (primaryClientOptions.provider) {
+      const client = createWalletClient({
+        account: primaryClientOptions.account,
+        chain: this.chain,
+        transport: custom(primaryClientOptions.provider),
+      }).extend(publicActions);
+
+      this.logger.log(
+        `init embedded client for ${
+          typeof primaryClientOptions.account === "object"
+            ? primaryClientOptions.account.address
+            : primaryClientOptions.account
+        }`,
+      );
+      this._primaryClient = client;
+      return client;
     }
+  }
+
+  primaryClient() {
+    return this._primaryClient;
+  }
+
+  embeddedClient() {
     return this._embeddedClient;
   }
 
@@ -113,7 +102,7 @@ export class EvmClients {
     /**
      * @dev do not need to close ws connections since viem clients maintain them automatically
      */
-    this._externalClient = undefined;
+    this._primaryClient = undefined;
     this._embeddedClient = undefined;
   }
 }

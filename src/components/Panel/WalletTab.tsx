@@ -3,7 +3,6 @@ import { type Address } from "viem";
 import clsx from "clsx";
 
 import { LedgerContext } from "@src/context/ledger/ledger.context";
-import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 
 import { TwoStepSpendModal } from "@src/components/Modals/TwoStepSpendModal";
 import { ReceiveModal } from "@src/components/Modals/ReceiveModal";
@@ -30,10 +29,12 @@ export default function WalletTab() {
     balanceForConsolidation,
     symbol,
   } = useContext(PanelContext);
-  const { wallet } = useWalletAdapter();
-  const { ensProfile, isEnsLoading, scanUrl } = useContext(LedgerContext);
+  const { ensProfile, isEnsLoading, scanUrl, evmClients } =
+    useContext(LedgerContext);
 
-  const address = wallet?.address as Address | undefined;
+  const address = evmClients?.primaryClient()?.account.address as
+    | Address
+    | undefined;
 
   const { showCopiedTooltip, handleCopyAddress } = useCopyAddress(address);
   const {

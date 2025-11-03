@@ -1,11 +1,12 @@
 import { Button } from "@headlessui/react";
 import { primaryButtonStyles } from "@src/components/styles/Button.styles";
 import WelcomeBanner from "./WelcomeBanner";
-import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { MdEmail } from "react-icons/md";
+import { useContext } from "react";
+import { LedgerContext } from "@src/context/ledger/ledger.context";
 
 export default function SignIn() {
-  const { signIn } = useWalletAdapter();
+  const { signIn } = useContext(LedgerContext);
 
   return (
     <>

@@ -86,7 +86,7 @@ const evmClients = new EvmClients(
 
 ### 2. Fallback Behavior
 
-If `embeddedClientOptions` is not provided, `embeddedClient()` returns the same instance as `externalClient()`. This maintains backward compatibility when user hasn't linked an external wallet.
+If `embeddedClientOptions` is not provided, `embeddedClient()` returns the same instance as `primaryClient()`. This maintains backward compatibility when user hasn't linked an external wallet.
 
 ```typescript
 _initEmbeddedClient() {
@@ -108,7 +108,7 @@ const signature = await viewAccount.signViewAccountCreation(
 
 // Authorization - uses primary wallet
 await viewAccount.authorize(
-  evmClients  // Uses evmClients.externalClient() internally
+  evmClients  // Uses evmClients.primaryClient() internally
 );
 ```
 
@@ -177,7 +177,7 @@ async signViewAccountCreation(evmClients, primaryWalletAddress, vaultAddress) {
 
 // Authorization - uses primary wallet  
 async authorize(evmClients) {
-  const externalClient = evmClients.externalClient();  // ✅
+  const externalClient = evmClients.primaryClient();  // ✅
   // Sign with primary wallet
 }
 ```
@@ -231,7 +231,7 @@ async authorize(evmClients) {
 embeddedWallet: 0x123...
 primaryWallet: 0x123... (same as embedded)
 
-externalClient() → signs with 0x123...
+primaryClient() → signs with 0x123...
 embeddedClient() → signs with 0x123... (same instance)
 ```
 
@@ -241,7 +241,7 @@ embeddedWallet: 0x123...
 externalWallet: 0x456...
 primaryWallet: 0x456...
 
-externalClient() → signs with 0x456...
+primaryClient() → signs with 0x456...
 embeddedClient() → signs with 0x123...
 ```
 

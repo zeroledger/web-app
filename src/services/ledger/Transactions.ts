@@ -81,7 +81,7 @@ export class Transactions {
   }
 
   mainAccount() {
-    return this.evmClients.externalClient().account;
+    return this.evmClients.primaryClient()!.account;
   }
 
   async getForwarder() {
@@ -154,7 +154,7 @@ export class Transactions {
             "deposit",
           );
 
-        const client = this.evmClients.externalClient();
+        const client = this.evmClients.primaryClient()!;
 
         const spendAllowance = await allowance({
           client,
@@ -187,7 +187,7 @@ export class Transactions {
             depositParams.depositStruct.amount +
             depositParams.depositStruct.forwarderFee +
             protocolFees,
-          client: this.evmClients.externalClient(),
+          client: this.evmClients.primaryClient()!,
         });
       },
       "approveDeposit",
@@ -206,7 +206,7 @@ export class Transactions {
             depositParams.depositStruct.amount +
             depositParams.depositStruct.forwarderFee +
             protocolFees,
-          client: this.evmClients.externalClient(),
+          client: this.evmClients.primaryClient()!,
           deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
         });
       },
@@ -223,7 +223,7 @@ export class Transactions {
         return await asyncMetaTxUtils.createSignedMetaTx(
           metaTransaction,
           await this.getForwarder(),
-          this.evmClients.externalClient(),
+          this.evmClients.primaryClient()!,
         );
       },
       "signMetaTransaction",
@@ -261,7 +261,7 @@ export class Transactions {
         const signedMetaTransaction = await asyncMetaTxUtils.createSignedMetaTx(
           metaTransaction,
           await this.getForwarder(),
-          this.evmClients.externalClient(),
+          this.evmClients.primaryClient()!,
         );
         const mainAccount = this.mainAccount();
         return await this.tesService.executeMetaTransactions(
@@ -419,7 +419,7 @@ export class Transactions {
         );
 
         const withdrawParams = {
-          client: this.evmClients.externalClient(),
+          client: this.evmClients.primaryClient()!,
           contract: this.vault,
           token: this.token,
           withdrawItems,
@@ -532,7 +532,7 @@ export class Transactions {
 
         const partialWithdrawParams = {
           transactionStruct,
-          client: this.evmClients.externalClient(),
+          client: this.evmClients.primaryClient()!,
           contract: this.vault,
           proof: proofData.calldata_proof,
         };
@@ -654,7 +654,7 @@ export class Transactions {
 
         const sendParams = {
           transactionStruct,
-          client: this.evmClients.externalClient(),
+          client: this.evmClients.primaryClient()!,
           contract: this.vault,
           proof: proofData.calldata_proof,
         };

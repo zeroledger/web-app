@@ -1,7 +1,6 @@
 import { useContext } from "react";
 import { parseUnits } from "viem";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
-import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { delay } from "@src/utils/common";
 import { type UnsignedMetaTransaction } from "@src/utils/metatx";
 import {
@@ -43,8 +42,7 @@ const defaultConfig = {
 };
 
 export const useTwoStepWithdrawModal = (decimals: number) => {
-  const { ledger } = useContext(LedgerContext);
-  const { wallet } = useWalletAdapter();
+  const { ledger, evmClients } = useContext(LedgerContext);
   const { settings } = useSettings();
   const skipSecondStep = !settings.showTransactionPreview;
   const { privateBalance } = useContext(PanelContext);
@@ -77,7 +75,8 @@ export const useTwoStepWithdrawModal = (decimals: number) => {
           }));
 
           // Use user's own address as recipient for withdraw
-          const recipient = wallet!.address as `0x${string}`;
+          const recipient = evmClients?.primaryClient()?.account
+            .address as `0x${string}`;
 
           const amount = parseUnits(data.amount, decimals);
           let metaTransactionData;

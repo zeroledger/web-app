@@ -3,29 +3,17 @@ import {
   linkButtonStyle,
   primaryButtonStyles,
 } from "@src/components/styles/Button.styles";
-import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
+import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { SiWalletconnect } from "react-icons/si";
 import clsx from "clsx";
-import { useState } from "react";
+import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { setLinkWalletPreference } from "@src/services/linkWalletPreference";
 
 export default function LinkWallet() {
-  const { linkExternalWallet } = useWalletAdapter();
+  const { isLinking, linkExternalWallet: handleLink } =
+    useContext(LedgerContext);
   const navigate = useNavigate();
-  const [isLinking, setIsLinking] = useState(false);
-
-  const handleLink = async () => {
-    try {
-      setIsLinking(true);
-      await linkExternalWallet();
-      setLinkWalletPreference(true);
-      navigate("/");
-    } catch (error) {
-      console.error("Failed to link wallet:", error);
-      setIsLinking(false);
-    }
-  };
 
   const handleSkip = () => {
     setLinkWalletPreference(false);

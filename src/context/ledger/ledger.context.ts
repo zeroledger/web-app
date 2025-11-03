@@ -2,29 +2,32 @@ import { createContext } from "react";
 import { type Ledger } from "@src/services/ledger";
 import { Chain, mainnet } from "viem/chains";
 import { EvmClients } from "@src/services/Clients";
-import { ViewAccount } from "@src/services/Account";
 import { Address } from "viem";
 import { TOKEN_ADDRESS } from "@src/common.constants";
+import { ViewAccount } from "@src/services/Account";
 
 export const LedgerContext = createContext<{
+  // wallet
+  logout: () => Promise<void>;
+  exportWallet: () => Promise<void>;
+  connect: () => Promise<void>;
+  signIn: () => Promise<void>;
+  linkExternalWallet: () => void;
+  isLinking: boolean;
+  viewAccount?: ViewAccount;
   // Ledger
-  ledger: Ledger | undefined;
-  setLedger: (ledger: Ledger | undefined) => void;
+  initializing: boolean;
+  ledger?: Ledger;
   // Switch Chain Modal
   isSwitchChainModalOpen: boolean;
   openSwitchChainModal: () => void;
   closeSwitchChainModal: () => void;
-  setTargetChain: (chain: Chain) => void;
   targetChain: Chain;
   // EVM Clients
-  evmClients: EvmClients | undefined;
-  setEvmClients: (evmClients: EvmClients | undefined) => void;
+  evmClients?: EvmClients;
   // Authorization
   authorized: boolean;
   setAuthorized: (authorized: boolean) => void;
-  // View Account
-  viewAccount: ViewAccount | undefined;
-  resetViewAccountAuthorization: () => void;
   // Ens Profile
   ensProfile?: {
     name?: string;
@@ -38,31 +41,25 @@ export const LedgerContext = createContext<{
   // Explorer base URL for current chain
   scanUrl: string;
 }>({
-  // Ledger
+  initializing: false,
+  logout: () => Promise.resolve(),
+  exportWallet: () => Promise.resolve(),
+  connect: () => Promise.resolve(),
+  signIn: () => Promise.resolve(),
+  linkExternalWallet: () => {},
+  isLinking: false,
+  viewAccount: undefined,
   ledger: undefined,
-  setLedger: () => {},
-  // Switch Chain Modal
   isSwitchChainModalOpen: false,
   openSwitchChainModal: () => {},
   closeSwitchChainModal: () => {},
-  setTargetChain: () => {},
   targetChain: mainnet,
-  // EVM Clients
   evmClients: undefined,
-  setEvmClients: () => {},
-  // Authorization
   authorized: false,
-  setAuthorized: () => {},
-  // View Account
-  viewAccount: undefined,
-  resetViewAccountAuthorization: () => {},
-  // Ens Profile
   ensProfile: undefined,
   isEnsLoading: false,
-  // Reset
+  setAuthorized: () => {},
   reset: () => {},
-  // Token Address
   tokenAddress: TOKEN_ADDRESS,
-  // Explorer base URL for current chain (default empty)
   scanUrl: "",
 });

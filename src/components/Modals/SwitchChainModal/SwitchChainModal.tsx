@@ -11,7 +11,7 @@ export default function SwitchChainModal() {
 
   const handleSwitchChain = debounce(async () => {
     try {
-      const externalClient = evmClients?.externalClient();
+      const externalClient = evmClients?.primaryClient();
       await externalClient?.switchChain({
         id: targetChain.id,
       });
@@ -22,7 +22,7 @@ export default function SwitchChainModal() {
 
   const handleAddChain = debounce(async () => {
     try {
-      const externalClient = evmClients?.externalClient();
+      const externalClient = evmClients?.primaryClient();
       await externalClient?.addChain({
         chain: targetChain,
       });

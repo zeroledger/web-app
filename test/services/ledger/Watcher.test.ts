@@ -576,7 +576,7 @@ describe("Watcher", () => {
 
   describe("meta transaction integration", () => {
     it("should support meta transaction signing with external client", async () => {
-      const mockExternalClient = mockEvmClients.externalClient();
+      const mockExternalClient = mockEvmClients.primaryClient();
 
       // Test that the external client has the required methods for meta transactions
       expect(mockExternalClient.account).toBeDefined();
@@ -588,7 +588,7 @@ describe("Watcher", () => {
     });
 
     it("should support permit signing with external client", async () => {
-      const mockExternalClient = mockEvmClients.externalClient();
+      const mockExternalClient = mockEvmClients.primaryClient();
 
       // Test that the external client has the required methods for permit signing
       expect(mockExternalClient.multicall).toBeDefined();
@@ -599,7 +599,7 @@ describe("Watcher", () => {
 
     it("should handle external client initialization", () => {
       // Test that external client is properly initialized
-      const client = mockEvmClients.externalClient();
+      const client = mockEvmClients.primaryClient();
       expect(client).toBeDefined();
       expect(client.account).toBeDefined();
       expect(client.chain).toBeDefined();

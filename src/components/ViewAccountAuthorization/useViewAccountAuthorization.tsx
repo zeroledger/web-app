@@ -1,9 +1,8 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SigningData } from "@src/components/SigningPreview/SigningPreview";
 import { shortString } from "@src/utils/common";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
-import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import debounce from "debounce";
 
 export const useViewAccountAuthorization = () => {
@@ -12,7 +11,6 @@ export const useViewAccountAuthorization = () => {
   const [error, setError] = useState<Error>();
   const navigate = useNavigate();
   const { viewAccount, setAuthorized, evmClients } = useContext(LedgerContext);
-  const { primaryWallet, isWalletAddressChanged } = useWalletAdapter();
 
   const messageData = useMemo(
     (): SigningData[] => [
@@ -22,7 +20,7 @@ export const useViewAccountAuthorization = () => {
       },
       {
         label: "Main Address",
-        value: shortString(primaryWallet?.address) || "",
+        value: shortString(evmClients?.primaryClient()?.account.address) || "",
       },
       {
         label: "View Address",
@@ -30,13 +28,13 @@ export const useViewAccountAuthorization = () => {
           shortString(viewAccount?.getViewAccount()?.address) || "loading...",
       },
     ],
-    [viewAccount, primaryWallet],
+    [viewAccount, evmClients],
   );
 
   const handleSign = debounce(async () => {
     try {
       setIsSigning(true);
-      await viewAccount?.authorize(evmClients!);
+      await viewAccount?.authorize(evmClients!.primaryClient()!);
       setAuthorized(true);
       setIsSuccess(true);
       setIsSigning(false);
@@ -47,12 +45,6 @@ export const useViewAccountAuthorization = () => {
       setIsSigning(false);
     }
   }, 50);
-
-  useEffect(() => {
-    if (isWalletAddressChanged) {
-      navigate("/");
-    }
-  }, [isWalletAddressChanged, navigate]);
 
   return {
     isSigning,
