@@ -77,6 +77,7 @@ export function useWalletAdapter() {
     () => embeddedWallet?.getEthereumProvider(),
     [embeddedWallet],
   );
+
   return {
     wallets,
     wallet,
