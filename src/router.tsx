@@ -3,47 +3,35 @@ import Error from "@src/components/Error";
 import { lazy } from "react";
 
 const RootRoute = lazy(() => import("./routes/RootRoute"));
-const SignInRoute = lazy(() => import("./routes/SignInRoute"));
 const LinkWalletRoute = lazy(() => import("./routes/LinkWalletRoute"));
+const AuthorizationRoute = lazy(() => import("./routes/AuthorizationRoute"));
 const PanelRoute = lazy(() => import("./routes/PanelRoute"));
-const Authorization = lazy(() => import("./routes/Authorization"));
 
 const Router = createBrowserRouter([
   {
-    element: <RootRoute />,
     path: "/",
+    element: <RootRoute />,
     errorElement: <Error />,
-    children: [
-      {
-        path: "/sign-in",
-        element: <SignInRoute />,
-        errorElement: <Error />,
-        children: [
-          {
-            path: "/link-wallet",
-            element: <LinkWalletRoute />,
-            errorElement: <Error />,
-            children: [
-              {
-                path: "/authorization",
-                element: <Authorization />,
-                errorElement: <Error />,
-                children: [
-                  {
-                    path: "/panel",
-                    element: <PanelRoute />,
-                  },
-                  {
-                    path: "/panel/:tab",
-                    element: <PanelRoute />,
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
+  },
+  {
+    path: "/link-wallet",
+    element: <LinkWalletRoute />,
+    errorElement: <Error />,
+  },
+  {
+    path: "/authorization",
+    element: <AuthorizationRoute />,
+    errorElement: <Error />,
+  },
+  {
+    path: "/panel",
+    element: <PanelRoute />,
+    errorElement: <Error />,
+  },
+  {
+    path: "/panel/:tab",
+    element: <PanelRoute />,
+    errorElement: <Error />,
   },
 ]);
 

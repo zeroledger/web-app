@@ -33,6 +33,7 @@ export class EvmClients {
   public readonly readClient: PublicClient;
   private _primaryClient?: CustomClient;
   private _embeddedClient?: CustomClient;
+  private readonly transport: Transport;
   private readonly logger = new Logger(EvmClients.name);
 
   constructor(
@@ -41,13 +42,13 @@ export class EvmClients {
     private readonly pollingInterval: number,
     private readonly chain: Chain,
   ) {
-    const transport = fallback([
+    this.transport = fallback([
       ...this.wsUrls.map((wss) => webSocket(wss)),
       ...this.httpUrls.map((url) => http(url)),
     ]);
     this.readClient = createClient({
       chain: this.chain,
-      transport,
+      transport: this.transport,
       pollingInterval: this.pollingInterval,
     }).extend(publicActions);
   }
@@ -72,22 +73,27 @@ export class EvmClients {
 
   setPrimaryClient(primaryClientOptions: PrimaryClientOptions) {
     if (primaryClientOptions.provider) {
-      const client = createWalletClient({
+      this._primaryClient = createWalletClient({
         account: primaryClientOptions.account,
         chain: this.chain,
         transport: custom(primaryClientOptions.provider),
       }).extend(publicActions);
-
-      this.logger.log(
-        `init embedded client for ${
-          typeof primaryClientOptions.account === "object"
-            ? primaryClientOptions.account.address
-            : primaryClientOptions.account
-        }`,
-      );
-      this._primaryClient = client;
-      return client;
+    } else {
+      this._primaryClient = createWalletClient({
+        account: primaryClientOptions.account,
+        chain: this.chain,
+        transport: this.transport,
+      }).extend(publicActions);
     }
+
+    this.logger.log(
+      `init embedded client for ${
+        typeof primaryClientOptions.account === "object"
+          ? primaryClientOptions.account.address
+          : primaryClientOptions.account
+      }`,
+    );
+    return this._primaryClient;
   }
 
   primaryClient() {

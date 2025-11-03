@@ -53,7 +53,9 @@ export function useLedgerWallets() {
           : (externalWallet?.address as Address | undefined);
       const walletChainId = externalWallet
         ? Number(externalWallet?.chainId.split(":")[1])
-        : SUPPORTED_CHAINS[0];
+        : SUPPORTED_CHAINS[0].id;
+
+      console.log("walletChainId", walletChainId);
 
       const switchToChain = SUPPORTED_CHAINS.find(
         (c) => c.id === walletChainId,
@@ -67,7 +69,7 @@ export function useLedgerWallets() {
       );
       const embeddedClient = evmClients.setEmbeddedClient({
         account: await toViemAccount({ wallet: embeddedWallet }),
-        provider: embeddedWallet.getEthereumProvider(),
+        provider: await embeddedWallet.getEthereumProvider(),
       });
       const primaryAccount = externalAccount
         ? externalAccount
@@ -78,7 +80,7 @@ export function useLedgerWallets() {
       evmClients.setPrimaryClient({
         account: primaryAccount,
         provider: externalAccount
-          ? externalWallet?.getEthereumProvider()
+          ? await externalWallet?.getEthereumProvider()
           : undefined,
       });
 

@@ -2,16 +2,16 @@ import { Navigate } from "react-router-dom";
 import { useContext } from "react";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import PageContainer from "@src/components/PageContainer";
-import LinkWallet from "@src/components/Onboarding/LinkWallet";
+import ViewAccountAuthorization from "@src/components/ViewAccountAuthorization/ViewAccountAuthorization";
 import { getLinkWalletPreference } from "@src/services/linkWalletPreference";
 import { DumpLoadingScreen } from "@src/components/LoadingScreen";
 
 /**
- * Link wallet route "/link-wallet"
- * Requirements: User signed in (has evmClients) AND no linking preference set
+ * Authorization route "/authorization"
+ * Requirements: User signed in, has linking preference, NOT yet authorized
  */
-export default function LinkWalletRoute() {
-  const { evmClients, initializing } = useContext(LedgerContext);
+export default function AuthorizationRoute() {
+  const { evmClients, initializing, authorized } = useContext(LedgerContext);
   const linkWalletPref = getLinkWalletPreference();
 
   // Still initializing
@@ -24,15 +24,20 @@ export default function LinkWalletRoute() {
     return <Navigate to="/" replace />;
   }
 
-  // Already made choice - redirect to authorization
-  if (linkWalletPref !== null) {
-    return <Navigate to="/authorization" replace />;
+  // No linking preference - redirect to link wallet
+  if (linkWalletPref === null) {
+    return <Navigate to="/link-wallet" replace />;
   }
 
-  // Show link wallet choice
+  // Already authorized - redirect to panel
+  if (authorized) {
+    return <Navigate to="/panel/wallet" replace />;
+  }
+
+  // Show authorization
   return (
     <PageContainer>
-      <LinkWallet />
+      <ViewAccountAuthorization />
     </PageContainer>
   );
 }
