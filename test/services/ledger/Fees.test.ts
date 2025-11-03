@@ -89,7 +89,7 @@ describe("Fees", () => {
           ]),
         ),
       },
-      externalClient: vi.fn(() => ({
+      primaryClient: vi.fn(() => ({
         account: {
           address: mockAccount,
           sign: vi.fn(),
