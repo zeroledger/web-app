@@ -23,9 +23,15 @@ export const useViewAccountAuthorization = () => {
         value: shortString(evmClients?.primaryClient()?.account.address) || "",
       },
       {
-        label: "View Address",
+        label: "Authentication Account Address",
         value:
           shortString(viewAccount?.getViewAccount()?.address) || "loading...",
+      },
+      {
+        label: "Encryption Key",
+        value:
+          shortString(viewAccount?.getQuantumKeyPair()?.publicKey) ||
+          "loading...",
       },
     ],
     [viewAccount, evmClients],

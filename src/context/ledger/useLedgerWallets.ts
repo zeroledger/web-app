@@ -104,7 +104,7 @@ export function useLedgerWallets() {
       );
 
       // Create ViewAccount from signature
-      await viewAccount!.createFromSignature(signature);
+      viewAccount!.createFromSignature(signature);
 
       const newLedger = await initialize(
         viewAccount!,
@@ -122,13 +122,6 @@ export function useLedgerWallets() {
       if (viewAccount!.hasAuthorization(primaryWalletAddress)) {
         await viewAccount!.loadAuthorization(primaryWalletAddress);
         isAuthorized = true;
-      } else {
-        // Need to authorize
-        const isViewAccountValid =
-          await newLedger!.tesService.validateViewAccount(primaryWalletAddress);
-        if (!isViewAccountValid) {
-          throw new Error("Failed to validate ViewAccount");
-        }
       }
       setAuthorized(isAuthorized);
       setChainSupported(!!switchToChain);

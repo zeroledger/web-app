@@ -116,19 +116,19 @@ export class Transactions {
 
   private async getEncryptionParams(user: Address) {
     const mainAccount = this.mainAccount();
-    const encryptionPublicKey = await this.tesService.getUserPublicKey(user);
-    if (!encryptionPublicKey) {
+    const encryptionKey = await this.tesService.getUserEncryptionKey(user);
+    if (!encryptionKey) {
       this.logger.warn(
         `${user} view account public key is not registered, getting trusted encryption token`,
       );
       return {
-        encryptionPublicKey: await this.tesService.getTrustedEncryptionToken(
+        encryptionKey: await this.tesService.getTrustedEncryptionKey(
           mainAccount.address,
         ),
         tesUrl: this.tesService.tesUrl,
       };
     } else {
-      return { encryptionPublicKey };
+      return { encryptionKey };
     }
   }
 
@@ -137,7 +137,7 @@ export class Transactions {
       async () => {
         const { asyncVaultUtils } = await this.preloadedModulesPromise;
         const mainAccount = this.mainAccount();
-        const { tesUrl, encryptionPublicKey } = await this.getEncryptionParams(
+        const { tesUrl, encryptionKey } = await this.getEncryptionParams(
           mainAccount.address,
         );
 
@@ -146,7 +146,7 @@ export class Transactions {
             this.token,
             mainAccount.address,
             value,
-            encryptionPublicKey,
+            encryptionKey,
             feesData.depositFee,
             feesData.fee,
             feesData.paymasterAddress,
@@ -337,7 +337,9 @@ export class Transactions {
         const gas =
           await asyncVaultUtils.getDepositWithPermitTxGas(depositParams);
 
-        this.logger.log(`Deposit: gas without forwarding: ${gas.toString()}`);
+        this.logger.log(
+          `DepositWithPermit: gas without forwarding: ${gas.toString()}`,
+        );
 
         return {
           metaTransaction: {
@@ -510,7 +512,7 @@ export class Transactions {
           },
         ];
 
-        const { encryptionPublicKey, tesUrl } = await this.getEncryptionParams(
+        const { encryptionKey, tesUrl } = await this.getEncryptionParams(
           mainAccount.address,
         );
 
@@ -521,10 +523,10 @@ export class Transactions {
             movingAmount: totalAmount,
             protocolFee: feesData.spendFee,
             spender: mainAccount.address,
-            spenderEncryptionPublicKey: encryptionPublicKey,
+            spenderEncryptionKey: encryptionKey,
             spenderTesUrl: tesUrl,
             receiver: mainAccount.address,
-            receiverEncryptionPublicKey: encryptionPublicKey,
+            receiverEncryptionKey: encryptionKey,
             receiverTesUrl: tesUrl,
             privateSpend: 0n,
             publicOutputs,
@@ -610,15 +612,11 @@ export class Transactions {
           },
         ];
 
-        const {
-          encryptionPublicKey: spenderEncryptionPublicKey,
-          tesUrl: spenderTesUrl,
-        } = await this.getEncryptionParams(mainAccount.address);
+        const { encryptionKey: spenderEncryptionKey, tesUrl: spenderTesUrl } =
+          await this.getEncryptionParams(mainAccount.address);
 
-        const {
-          encryptionPublicKey: receiverEncryptionPublicKey,
-          tesUrl: receiverTesUrl,
-        } = await this.getEncryptionParams(recipient);
+        const { encryptionKey: receiverEncryptionKey, tesUrl: receiverTesUrl } =
+          await this.getEncryptionParams(recipient);
 
         const decoyParams = !consolidation
           ? (
@@ -637,10 +635,10 @@ export class Transactions {
             movingAmount: totalAmount,
             protocolFee: feesData.spendFee,
             spender: mainAccount.address,
-            spenderEncryptionPublicKey,
+            spenderEncryptionKey,
             spenderTesUrl,
             receiver: recipient,
-            receiverEncryptionPublicKey,
+            receiverEncryptionKey,
             receiverTesUrl,
             privateSpend,
             publicOutputs,

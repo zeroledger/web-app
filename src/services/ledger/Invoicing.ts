@@ -89,19 +89,19 @@ export class Invoicing {
 
   private async getEncryptionParams(user: Address) {
     const mainAccount = this.mainAccount();
-    const encryptionPublicKey = await this.tesService.getUserPublicKey(user);
-    if (!encryptionPublicKey) {
+    const encryptionKey = await this.tesService.getUserEncryptionKey(user);
+    if (!encryptionKey) {
       this.logger.warn(
-        `${user} view account public key is not registered, getting trusted encryption token`,
+        `${user} view account encryption key is not registered, getting trusted encryption token`,
       );
       return {
-        encryptionPublicKey: await this.tesService.getTrustedEncryptionToken(
+        encryptionKey: await this.tesService.getTrustedEncryptionKey(
           mainAccount.address,
         ),
         tesUrl: this.tesService.tesUrl,
       };
     } else {
-      return { encryptionPublicKey };
+      return { encryptionKey };
     }
   }
 
@@ -111,7 +111,7 @@ export class Invoicing {
         const { asyncVaultUtils, asyncInvoiceUtils } =
           await this.preloadedModulesPromise;
         const mainAccount = this.mainAccount();
-        const { tesUrl, encryptionPublicKey } = await this.getEncryptionParams(
+        const { tesUrl, encryptionKey } = await this.getEncryptionParams(
           mainAccount.address,
         );
 
@@ -127,7 +127,7 @@ export class Invoicing {
             // since fee is paid at invoice execution time,
             // we need to subtract it from the amount before depositStruct creation
             amount - feesData.fee,
-            encryptionPublicKey,
+            encryptionKey,
             feesData.depositFee,
             // fee is paid at invoice execution time, so we need to set it to 0
             0n,

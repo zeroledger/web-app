@@ -199,7 +199,7 @@ export class Watcher extends EventEmitter {
             );
             commitment = decryptCommitment(
               encryptedCommitment,
-              this.tesService.viewAccount.viewPrivateKey()!,
+              this.tesService.viewAccount.getQuantumKeyPair()!.secretKey,
             );
           }
         } catch {

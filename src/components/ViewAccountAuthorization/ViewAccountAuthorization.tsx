@@ -11,8 +11,8 @@ export default function ViewAccountAuthorization() {
         isSigning={isSigning}
         isSuccess={isSuccess}
         error={error}
-        title="View Account Authorization"
-        description="Signing this message you authorize view account to be used for encryption and decryption of your transactions and trusted encryption service authentication."
+        title="Authorize Authentication Account and Encryption Key"
+        description="By signing this message, you authorize your authentication account to handle authentication and confirm your public encryption key."
         messageData={messageData}
         onSign={handleSign}
         buttonText="Authorize"
@@ -20,7 +20,7 @@ export default function ViewAccountAuthorization() {
         extraContent={
           <div className="text-center mb-2">
             <p className="text-gray-500 text-xs">
-              View account is never in custody of your funds.
+              Authentication account is never in custody of your funds.
             </p>
           </div>
         }

@@ -8,7 +8,7 @@ import {
   hexToBigInt,
 } from "viem";
 import { CommitmentStruct } from "./types";
-import { encrypt, decrypt } from "@zeroledger/vycrypt";
+import { decryptQuantum, encryptQuantum } from "@zeroledger/vycrypt";
 
 export const serializeCommitment = (commitment: CommitmentStruct) => ({
   amount: toHex(commitment.amount),
@@ -25,12 +25,12 @@ export const deSerializeCommitment = (
 export const encode = (
   commitment: CommitmentStruct,
   tesUrl: string,
-  encryptionPublicKey: Hex,
+  encryptionKey: Hex,
   message?: string,
 ) => {
-  const encryptedCommitment = encrypt(
+  const encryptedCommitment = encryptQuantum(
     JSON.stringify(serializeCommitment(commitment)),
-    encryptionPublicKey,
+    encryptionKey,
   );
   return encodeAbiParameters(ENCRYPTION_ABI, [
     encryptedCommitment,
@@ -53,10 +53,10 @@ export const decodeMetadata = (metadata: Hex) => {
 
 export const decryptCommitment = (
   encryptedCommitment: Hex,
-  decryptionPrivateKey: Hash,
+  decryptionKey: Hash,
 ): CommitmentStruct => {
   const decryptedCommitment = JSON.parse(
-    decrypt(decryptionPrivateKey, encryptedCommitment),
+    decryptQuantum(decryptionKey, encryptedCommitment),
   ) as ReturnType<typeof serializeCommitment>;
   return deSerializeCommitment(decryptedCommitment);
 };

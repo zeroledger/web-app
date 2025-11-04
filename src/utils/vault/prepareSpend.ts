@@ -130,10 +130,10 @@ type TransactionStructCreationInput = {
   outputs: OutputRecord[];
   decoyParams?: DecoyParams;
   spender: Address;
-  spenderEncryptionPublicKey: Hex;
+  spenderEncryptionKey: Hex;
   spenderTesUrl: string;
   receiver: Address;
-  receiverEncryptionPublicKey: Hex;
+  receiverEncryptionKey: Hex;
   receiverTesUrl: string;
   publicOutputs: PublicOutput[];
   messageToReceiver?: string;
@@ -145,10 +145,10 @@ function createTransactionStruct({
   outputs,
   decoyParams,
   spender,
-  spenderEncryptionPublicKey,
+  spenderEncryptionKey,
   spenderTesUrl,
   receiver,
-  receiverEncryptionPublicKey,
+  receiverEncryptionKey,
   receiverTesUrl,
   publicOutputs,
   messageToReceiver,
@@ -175,7 +175,7 @@ function createTransactionStruct({
       sValue: outputs[receiverRecordIndex]!.sValue,
     },
     receiverTesUrl,
-    receiverEncryptionPublicKey,
+    receiverEncryptionKey,
     messageToReceiver,
   );
 
@@ -190,7 +190,7 @@ function createTransactionStruct({
         sValue: outputs[changeRecordIndex].sValue,
       },
       spenderTesUrl,
-      spenderEncryptionPublicKey,
+      spenderEncryptionKey,
     );
   }
 
@@ -205,7 +205,7 @@ function createTransactionStruct({
         sValue: outputs[decoyRecordIndex].sValue,
       },
       "",
-      decoyParams!.publicKey,
+      decoyParams!.encryptionKey,
       // to emulate message for decoy recipient
       createRandomString(messageToReceiver?.length || 0),
     );
@@ -233,13 +233,13 @@ export type PrepareSpendParams = {
   // sender address
   spender: Address;
   // spender encryption public key
-  spenderEncryptionPublicKey: Hex;
+  spenderEncryptionKey: Hex;
   // spender tes url
   spenderTesUrl?: string;
   // receiver address
   receiver: Address;
   // receiver encryption public key
-  receiverEncryptionPublicKey: Hex;
+  receiverEncryptionKey: Hex;
   // receiver tes url
   receiverTesUrl?: string;
   // amount to send to receiver
@@ -258,10 +258,10 @@ export default async function prepareSpend({
   movingAmount,
   protocolFee,
   spender,
-  spenderEncryptionPublicKey,
+  spenderEncryptionKey,
   spenderTesUrl = "",
   receiver,
-  receiverEncryptionPublicKey,
+  receiverEncryptionKey,
   receiverTesUrl = "",
   privateSpend,
   publicOutputs,
@@ -305,10 +305,10 @@ export default async function prepareSpend({
     outputs,
     decoyParams,
     spender,
-    spenderEncryptionPublicKey,
+    spenderEncryptionKey,
     spenderTesUrl,
     receiver,
-    receiverEncryptionPublicKey,
+    receiverEncryptionKey,
     receiverTesUrl,
     publicOutputs,
     messageToReceiver,

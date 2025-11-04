@@ -36,7 +36,7 @@
     "@privy-io/react-auth": "^3.0.1",
     "@solana/spl-token": "^0.4.14",
     "@tailwindcss/vite": "^4.1.12",
-    "@zeroledger/vycrypt": "^0.0.1-betta",
+    "@zeroledger/vycrypt": "^1.0.0-alpha",
     "axios": "^1.12.2",
     "browser-level": "^2.0.0",
     "circomlibjs": "^0.1.7",
@@ -56,10 +56,10 @@
     "react-toastify": "^11.0.5",
     "snarkjs": "^0.7.5",
     "swr": "^2.3.6",
-    "tailwindcss": "^4.1.12",
+    "tailwindcss": "^4.1.16",
     "typewriter-effect": "^2.22.0",
     "viem": "^2.36.0",
-    "vite-plugin-mkcert": "^1.17.8"
+    "vite-plugin-mkcert": "^1.17.9"
   },
   "devDependencies": {
     "@types/circomlibjs": "^0.1.6",

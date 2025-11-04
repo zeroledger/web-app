@@ -21,7 +21,7 @@ import type { Proof } from "@src/utils/prover";
 import { shuffle } from "@src/utils/common";
 
 export const AUTH_TOKEN_ABI = parseAbiParameters(
-  "address viewAddr,bytes challengeSignature, address ownerAddr,bytes ownerAccDelegationSignature",
+  "address viewAddr,bytes challengeSignature,address ownerAddr,bytes ownerAccDelegationSignature,bytes encryptionKey",
 );
 
 const backoffOptions = {
@@ -82,6 +82,7 @@ export class Tes {
       await this.signChallenge(random),
       mainAccountAddress,
       this.viewAccount.getDelegationSignature()!,
+      this.viewAccount.getQuantumKeyPair()!.publicKey,
     ]);
     return token;
   }
@@ -102,23 +103,13 @@ export class Tes {
     }
   }
 
-  async validateViewAccount(mainAccountAddress: Address) {
-    const { data } = await this.axios.get<{
-      isValid: boolean;
-      registered: boolean;
-    }>(
-      `${this.tesUrl}/challenge/validate/?owner=${mainAccountAddress}&view=${this.viewAccount.getViewAccount()!.address}`,
-    );
-    return data.isValid || !data.registered;
-  }
-
-  getTrustedEncryptionToken(mainAccountAddress: Address) {
+  getTrustedEncryptionKey(mainAccountAddress: Address) {
     return backOff(async () => {
       await this.manageAuth(mainAccountAddress);
       const { data } = await this.axios.get<{
-        tepk: Hex;
-      }>(`${this.tesUrl}/encryption/tepk`);
-      return data.tepk;
+        trustedEncryptionKey: Hex;
+      }>(`${this.tesUrl}/encryption/trustedEncryptionKey`);
+      return data.trustedEncryptionKey;
     }, backoffOptions);
   }
 
@@ -255,12 +246,12 @@ export class Tes {
     );
   }
 
-  async getUserPublicKey(user: Address) {
+  async getUserEncryptionKey(user: Address) {
     return backOff(async () => {
       const { data } = await this.axios.get<{
-        publicKey: Hex | null;
-      }>(`${this.tesUrl}/userMetadata/publicKey/${user}`);
-      return data.publicKey;
+        encryptionKey: Hex | null;
+      }>(`${this.tesUrl}/userMetadata/encryptionKey/${user}`);
+      return data.encryptionKey;
     }, backoffOptions);
   }
 
@@ -268,7 +259,7 @@ export class Tes {
     return backOff(async () => {
       const { data } = await this.axios.get<
         | {
-            publicKey: Hex;
+            encryptionKey: Hex;
             address: Address;
           }[]
         | null

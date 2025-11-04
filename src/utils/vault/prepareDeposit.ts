@@ -29,7 +29,7 @@ async function createDepositStruct(
 async function generateDepositCommitmentData(
   value: bigint,
   userAddress: Address,
-  userEncryptionPublicKey: Hex,
+  userEncryptionKey: Hex,
   tesUrl: string,
   messageToReceiver?: string,
   twoDecoys?: DecoyParams[],
@@ -54,8 +54,8 @@ async function generateDepositCommitmentData(
             amount: amount,
             sValue: decoySValue,
             tesUrl: i === 0 ? tesUrl : "",
-            userEncryptionPublicKey:
-              i === 0 ? userEncryptionPublicKey : twoDecoys[i - 1].publicKey,
+            userEncryptionKey:
+              i === 0 ? userEncryptionKey : twoDecoys[i - 1].encryptionKey,
             messageToReceiver:
               i === 0
                 ? messageToReceiver
@@ -75,7 +75,7 @@ async function generateDepositCommitmentData(
           metadata: encode(
             { amount: param.amount, sValue: param.sValue },
             param.tesUrl,
-            param.userEncryptionPublicKey,
+            param.userEncryptionKey,
             param.messageToReceiver,
           ),
         };
@@ -114,7 +114,7 @@ async function generateDepositCommitmentData(
       metadata: encode(
         { amount: amounts[0], sValue: sValues[0] },
         tesUrl,
-        userEncryptionPublicKey,
+        userEncryptionKey,
         messageToReceiver,
       ),
     },
@@ -124,7 +124,7 @@ async function generateDepositCommitmentData(
       metadata: encode(
         { amount: amounts[1], sValue: sValues[1] },
         tesUrl,
-        userEncryptionPublicKey,
+        userEncryptionKey,
       ),
     },
     {
@@ -133,7 +133,7 @@ async function generateDepositCommitmentData(
       metadata: encode(
         { amount: amounts[2], sValue: sValues[2] },
         tesUrl,
-        userEncryptionPublicKey,
+        userEncryptionKey,
       ),
     },
   ];
@@ -170,7 +170,7 @@ export default async function prepareDeposit(
   token: Address,
   user: Address,
   value: bigint,
-  userEncryptionPublicKey: Hex,
+  userEncryptionKey: Hex,
   protocolDepositFee: bigint,
   forwarderFee: bigint,
   forwarderFeeRecipient: Address,
@@ -183,7 +183,7 @@ export default async function prepareDeposit(
   const depositCommitmentData = await generateDepositCommitmentData(
     valueLeftForUser,
     user,
-    userEncryptionPublicKey,
+    userEncryptionKey,
     tesUrl,
     messageToReceiver,
     decoyParams,

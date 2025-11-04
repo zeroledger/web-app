@@ -8,6 +8,7 @@ import {
   AVERAGE_ERC_20_TRANSFER_COST,
   SMART_CONTRACT_WALLET_INITIALIZATION_GAS_COST,
   PERMIT_GAS_COST,
+  OUTPUT_RECORD_GAS_COST,
 } from "./vault.constants";
 
 // gas amount that should be covered by fee during sponsoring
@@ -17,7 +18,8 @@ export const depositWithPermitGasSponsoredLimit = (
 ) =>
   PROOF_VERIFICATION_GAS_COST +
   PERMIT_GAS_COST +
-  AVERAGE_ERC_20_TRANSFER_COST * 3n +
+  AVERAGE_ERC_20_TRANSFER_COST +
+  OUTPUT_RECORD_GAS_COST * 3n +
   FORWARDER_EXECUTION_COST +
   (initializeSCWRequired ? SMART_CONTRACT_WALLET_INITIALIZATION_GAS_COST : 0n);
 

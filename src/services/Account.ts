@@ -6,7 +6,12 @@ import {
   Address,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { decrypt, encrypt } from "@zeroledger/vycrypt";
+import {
+  decrypt,
+  encrypt,
+  generateQuantumKeyPair,
+  QuantumKeyPair,
+} from "@zeroledger/vycrypt";
 import { type CustomClient } from "@src/services/Clients";
 import { signTypedData } from "@src/utils/signTypedData";
 
@@ -21,7 +26,7 @@ export type EncryptedAccountsStore = Record<
 >;
 
 const authorizationDomain = {
-  name: "View Account Authorization",
+  name: "Authorization",
   version: "0.0.1",
 } as const;
 
@@ -29,7 +34,8 @@ const authorizationTypes = {
   Authorize: [
     { name: "protocol", type: "string" },
     { name: "main_account", type: "address" },
-    { name: "view_account", type: "address" },
+    { name: "auth_account", type: "address" },
+    { name: "encryption_key", type: "bytes" },
   ],
 } as const;
 
@@ -52,6 +58,7 @@ export class ViewAccount {
   private _viewPk?: Hash;
   private _viewAccount?: PrivateKeyAccount;
   private _delegationSignature?: Hex;
+  private _quantumKeyPair?: QuantumKeyPair;
 
   constructor(private readonly appPrefixKey: string) {
     this.PKS_STORE_KEY = `${this.appPrefixKey}.encodedAccountData`;
@@ -79,13 +86,18 @@ export class ViewAccount {
     return this._delegationSignature;
   }
 
+  getQuantumKeyPair() {
+    return this._quantumKeyPair;
+  }
+
   hasAuthorization(mainAccountAddress: Address) {
     return !!this.encryptedDelegationSignature(mainAccountAddress);
   }
 
-  async createFromSignature(signature: Hex) {
+  createFromSignature(signature: Hex) {
     this._viewPk = keccak256(signature);
     this._viewAccount = privateKeyToAccount(this._viewPk);
+    this._quantumKeyPair = generateQuantumKeyPair(keccak256(this._viewPk));
   }
 
   async signViewAccountCreation(
@@ -113,14 +125,14 @@ export class ViewAccount {
     if (!encryptedDelegationSignature || !this._viewPk) {
       throw new Error("No authorization found or ViewAccount not initialized");
     }
-    this._delegationSignature = (await decrypt(
+    this._delegationSignature = decrypt(
       this._viewPk,
       encryptedDelegationSignature,
-    )) as Hex;
+    ) as Hex;
   }
 
   async authorize(primaryClient: CustomClient) {
-    if (!this._viewPk || !this._viewAccount) {
+    if (!this._viewPk || !this._viewAccount || !this._quantumKeyPair) {
       throw new Error("ViewAccount not initialized");
     }
 
@@ -132,13 +144,14 @@ export class ViewAccount {
       message: {
         protocol: "zeroledger",
         main_account: primaryClient.account.address,
-        view_account: this._viewAccount.address,
+        auth_account: this._viewAccount.address,
+        encryption_key: this._quantumKeyPair.publicKey,
       },
     };
     this._delegationSignature = await signTypedData(primaryClient, obj);
     localStorage.setItem(
       `${this.PKS_STORE_KEY}.delegation.${primaryClient.account.address}`,
-      await encrypt(this._delegationSignature, pubK),
+      encrypt(this._delegationSignature, pubK),
     );
   }
 

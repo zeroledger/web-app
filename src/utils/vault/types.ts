@@ -157,5 +157,5 @@ export type SelectedCommitmentRecord = {
 
 export type DecoyParams = {
   address: Address;
-  publicKey: Hex;
+  encryptionKey: Hex;
 };
