@@ -5,13 +5,14 @@ import { type CustomClient } from "@src/services/Clients";
 
 const localAccountDomain = {
   name: "Local Account Derivation",
-  version: "0.0.1",
+  version: "1.0.0",
 } as const;
 
 const localAccountTypes = {
   Derive: [
     { name: "protocol", type: "string" },
     { name: "rootWallet", type: "address" },
+    { name: "type", type: "string" },
   ],
 } as const;
 
@@ -34,14 +35,15 @@ export async function deriveLocalAccount(
     message: {
       protocol: "zeroledger",
       rootWallet: embeddedWalletAddress,
+      type: "local",
     },
   };
 
   // Sign with embedded wallet
   const signature = (await signTypedData(embeddedClient, obj)) as Hex;
 
-  // Derive private key from signature
-  const privateKey = keccak256(signature);
+  // Derive private key from signature using double hash for extra security
+  const privateKey = keccak256(keccak256(signature));
 
   // Create local wallet account
   const localAccount = privateKeyToAccount(privateKey);

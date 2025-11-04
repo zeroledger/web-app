@@ -8,18 +8,14 @@ import { SiWalletconnect } from "react-icons/si";
 import clsx from "clsx";
 import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  setLinkWalletPreference,
-  getLinkWalletPreference,
-} from "@src/services/linkWalletPreference";
+import { setConnectionWalletPreference } from "@src/services/connectionWalletPreference";
 
-export default function LinkWallet() {
-  const { isLinking, linkExternalWallet: handleLink } =
+export default function ConnectWallet() {
+  const { isExternalWalletConnecting, connectExternalWallet: handleLink } =
     useContext(LedgerContext);
   const navigate = useNavigate();
-  const linkWalletPref = getLinkWalletPreference();
   const handleSkip = () => {
-    setLinkWalletPreference(false);
+    setConnectionWalletPreference(false);
     navigate("/");
   };
 
@@ -27,24 +23,22 @@ export default function LinkWallet() {
     <div className="mx-auto w-full md:max-w-md px-3">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-white mb-2">
-          {linkWalletPref === null
-            ? "Link First External Wallet"
-            : "Link Additional External Wallet"}
+          Select Connection Mode
         </h2>
         <p className="text-sm text-white/60">
-          The selected wallet will be used as your primary wallet for
-          transactions.
+          Connection mode decides whether ZeroLedger uses a wallet built into
+          the app or one you connect from outside.
         </p>
       </div>
       <div className="flex flex-col items-center gap-3 max-w-xs mx-auto">
         <Button
           className={clsx(primaryButtonStyles.small, {
-            "opacity-50 cursor-not-allowed": isLinking,
+            "opacity-50 cursor-not-allowed": isExternalWalletConnecting,
           })}
           onClick={handleLink}
-          disabled={isLinking}
+          disabled={isExternalWalletConnecting}
         >
-          {isLinking ? (
+          {isExternalWalletConnecting ? (
             <>
               <svg className="mr-2 size-4 animate-spin" viewBox="0 0 24 24">
                 <path
@@ -52,23 +46,22 @@ export default function LinkWallet() {
                   fill="currentColor"
                 />
               </svg>
-              Linking...
+              Connecting...
             </>
           ) : (
             <>
-              Link Wallet <SiWalletconnect className="ml-1" />
+              External Wallet
+              <SiWalletconnect className="ml-1" />
             </>
           )}
         </Button>
-        {linkWalletPref === null && (
-          <Button
-            className={clsx(linkButtonStyle, "hover:cursor-pointer")}
-            onClick={handleSkip}
-            disabled={isLinking}
-          >
-            Use Email Wallet
-          </Button>
-        )}
+        <Button
+          className={clsx(linkButtonStyle, "hover:cursor-pointer")}
+          onClick={handleSkip}
+          disabled={isExternalWalletConnecting}
+        >
+          Build In Wallet
+        </Button>
       </div>
     </div>
   );

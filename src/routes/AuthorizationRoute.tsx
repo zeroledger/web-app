@@ -4,14 +4,14 @@ import { LedgerContext } from "@src/context/ledger/ledger.context";
 import PageContainer from "@src/components/PageContainer";
 import ViewAccountAuthorization from "@src/components/ViewAccountAuthorization/ViewAccountAuthorization";
 import { DumpLoadingScreen } from "@src/components/LoadingScreen";
+import { getConnectionWalletPreference } from "@src/services/connectionWalletPreference";
 
 /**
  * Authorization route "/authorization"
  * Requirements: User signed in, has linking preference, NOT yet authorized
  */
 export default function AuthorizationRoute() {
-  const { evmClients, initializing, authorized, linkNeeded } =
-    useContext(LedgerContext);
+  const { evmClients, initializing, authorized } = useContext(LedgerContext);
 
   // Still initializing
   if (initializing) {
@@ -23,9 +23,9 @@ export default function AuthorizationRoute() {
     return <Navigate to="/" replace />;
   }
 
-  // No linking preference - redirect to link wallet
-  if (linkNeeded) {
-    return <Navigate to="/link-wallet" replace />;
+  // No connection wallet preference - redirect to connect wallet
+  if (getConnectionWalletPreference() === null) {
+    return <Navigate to="/connect-wallet" replace />;
   }
 
   // Already authorized - redirect to panel

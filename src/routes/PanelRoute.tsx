@@ -6,6 +6,7 @@ import {
 } from "@src/components/LoadingScreen";
 import PageContainer from "@src/components/PageContainer";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
+import { getConnectionWalletPreference } from "@src/services/connectionWalletPreference";
 
 // Lazy load the Panel component
 const Panel = lazy(() => import("@src/components/Panel"));
@@ -20,8 +21,7 @@ const PanelProvider = lazy(() =>
  * Requirements: User signed in, has linking preference, AND authorized
  */
 export default function PanelRoute() {
-  const { evmClients, initializing, authorized, linkNeeded } =
-    useContext(LedgerContext);
+  const { evmClients, initializing, authorized } = useContext(LedgerContext);
 
   // Still initializing
   if (initializing) {
@@ -33,9 +33,9 @@ export default function PanelRoute() {
     return <Navigate to="/" replace />;
   }
 
-  // No linking preference - redirect to link wallet
-  if (linkNeeded) {
-    return <Navigate to="/link-wallet" replace />;
+  // No connection wallet preference - redirect to connect wallet
+  if (getConnectionWalletPreference() === null) {
+    return <Navigate to="/connect-wallet" replace />;
   }
 
   // Not authorized yet - redirect to authorization

@@ -12,9 +12,8 @@ export const LedgerContext = createContext<{
   exportWallet: () => Promise<void>;
   connect: () => Promise<void>;
   signIn: () => Promise<void>;
-  linkExternalWallet: () => void;
-  isLinking: boolean;
-  linkNeeded: boolean;
+  connectExternalWallet: () => void;
+  isExternalWalletConnecting: boolean;
   viewAccount?: ViewAccount;
   // Ledger
   initializing: boolean;
@@ -47,9 +46,8 @@ export const LedgerContext = createContext<{
   exportWallet: () => Promise.resolve(),
   connect: () => Promise.resolve(),
   signIn: () => Promise.resolve(),
-  linkExternalWallet: () => {},
-  isLinking: false,
-  linkNeeded: false,
+  connectExternalWallet: () => {},
+  isExternalWalletConnecting: false,
   viewAccount: undefined,
   ledger: undefined,
   isSwitchChainModalOpen: false,

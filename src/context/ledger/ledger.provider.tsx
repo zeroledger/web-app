@@ -15,8 +15,8 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
     exportWallet,
     connect,
     signIn,
-    linkExternalWallet,
-    isLinking,
+    connectExternalWallet,
+    isExternalWalletConnecting,
     evmClients,
     ledger,
     reset,
@@ -24,7 +24,6 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
     viewAccount,
     authorized,
     setAuthorized,
-    linkNeeded,
   } = useLedgerWallets();
 
   const {
@@ -44,9 +43,8 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       exportWallet,
       connect,
       signIn,
-      linkExternalWallet,
-      isLinking,
-      linkNeeded,
+      connectExternalWallet,
+      isExternalWalletConnecting,
       viewAccount,
       // Ledger
       initializing,
@@ -77,8 +75,8 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       exportWallet,
       connect,
       signIn,
-      linkExternalWallet,
-      isLinking,
+      connectExternalWallet,
+      isExternalWalletConnecting,
       viewAccount,
       ledger,
       isSwitchChainModalOpen,
@@ -90,7 +88,7 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       reset,
       ensProfile,
       isEnsLoading,
-      linkNeeded,
+      setAuthorized,
     ],
   );
 

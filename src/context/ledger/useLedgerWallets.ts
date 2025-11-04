@@ -1,6 +1,6 @@
 import {
   toViemAccount,
-  useLinkAccount,
+  useConnectWallet,
   usePrivy,
   useWallets,
 } from "@privy-io/react-auth";
@@ -23,10 +23,7 @@ import { EvmClients } from "@src/services/Clients";
 import { deriveLocalAccount } from "@src/utils/deriveLocalWallet";
 import { initialize, type Ledger } from "@src/services/ledger";
 import { ViewAccount } from "@src/services/Account";
-import {
-  getLinkWalletPreference,
-  setLinkWalletPreference,
-} from "@src/services/linkWalletPreference";
+import { setConnectionWalletPreference } from "@src/services/connectionWalletPreference";
 
 const viewAccount = new ViewAccount(APP_PREFIX_KEY);
 
@@ -40,24 +37,19 @@ export function useLedgerWallets() {
   const [targetChain, setTargetChain] = useState<Chain>(SUPPORTED_CHAINS[0]);
   const [chainSupported, setChainSupported] = useState<boolean>(true);
   const embeddedWallet = wallets.find((w) => w.walletClientType === "privy");
-  const externalWallet = wallets.find(
-    (w) => w.walletClientType !== "privy" && w.linked,
-  );
+  const externalWallet = wallets.find((w) => w.walletClientType !== "privy");
   const [evmClients, setEvmClients] = useState<EvmClients>();
 
-  const [isLinking, setIsLinking] = useState(false);
-  const linkWalletPref = getLinkWalletPreference();
+  const [isExternalWalletConnecting, setIsExternalWalletConnecting] =
+    useState(false);
 
-  const linkNeeded =
-    linkWalletPref === null || (linkWalletPref === true && !externalWallet);
-
-  const { linkWallet } = useLinkAccount({
+  const { connectWallet } = useConnectWallet({
     onSuccess: () => {
-      setIsLinking(false);
-      setLinkWalletPreference(true);
+      setIsExternalWalletConnecting(false);
+      setConnectionWalletPreference(true);
     },
     onError: () => {
-      setIsLinking(false);
+      setIsExternalWalletConnecting(false);
     },
   });
 
@@ -144,7 +136,7 @@ export function useLedgerWallets() {
       setLedger(newLedger);
       setEvmClients(evmClients);
       setIsConnecting(false);
-      setIsLinking(false);
+      setIsExternalWalletConnecting(false);
     };
     init();
   }, [embeddedWallet, externalWallet, ready]);
@@ -165,10 +157,10 @@ export function useLedgerWallets() {
     privyLogin({ loginMethods: ["email"] });
   }, [authenticated, privyLogin, logout]);
 
-  const linkExternalWallet = useCallback(async () => {
-    setIsLinking(true);
-    linkWallet();
-  }, [linkWallet]);
+  const connectExternalWallet = useCallback(async () => {
+    setIsExternalWalletConnecting(true);
+    connectWallet();
+  }, [connectWallet]);
 
   const reset = useCallback(() => {
     setLedger(undefined);
@@ -190,7 +182,7 @@ export function useLedgerWallets() {
     exportWallet,
     connect,
     signIn,
-    linkExternalWallet,
+    connectExternalWallet,
     evmClients,
     ledger,
     reset,
@@ -198,7 +190,6 @@ export function useLedgerWallets() {
     viewAccount,
     authorized,
     setAuthorized,
-    isLinking,
-    linkNeeded,
+    isExternalWalletConnecting,
   };
 }

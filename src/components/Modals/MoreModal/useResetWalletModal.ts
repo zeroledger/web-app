@@ -2,7 +2,7 @@ import { useContext, useState } from "react";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { catchService } from "@src/services/core/catch.service";
 import debounce from "debounce";
-import { resetLinkWalletPreference } from "@src/services/linkWalletPreference";
+import { resetConnectionWalletPreference } from "@src/services/connectionWalletPreference";
 
 export const useResetWalletModal = () => {
   const { ledger, viewAccount, evmClients } = useContext(LedgerContext);
@@ -13,7 +13,7 @@ export const useResetWalletModal = () => {
     try {
       const externalClient = evmClients?.primaryClient();
       viewAccount?.reset(externalClient!.account.address);
-      resetLinkWalletPreference();
+      resetConnectionWalletPreference();
       await ledger?.watcher.reset();
       await logout();
       window.location.reload();
