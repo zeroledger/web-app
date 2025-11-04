@@ -1,78 +1,64 @@
-import { useState, useMemo, ReactNode, useEffect, useCallback } from "react";
+import { useMemo, ReactNode } from "react";
 import { LedgerContext } from "./ledger.context";
-import { APP_PREFIX_KEY, TOKEN_ADDRESS, SCAN_URL } from "@src/common.constants";
-import { type Ledger } from "@src/services/ledger";
-import { EvmClients } from "@src/services/Clients";
-import { useViewAccountAuthorization } from "./useViewAccountAuthorization";
-import { useWalletAdapter } from "./useWalletAdapter";
+import { TOKEN_ADDRESS, SCAN_URL } from "@src/common.constants";
 import { useSwitchModal } from "./useSwitchModal";
-import { ViewAccount } from "@src/services/Account";
 import { useEnsProfile } from "./useEnsProfile";
-import { Address } from "viem";
-
-const viewAccount = new ViewAccount(APP_PREFIX_KEY);
+import { useLedgerWallets } from "./useLedgerWallets";
 
 export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
   children,
 }) => {
-  const [ledger, setLedger] = useState<Ledger>();
   const {
-    password,
-    setPassword,
+    initializing,
+    targetChain,
+    logout,
+    exportWallet,
+    connect,
+    signIn,
+    connectExternalWallet,
+    isExternalWalletConnecting,
+    evmClients,
+    ledger,
+    reset,
+    chainSupported,
+    viewAccount,
     authorized,
-    resetViewAccountAuthorization,
     setAuthorized,
-  } = useViewAccountAuthorization();
-  const [evmClients, setEvmClients] = useState<EvmClients>();
-  const { wallet } = useWalletAdapter();
+  } = useLedgerWallets();
 
   const {
     isSwitchChainModalOpen,
     openSwitchChainModal,
     closeSwitchChainModal,
-    targetChain,
-    setTargetChain,
-  } = useSwitchModal(evmClients);
+  } = useSwitchModal(evmClients, chainSupported);
 
   const { data: ensProfile, isLoading: isEnsLoading } = useEnsProfile(
-    wallet?.address as Address | undefined,
+    evmClients?.primaryClient()?.account.address,
   );
-
-  const reset = useCallback(() => {
-    setLedger(undefined);
-    setEvmClients(undefined);
-    resetViewAccountAuthorization();
-  }, [setLedger, setEvmClients, resetViewAccountAuthorization]);
-
-  useEffect(() => {
-    if (!wallet) {
-      reset();
-    }
-  }, [wallet, reset]);
 
   const value = useMemo(
     () => ({
+      // wallet
+      logout,
+      exportWallet,
+      connect,
+      signIn,
+      connectExternalWallet,
+      isExternalWalletConnecting,
+      viewAccount,
       // Ledger
+      initializing,
       ledger,
-      setLedger,
       // Switch Chain Modal
       isSwitchChainModalOpen,
       openSwitchChainModal,
       closeSwitchChainModal,
-      setTargetChain,
       targetChain,
       // EVM Clients
       evmClients,
-      setEvmClients,
-      // Password
-      password,
-      setPassword,
       // Authorization
       authorized,
       setAuthorized,
-      // View Account
-      viewAccount,
-      resetViewAccountAuthorization,
       // Ens Profile
       ensProfile,
       isEnsLoading,
@@ -84,23 +70,25 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       scanUrl: SCAN_URL[targetChain.id] ?? "",
     }),
     [
+      initializing,
+      logout,
+      exportWallet,
+      connect,
+      signIn,
+      connectExternalWallet,
+      isExternalWalletConnecting,
+      viewAccount,
       ledger,
       isSwitchChainModalOpen,
       openSwitchChainModal,
       closeSwitchChainModal,
-      setTargetChain,
       targetChain,
-      password,
-      setPassword,
       authorized,
-      setAuthorized,
       evmClients,
-      resetViewAccountAuthorization,
-      setLedger,
-      setEvmClients,
       reset,
       ensProfile,
       isEnsLoading,
+      setAuthorized,
     ],
   );
 

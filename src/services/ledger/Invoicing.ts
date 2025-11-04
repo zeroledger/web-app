@@ -62,7 +62,7 @@ export class Invoicing {
   }
 
   mainAccount() {
-    return this.evmClients.externalClient().account;
+    return this.evmClients.primaryClient()!.account;
   }
 
   private async enqueue<T>(

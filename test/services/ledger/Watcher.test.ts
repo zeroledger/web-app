@@ -97,7 +97,7 @@ describe("Watcher", () => {
         getBlockNumber: vi.fn(),
         readContract: vi.fn(),
       },
-      externalClient: vi.fn(() => ({
+      primaryClient: vi.fn(() => ({
         account: {
           address: mockAccount,
           sign: vi.fn(),
@@ -180,7 +180,7 @@ describe("Watcher", () => {
 
     it("should handle external client initialization", () => {
       // Test that external client is called and returns proper account
-      const externalClientSpy = vi.spyOn(mockEvmClients, "externalClient");
+      const externalClientSpy = vi.spyOn(mockEvmClients, "primaryClient");
 
       const result = watcher.mainAccount();
 
@@ -576,33 +576,35 @@ describe("Watcher", () => {
 
   describe("meta transaction integration", () => {
     it("should support meta transaction signing with external client", async () => {
-      const mockExternalClient = mockEvmClients.externalClient();
+      const mockExternalClient = mockEvmClients.primaryClient();
 
       // Test that the external client has the required methods for meta transactions
-      expect(mockExternalClient.account).toBeDefined();
-      expect(mockExternalClient.account.address).toBe(mockAccount);
-      expect(mockExternalClient.account.sign).toBeDefined();
-      expect(mockExternalClient.signTypedData).toBeDefined();
-      expect(mockExternalClient.chain).toBeDefined();
-      expect(mockExternalClient.chain.id).toBe(1);
+      expect(mockExternalClient).toBeDefined();
+      expect(mockExternalClient!.account).toBeDefined();
+      expect(mockExternalClient!.account.address).toBe(mockAccount);
+      expect(mockExternalClient!.account.sign).toBeDefined();
+      expect(mockExternalClient!.signTypedData).toBeDefined();
+      expect(mockExternalClient!.chain).toBeDefined();
+      expect(mockExternalClient!.chain.id).toBe(1);
     });
 
     it("should support permit signing with external client", async () => {
-      const mockExternalClient = mockEvmClients.externalClient();
+      const mockExternalClient = mockEvmClients.primaryClient();
 
       // Test that the external client has the required methods for permit signing
-      expect(mockExternalClient.multicall).toBeDefined();
-      expect(mockExternalClient.readContract).toBeDefined();
-      expect(mockExternalClient.account.sign).toBeDefined();
-      expect(mockExternalClient.signTypedData).toBeDefined();
+      expect(mockExternalClient).toBeDefined();
+      expect(mockExternalClient!.multicall).toBeDefined();
+      expect(mockExternalClient!.readContract).toBeDefined();
+      expect(mockExternalClient!.account.sign).toBeDefined();
+      expect(mockExternalClient!.signTypedData).toBeDefined();
     });
 
     it("should handle external client initialization", () => {
       // Test that external client is properly initialized
-      const client = mockEvmClients.externalClient();
+      const client = mockEvmClients.primaryClient();
       expect(client).toBeDefined();
-      expect(client.account).toBeDefined();
-      expect(client.chain).toBeDefined();
+      expect(client!.account).toBeDefined();
+      expect(client!.chain).toBeDefined();
     });
   });
 

@@ -1,12 +1,10 @@
 import { useContext } from "react";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
-import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { delay } from "@src/utils/common";
 import {
   useMultiStepModal,
   type MultiStepModalState,
 } from "@src/hooks/useMultiStepModal";
-import { type Address } from "viem";
 import { type Tes } from "@src/services/Tes";
 import debounce from "debounce";
 
@@ -32,9 +30,8 @@ const defaultConfig = {
 };
 
 export const usePointsModal = () => {
-  const { wallet } = useWalletAdapter();
-  const { ledger } = useContext(LedgerContext);
-
+  const { ledger, evmClients } = useContext(LedgerContext);
+  const primaryAddress = evmClients?.primaryClient()?.account.address;
   const {
     form,
     onModalOpen,
@@ -49,7 +46,7 @@ export const usePointsModal = () => {
     onModalOpen();
     setPromise(async () => {
       try {
-        if (!ledger || !wallet) {
+        if (!ledger || !evmClients?.primaryClient()) {
           throw new Error("Ledger or wallet not available");
         }
 
@@ -58,9 +55,7 @@ export const usePointsModal = () => {
           isModalLoading: true,
         }));
 
-        const points = await ledger.tesService.getPointsData(
-          wallet.address as Address,
-        );
+        const points = await ledger.tesService.getPointsData(primaryAddress!);
         setState((prev) => ({
           ...prev,
           points,
@@ -91,23 +86,19 @@ export const usePointsModal = () => {
       setPromise(async () => {
         await promise;
         try {
-          if (!ledger || !wallet) {
-            throw new Error("Ledger or wallet not available");
-          }
-
           setState((prev) => ({
             ...prev,
             isUnlocking: true,
           }));
 
-          const { unlocked, reason } = await ledger.tesService.unlockPoints(
+          const { unlocked, reason } = await ledger!.tesService.unlockPoints(
             data.inviteCode.trim(),
-            wallet.address as Address,
+            primaryAddress!,
           );
 
           if (unlocked) {
-            const points = await ledger.tesService.getPointsData(
-              wallet.address as Address,
+            const points = await ledger!.tesService.getPointsData(
+              primaryAddress!,
             );
             setState((prev) => ({
               ...prev,

@@ -1,6 +1,12 @@
-import { lazy } from "react";
-import { LoadingScreen } from "@src/components/LoadingScreen";
+import { lazy, useContext } from "react";
+import { Navigate } from "react-router-dom";
+import {
+  LoadingScreen,
+  DumpLoadingScreen,
+} from "@src/components/LoadingScreen";
 import PageContainer from "@src/components/PageContainer";
+import { LedgerContext } from "@src/context/ledger/ledger.context";
+import { getConnectionWalletPreference } from "@src/services/connectionWalletPreference";
 
 // Lazy load the Panel component
 const Panel = lazy(() => import("@src/components/Panel"));
@@ -10,7 +16,34 @@ const PanelProvider = lazy(() =>
   ),
 );
 
+/**
+ * Panel route "/panel" and "/panel/:tab"
+ * Requirements: User signed in, has linking preference, AND authorized
+ */
 export default function PanelRoute() {
+  const { evmClients, initializing, authorized } = useContext(LedgerContext);
+
+  // Still initializing
+  if (initializing) {
+    return <DumpLoadingScreen />;
+  }
+
+  // Not signed in - redirect to root
+  if (!evmClients) {
+    return <Navigate to="/" replace />;
+  }
+
+  // No connection wallet preference - redirect to connect wallet
+  if (getConnectionWalletPreference() === null) {
+    return <Navigate to="/connect-wallet" replace />;
+  }
+
+  // Not authorized yet - redirect to authorization
+  if (!authorized) {
+    return <Navigate to="/authorization" replace />;
+  }
+
+  // All requirements met - show panel
   return (
     <PageContainer>
       <LoadingScreen message="Preparing wallet modules...">

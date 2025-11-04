@@ -16,8 +16,13 @@ import {
 } from "viem";
 import { Logger } from "@src/utils/logger";
 
-export type ExternalClientOptions = {
+export type PrimaryClientOptions = {
   account: Account | Address;
+  provider?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+};
+
+export type EmbeddedClientOptions = {
+  account: Account;
   provider: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 };
 
@@ -26,7 +31,9 @@ export type CustomClient = PublicClient<Transport, Chain, Account, RpcSchema> &
 
 export class EvmClients {
   public readonly readClient: PublicClient;
-  private _externalClient?: CustomClient;
+  private _primaryClient?: CustomClient;
+  private _embeddedClient?: CustomClient;
+  private readonly transport: Transport;
   private readonly logger = new Logger(EvmClients.name);
 
   constructor(
@@ -34,47 +41,74 @@ export class EvmClients {
     private readonly httpUrls: string[],
     private readonly pollingInterval: number,
     private readonly chain: Chain,
-    private readonly externalClientOptions: ExternalClientOptions,
   ) {
-    const transport = fallback([
+    this.transport = fallback([
       ...this.wsUrls.map((wss) => webSocket(wss)),
       ...this.httpUrls.map((url) => http(url)),
     ]);
     this.readClient = createClient({
       chain: this.chain,
-      transport,
+      transport: this.transport,
       pollingInterval: this.pollingInterval,
     }).extend(publicActions);
   }
 
-  _initExternalClient() {
+  setEmbeddedClient(embeddedClientOptions: EmbeddedClientOptions) {
     const client = createWalletClient({
-      account: this.externalClientOptions.account,
+      account: embeddedClientOptions.account,
       chain: this.chain,
-      transport: custom(this.externalClientOptions.provider),
+      transport: custom(embeddedClientOptions.provider),
     }).extend(publicActions);
 
     this.logger.log(
-      `init external client for ${
-        typeof this.externalClientOptions.account === "object"
-          ? this.externalClientOptions.account.address
-          : this.externalClientOptions.account
+      `init embedded client for ${
+        typeof embeddedClientOptions.account === "object"
+          ? embeddedClientOptions.account.address
+          : embeddedClientOptions.account
       }`,
     );
+    this._embeddedClient = client;
     return client;
   }
 
-  externalClient() {
-    if (!this._externalClient) {
-      this._externalClient = this._initExternalClient();
+  setPrimaryClient(primaryClientOptions: PrimaryClientOptions) {
+    if (primaryClientOptions.provider) {
+      this._primaryClient = createWalletClient({
+        account: primaryClientOptions.account,
+        chain: this.chain,
+        transport: custom(primaryClientOptions.provider),
+      }).extend(publicActions);
+    } else {
+      this._primaryClient = createWalletClient({
+        account: primaryClientOptions.account,
+        chain: this.chain,
+        transport: this.transport,
+      }).extend(publicActions);
     }
-    return this._externalClient;
+
+    this.logger.log(
+      `init primary client for ${
+        typeof primaryClientOptions.account === "object"
+          ? primaryClientOptions.account.address
+          : primaryClientOptions.account
+      }`,
+    );
+    return this._primaryClient;
+  }
+
+  primaryClient() {
+    return this._primaryClient;
+  }
+
+  embeddedClient() {
+    return this._embeddedClient;
   }
 
   async close() {
     /**
      * @dev do not need to close ws connections since viem clients maintain them automatically
      */
-    this._externalClient = undefined;
+    this._primaryClient = undefined;
+    this._embeddedClient = undefined;
   }
 }

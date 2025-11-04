@@ -9,8 +9,6 @@ import { primaryInputStyle } from "@src/components/styles/Input.styles";
 import { delay, getMaxFormattedValue } from "@src/utils/common";
 import clsx from "clsx";
 import { useMetadata } from "@src/hooks/useMetadata";
-import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
-import { Address } from "viem";
 import { AMOUNT_REGEX } from "@src/common.constants";
 
 interface DepositFormData {
@@ -38,11 +36,10 @@ export const DepositForm = ({
   } = formMethods;
 
   const { ledger, evmClients, tokenAddress } = useContext(LedgerContext);
-  const { wallet } = useWalletAdapter();
 
   const { publicBalance, decimals } = useMetadata(
     tokenAddress,
-    wallet?.address as Address,
+    evmClients!.primaryClient()!.account.address,
     isModalOpen,
     evmClients,
   );

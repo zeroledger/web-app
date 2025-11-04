@@ -4,14 +4,12 @@ import axios from "axios";
 import { type FaucetRpc } from "@src/services/core/faucet.dto";
 import { type EvmClients } from "@src/services/Clients";
 import { type ViewAccount } from "@src/services/Account";
-import { type ConnectedWallet } from "@src/wallet.types";
 
 const axiosInstance = axios.create();
 
 export type Ledger = Awaited<ReturnType<typeof initialize>>;
 
 export const initialize = async (
-  wallet: ConnectedWallet,
   viewAccount: ViewAccount,
   evmClients: EvmClients,
   appPrefixKey: string,
@@ -51,7 +49,7 @@ export const initialize = async (
 
   // Create lightweight dependencies immediately
   const queue = new MemoryQueue();
-  const address = wallet.address as Address;
+  const address = evmClients.primaryClient()!.account.address;
 
   const faucetRpcClient = new JsonRpcClient<FaucetRpc>(axiosInstance, address);
 

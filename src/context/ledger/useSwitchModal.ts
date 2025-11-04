@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import { useModal } from "@src/hooks/useModal";
-import { useWalletAdapter } from "./useWalletAdapter";
 import { EvmClients } from "@src/services/Clients";
 
-export const useSwitchModal = (evmClients: EvmClients | undefined) => {
-  const { wallet, targetChain, setTargetChain, chainSupported } =
-    useWalletAdapter();
+export const useSwitchModal = (
+  evmClients: EvmClients | undefined,
+  chainSupported: boolean,
+) => {
   const {
     isOpen: isSwitchChainModalOpen,
     openModal: openSwitchChainModal,
@@ -29,17 +29,9 @@ export const useSwitchModal = (evmClients: EvmClients | undefined) => {
     isSwitchChainModalOpen,
   ]);
 
-  useEffect(() => {
-    if (!wallet && isSwitchChainModalOpen) {
-      closeSwitchChainModal();
-    }
-  }, [wallet, closeSwitchChainModal, isSwitchChainModalOpen]);
-
   return {
     isSwitchChainModalOpen,
     openSwitchChainModal,
     closeSwitchChainModal,
-    targetChain,
-    setTargetChain,
   };
 };

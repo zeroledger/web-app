@@ -95,7 +95,7 @@ export class Fees {
     const { deposit: depositFee } = await this.getProtocolFees();
     const tokenWithPermit = await permitSupported(
       this.token,
-      this.evmClients.externalClient(),
+      this.evmClients.primaryClient()!,
     );
 
     const { isEOA, smartWalletAndRequireInitialization } =
@@ -185,7 +185,7 @@ export class Fees {
     const { gasPrice, paymasterAddress, sponsoredVaultMethods } =
       await this.tesService.quote(
         this.token,
-        this.evmClients.externalClient().account.address,
+        this.evmClients.primaryClient()!.account.address,
       );
 
     if (!sponsoredVaultMethods.includes(method)) {

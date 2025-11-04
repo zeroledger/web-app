@@ -1,5 +1,4 @@
 import { BackButton } from "@src/components/Buttons/BackButton";
-import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 import { useEnsProfile } from "@src/context/ledger/useEnsProfile";
 import { useDynamicHeight } from "@src/hooks/useDynamicHeight";
 import {
@@ -25,12 +24,14 @@ interface ReceiveModalProps {
 }
 
 export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
-  const { wallet } = useWalletAdapter();
+  const { evmClients } = useContext(LedgerContext);
   const { ledger } = useContext(LedgerContext);
   const { decimals } = useContext(PanelContext);
-  const { data: ensProfile } = useEnsProfile(wallet?.address as `0x${string}`);
+  const primaryAddress = evmClients!.primaryClient()!.account
+    .address as `0x${string}`;
+  const { data: ensProfile } = useEnsProfile(primaryAddress);
   const { showCopiedTooltip: showAddressCopied, handleCopyAddress } =
-    useCopyAddress(wallet?.address as `0x${string}`);
+    useCopyAddress(primaryAddress);
   const { showCopiedTooltip: showEnsCopied, handleCopyEns } = useCopyEns(
     ensProfile?.name,
   );
@@ -119,7 +120,7 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
 
   const generateQRData = () => {
     // Use invoice address for public payments, otherwise use wallet address
-    const targetAddress = isPublicPayment ? invoiceAddress : wallet?.address;
+    const targetAddress = isPublicPayment ? invoiceAddress : primaryAddress;
     if (!targetAddress) return "";
 
     const hasAmount = amount && parseFloat(amount) > 0;
@@ -133,7 +134,7 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
     // For private payments (ZeroLedger)
     if (hasAmount || hasMessage) {
       // Build QR code with parameters
-      let qrData = `zeroledger:address=${wallet.address}`;
+      let qrData = `zeroledger:address=${primaryAddress}`;
       if (hasAmount) {
         qrData += `&amount=${amount}`;
       }
@@ -144,7 +145,7 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
     }
 
     // Just the address if no parameters specified
-    return wallet.address;
+    return primaryAddress;
   };
 
   return (
@@ -215,7 +216,7 @@ export default function ReceiveModal({ isOpen, onClose }: ReceiveModalProps) {
           {!isPublicPayment && (
             <PrivatePaymentFields
               ensName={ensProfile?.name}
-              walletAddress={wallet?.address as `0x${string}`}
+              walletAddress={primaryAddress}
               amount={amount}
               amountError={amountError}
               messageRequest={messageRequest}

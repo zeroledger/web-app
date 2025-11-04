@@ -1,6 +1,6 @@
 import { Field, Label, Input, Button } from "@headlessui/react";
 import { primaryInputStyle } from "@src/components/styles/Input.styles";
-import { primaryButtonStyle } from "@src/components/styles/Button.styles";
+import { primaryButtonStyles } from "@src/components/styles/Button.styles";
 import { shortString } from "@src/utils/common";
 import clsx from "clsx";
 
@@ -89,7 +89,7 @@ export const InvoiceSection = ({
             message.trim().length === 0
           }
           className={clsx(
-            primaryButtonStyle,
+            primaryButtonStyles.regular,
             "w-full",
             (isGenerating ||
               !amount ||

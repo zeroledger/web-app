@@ -3,7 +3,6 @@ import { type Address } from "viem";
 import clsx from "clsx";
 
 import { LedgerContext } from "@src/context/ledger/ledger.context";
-import { useWalletAdapter } from "@src/context/ledger/useWalletAdapter";
 
 import { TwoStepSpendModal } from "@src/components/Modals/TwoStepSpendModal";
 import { ReceiveModal } from "@src/components/Modals/ReceiveModal";
@@ -17,7 +16,7 @@ import { useReceiveModal } from "./hooks/useReceiveModal";
 import { Avatar } from "../EnsProfile/Avatar";
 import { Name } from "../EnsProfile/Name";
 import { ENV } from "@src/common.constants";
-import { primaryButtonStyle } from "../styles/Button.styles";
+import { primaryButtonStyles } from "../styles/Button.styles";
 
 export default function WalletTab() {
   const {
@@ -30,10 +29,12 @@ export default function WalletTab() {
     balanceForConsolidation,
     symbol,
   } = useContext(PanelContext);
-  const { wallet } = useWalletAdapter();
-  const { ensProfile, isEnsLoading, scanUrl } = useContext(LedgerContext);
+  const { ensProfile, isEnsLoading, scanUrl, evmClients } =
+    useContext(LedgerContext);
 
-  const address = wallet?.address as Address | undefined;
+  const address = evmClients?.primaryClient()?.account.address as
+    | Address
+    | undefined;
 
   const { showCopiedTooltip, handleCopyAddress } = useCopyAddress(address);
   const {
@@ -149,12 +150,15 @@ export default function WalletTab() {
         <div className="flex gap-6 mt-2">
           <button
             onClick={onModalOpen}
-            className={primaryButtonStyle}
+            className={primaryButtonStyles.regular}
             disabled={disableSpend}
           >
             Send
           </button>
-          <button onClick={onReceiveModalOpen} className={primaryButtonStyle}>
+          <button
+            onClick={onReceiveModalOpen}
+            className={primaryButtonStyles.regular}
+          >
             Receive
           </button>
         </div>

@@ -20,6 +20,7 @@ const fetchEnsProfile = async (
     return { name: ensName };
   }
   return { name: ensName, avatar: ensAvatar };
+  return {};
 };
 
 export const useEnsProfile = (address: Address | undefined) => {

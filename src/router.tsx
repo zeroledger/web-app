@@ -1,68 +1,37 @@
 import { createBrowserRouter } from "react-router-dom";
 import Error from "@src/components/Error";
-import { LoadingScreen } from "./components/LoadingScreen";
 import { lazy } from "react";
 
-const Root = lazy(() => import("./routes/Root"));
-const PrivateRoutes = lazy(() => import("./routes/PrivateRoutes"));
+const RootRoute = lazy(() => import("./routes/RootRoute"));
+const ConnectWalletRoute = lazy(() => import("./routes/ConnectWalletRoute"));
+const AuthorizationRoute = lazy(() => import("./routes/AuthorizationRoute"));
 const PanelRoute = lazy(() => import("./routes/PanelRoute"));
-const Authorization = lazy(() => import("./routes/Authorization"));
-const AuthorizedRoutes = lazy(() => import("./routes/AuthorizedRoutes"));
 
 const Router = createBrowserRouter([
   {
     path: "/",
-    element: (
-      <LoadingScreen>
-        <Root />
-      </LoadingScreen>
-    ),
+    element: <RootRoute />,
     errorElement: <Error />,
   },
   {
-    element: (
-      <LoadingScreen>
-        <PrivateRoutes />
-      </LoadingScreen>
-    ),
+    path: "/connect-wallet",
+    element: <ConnectWalletRoute />,
     errorElement: <Error />,
-    children: [
-      {
-        path: "/authorization",
-        element: (
-          <LoadingScreen>
-            <Authorization />
-          </LoadingScreen>
-        ),
-        errorElement: <Error />,
-      },
-      {
-        element: (
-          <LoadingScreen>
-            <AuthorizedRoutes />
-          </LoadingScreen>
-        ),
-        errorElement: <Error />,
-        children: [
-          {
-            path: "/panel",
-            element: (
-              <LoadingScreen>
-                <PanelRoute />
-              </LoadingScreen>
-            ),
-          },
-          {
-            path: "/panel/:tab",
-            element: (
-              <LoadingScreen>
-                <PanelRoute />
-              </LoadingScreen>
-            ),
-          },
-        ],
-      },
-    ],
+  },
+  {
+    path: "/authorization",
+    element: <AuthorizationRoute />,
+    errorElement: <Error />,
+  },
+  {
+    path: "/panel",
+    element: <PanelRoute />,
+    errorElement: <Error />,
+  },
+  {
+    path: "/panel/:tab",
+    element: <PanelRoute />,
+    errorElement: <Error />,
   },
 ]);
 
