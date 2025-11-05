@@ -10,7 +10,7 @@ export const ENV = (matchedEnv ? matchedEnv[0] : "prod") as
 
 const hardhatBaseFork = {
   ...hardhat,
-  contracts: base.contracts,
+  contracts: baseSepolia.contracts,
 };
 
 const supportedChainsPerEnvMap = {
