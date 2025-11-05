@@ -21,7 +21,7 @@ import type { Proof } from "@src/utils/prover";
 import { shuffle } from "@src/utils/common";
 
 export const AUTH_TOKEN_ABI = parseAbiParameters(
-  "address viewAddr,bytes challengeSignature,address ownerAddr,bytes ownerAccDelegationSignature,bytes encryptionKey",
+  "address authAccount,bytes challengeSignature,address ownerAddr,bytes ownerAccDelegationSignature,bytes encryptionKey",
 );
 
 const backoffOptions = {

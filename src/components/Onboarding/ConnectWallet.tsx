@@ -8,11 +8,13 @@ import { SiWalletconnect } from "react-icons/si";
 import clsx from "clsx";
 import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { setConnectionWalletPreference } from "@src/services/connectionWalletPreference";
 
 export default function ConnectWallet() {
-  const { isExternalWalletConnecting, connectExternalWallet: handleLink } =
-    useContext(LedgerContext);
+  const {
+    isExternalWalletConnecting,
+    connectExternalWallet: handleLink,
+    setConnectionWalletPreference,
+  } = useContext(LedgerContext);
   const navigate = useNavigate();
   const handleSkip = () => {
     setConnectionWalletPreference(false);

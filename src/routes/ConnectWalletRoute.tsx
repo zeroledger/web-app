@@ -4,14 +4,14 @@ import { LedgerContext } from "@src/context/ledger/ledger.context";
 import PageContainer from "@src/components/PageContainer";
 import ConnectWallet from "@src/components/Onboarding/ConnectWallet";
 import { DumpLoadingScreen } from "@src/components/LoadingScreen";
-import { getConnectionWalletPreference } from "@src/services/connectionWalletPreference";
 
 /**
  * Link wallet route "/link-wallet"
  * Requirements: User signed in (has evmClients) AND no linking preference set
  */
 export default function LinkWalletRoute() {
-  const { evmClients, initializing } = useContext(LedgerContext);
+  const { evmClients, initializing, connectionWalletPreference } =
+    useContext(LedgerContext);
 
   // Still initializing
   if (initializing) {
@@ -24,7 +24,7 @@ export default function LinkWalletRoute() {
   }
 
   // Already made choice - redirect to authorization
-  if (getConnectionWalletPreference() !== null) {
+  if (connectionWalletPreference !== null) {
     return <Navigate to="/authorization" replace />;
   }
 

@@ -2,10 +2,10 @@ import { useContext, useState } from "react";
 import { LedgerContext } from "@src/context/ledger/ledger.context";
 import { catchService } from "@src/services/core/catch.service";
 import debounce from "debounce";
-import { resetConnectionWalletPreference } from "@src/services/connectionWalletPreference";
 
 export const useResetWalletModal = () => {
-  const { ledger, viewAccount, evmClients } = useContext(LedgerContext);
+  const { ledger, viewAccount, evmClients, resetConnectionWalletPreference } =
+    useContext(LedgerContext);
   const { logout } = useContext(LedgerContext);
   const [isResetWalletModalOpen, setIsResetWalletModalOpen] = useState(false);
 

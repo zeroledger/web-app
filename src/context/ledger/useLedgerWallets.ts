@@ -23,21 +23,28 @@ import { EvmClients } from "@src/services/Clients";
 import { deriveLocalAccount } from "@src/utils/deriveLocalWallet";
 import { initialize, type Ledger } from "@src/services/ledger";
 import { ViewAccount } from "@src/services/Account";
-import { setConnectionWalletPreference } from "@src/services/connectionWalletPreference";
+import { useConnectionWalletPreference } from "./useConnectionWalletPreference";
 
 const viewAccount = new ViewAccount(APP_PREFIX_KEY);
 
 export function useLedgerWallets() {
   const { wallets, ready } = useWallets();
   const { logout, exportWallet, authenticated, login: privyLogin } = usePrivy();
-
+  const {
+    connectionWalletPreference,
+    setConnectionWalletPreference,
+    resetConnectionWalletPreference,
+  } = useConnectionWalletPreference();
   const [ledger, setLedger] = useState<Ledger>();
   const [authorized, setAuthorized] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [targetChain, setTargetChain] = useState<Chain>(SUPPORTED_CHAINS[0]);
   const [chainSupported, setChainSupported] = useState<boolean>(true);
   const embeddedWallet = wallets.find((w) => w.walletClientType === "privy");
-  const externalWallet = wallets.find((w) => w.walletClientType !== "privy");
+  const externalWallet =
+    connectionWalletPreference === true
+      ? wallets.find((w) => w.walletClientType !== "privy")
+      : undefined;
   const [evmClients, setEvmClients] = useState<EvmClients>();
 
   const [isExternalWalletConnecting, setIsExternalWalletConnecting] =
@@ -184,5 +191,8 @@ export function useLedgerWallets() {
     authorized,
     setAuthorized,
     isExternalWalletConnecting,
+    connectionWalletPreference,
+    setConnectionWalletPreference,
+    resetConnectionWalletPreference,
   };
 }

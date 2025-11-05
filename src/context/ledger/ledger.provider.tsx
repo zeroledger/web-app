@@ -24,6 +24,9 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
     viewAccount,
     authorized,
     setAuthorized,
+    connectionWalletPreference,
+    setConnectionWalletPreference,
+    resetConnectionWalletPreference,
   } = useLedgerWallets();
 
   const {
@@ -45,6 +48,9 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       signIn,
       connectExternalWallet,
       isExternalWalletConnecting,
+      connectionWalletPreference,
+      setConnectionWalletPreference,
+      resetConnectionWalletPreference,
       viewAccount,
       // Ledger
       initializing,
@@ -77,6 +83,9 @@ export const LedgerProvider: React.FC<{ children?: ReactNode }> = ({
       signIn,
       connectExternalWallet,
       isExternalWalletConnecting,
+      connectionWalletPreference,
+      setConnectionWalletPreference,
+      resetConnectionWalletPreference,
       viewAccount,
       ledger,
       isSwitchChainModalOpen,
