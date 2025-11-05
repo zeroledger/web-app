@@ -29,15 +29,6 @@ export function getWithdrawTxData(params: WithdrawParams) {
   });
 }
 
-export function getWithdrawTxGas(params: WithdrawParams) {
-  return params.client.estimateContractGas({
-    address: params.contract,
-    abi: VAULT_ABI,
-    functionName: "withdraw",
-    args: [params.token, params.withdrawItems, params.withdrawRecipients],
-  });
-}
-
 export async function getWithdrawRequest(params: WithdrawParams) {
   const { request } = await params.client.simulateContract({
     address: params.contract,

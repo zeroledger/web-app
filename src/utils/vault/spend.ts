@@ -47,15 +47,6 @@ export function getSpendTxData(
   });
 }
 
-export function getSpendTxGas(params: SpendParams) {
-  return params.client.estimateContractGas({
-    address: params.contract,
-    abi: VAULT_ABI,
-    functionName: "spend",
-    args: [params.transactionStruct, params.proof],
-  });
-}
-
 export async function getSpendRequest(params: SpendParams) {
   const { request } = await params.client.simulateContract({
     address: params.contract,

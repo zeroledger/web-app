@@ -43,22 +43,6 @@ export function getDepositWithPermitTxData(
   });
 }
 
-export function getDepositWithPermitTxGas(params: DepositParamsWithPermit) {
-  return params.client.estimateContractGas({
-    address: params.contract,
-    abi: VAULT_ABI,
-    functionName: "depositWithPermit",
-    args: [
-      params.depositStruct,
-      params.proof,
-      params.deadline,
-      params.permitSignature.v,
-      params.permitSignature.r,
-      params.permitSignature.s,
-    ],
-  });
-}
-
 async function getDepositWithPermitRequest(params: DepositParamsWithPermit) {
   const { request } = await params.client.simulateContract({
     address: params.contract,

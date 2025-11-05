@@ -64,7 +64,7 @@ export const InvoiceSection = ({
             className={primaryInputStyle}
             value={message}
             onChange={(e) => onMessageChange(e.target.value)}
-            placeholder="e.g., INV-2024-001"
+            placeholder="e.g., Invoice #123, Coffee payment..."
             maxLength={32}
             disabled={isGenerating}
           />

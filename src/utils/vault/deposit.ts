@@ -25,15 +25,6 @@ export function getDepositTxData(depositStruct: DepositStruct, proof: Proof) {
   });
 }
 
-export function getDepositTxGas(params: DepositParams) {
-  return params.client.estimateContractGas({
-    address: params.contract,
-    abi: VAULT_ABI,
-    functionName: "deposit",
-    args: [params.depositStruct, params.proof],
-  });
-}
-
 async function getDepositRequest(params: DepositParams) {
   const { request } = await params.client.simulateContract({
     address: params.contract,

@@ -12,11 +12,11 @@ import {
 import { createRandomString, shuffle } from "@src/utils/common";
 import { encode } from "./metadata";
 
-async function createDepositStruct(
+function createDepositStruct(
   token: Address,
   data: DepositData,
   depositCommitmentData: DepositCommitmentData,
-): Promise<DepositStruct> {
+): DepositStruct {
   return {
     token,
     amount: data.valueLeftForUser,
@@ -205,7 +205,7 @@ export default async function prepareDeposit(
     depositCommitmentData.sValues,
   );
 
-  const depositStruct = await createDepositStruct(
+  const depositStruct = createDepositStruct(
     token,
     depositData,
     depositCommitmentData,

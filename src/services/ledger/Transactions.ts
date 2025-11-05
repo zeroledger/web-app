@@ -1,4 +1,4 @@
-import { Address, formatEther, parseEther } from "viem";
+import { Account, Address, formatEther, Hex, parseEther } from "viem";
 import { FaucetRpc, FaucetRequestDto } from "@src/services/core/faucet.dto";
 import { approve, allowance, permit } from "@src/utils/erc20";
 import { JsonRpcClient, ServiceClient } from "@src/services/core/rpc";
@@ -18,6 +18,9 @@ import { type Tes } from "@src/services/Tes";
 import type Commitments from "./Commitments";
 import type { EvmClients } from "@src/services/Clients";
 import type { SpendFeesData, WithdrawFeesData, DepositFeesData } from "./Fees";
+import { hardhat } from "viem/chains";
+
+const mockBalance = parseEther("1");
 
 export type TransactionDetails = {
   type: "deposit" | "partialWithdraw" | "withdraw" | "send";
@@ -114,6 +117,23 @@ export class Transactions {
     return result;
   }
 
+  private estimateGas(mainAccount: Account, calldata: Hex, contract?: Address) {
+    return this.evmClients.readClient.estimateGas({
+      account: mainAccount,
+      to: contract ?? this.vault,
+      data: calldata,
+      stateOverride:
+        this.evmClients.readClient.chain?.id !== hardhat.id
+          ? [
+              {
+                address: mainAccount.address,
+                balance: mockBalance,
+              },
+            ]
+          : undefined,
+    });
+  }
+
   private async getEncryptionParams(user: Address) {
     const mainAccount = this.mainAccount();
     const encryptionKey = await this.tesService.getUserEncryptionKey(user);
@@ -141,8 +161,13 @@ export class Transactions {
           mainAccount.address,
         );
 
-        const { proofData, depositStruct /* depositCommitmentData */ } =
-          await asyncVaultUtils.prepareDeposit(
+        const client = this.evmClients.primaryClient()!;
+
+        const [
+          { proofData, depositStruct /* depositCommitmentData */ },
+          spendAllowance,
+        ] = await Promise.all([
+          asyncVaultUtils.prepareDeposit(
             this.token,
             mainAccount.address,
             value,
@@ -152,16 +177,14 @@ export class Transactions {
             feesData.paymasterAddress,
             tesUrl,
             "deposit",
-          );
-
-        const client = this.evmClients.primaryClient()!;
-
-        const spendAllowance = await allowance({
-          client,
-          tokenAddress: this.token,
-          ownerAddress: mainAccount.address,
-          spenderAddress: this.vault,
-        });
+          ),
+          allowance({
+            client,
+            tokenAddress: this.token,
+            ownerAddress: mainAccount.address,
+            spenderAddress: this.vault,
+          }),
+        ]);
 
         return {
           depositStruct,
@@ -179,8 +202,8 @@ export class Transactions {
 
   approveDeposit(depositParams: DepositParams, protocolFees: bigint) {
     return this.enqueue(
-      async () => {
-        await approve({
+      () =>
+        approve({
           tokenAddress: depositParams.depositStruct.token,
           receiverAddress: this.vault,
           amount:
@@ -188,8 +211,7 @@ export class Transactions {
             depositParams.depositStruct.forwarderFee +
             protocolFees,
           client: this.evmClients.primaryClient()!,
-        });
-      },
+        }),
       "approveDeposit",
       80_000,
       true,
@@ -198,8 +220,8 @@ export class Transactions {
 
   permitDeposit(depositParams: DepositParams, protocolFees: bigint) {
     return this.enqueue(
-      async () => {
-        return await permit({
+      () =>
+        permit({
           tokenAddress: depositParams.depositStruct.token,
           receiverAddress: this.vault,
           amount:
@@ -208,8 +230,7 @@ export class Transactions {
             protocolFees,
           client: this.evmClients.primaryClient()!,
           deadline: BigInt(Math.floor(Date.now() / 1000) + 3600),
-        });
-      },
+        }),
       "permitDeposit",
       80_000,
       true,
@@ -237,14 +258,12 @@ export class Transactions {
     coveredGas: string,
   ) {
     return this.enqueue(
-      async () => {
-        const mainAccount = this.mainAccount();
-        return await this.tesService.executeMetaTransactions(
+      () =>
+        this.tesService.executeMetaTransactions(
           metaTransactions,
           coveredGas,
-          mainAccount.address,
-        );
-      },
+          this.mainAccount().address,
+        ),
       "executeMetaTransaction",
       50_000,
       true,
@@ -282,7 +301,14 @@ export class Transactions {
         const { asyncVaultUtils, asyncMetaTxUtils } =
           await this.preloadedModulesPromise;
         const mainAccount = this.mainAccount();
-        const gas = await asyncVaultUtils.getDepositTxGas(depositParams);
+        const calldata = asyncVaultUtils.getDepositTxData(
+          depositParams.depositStruct,
+          depositParams.proof,
+        );
+        const [forwarder, gas] = await Promise.all([
+          this.getForwarder(),
+          this.estimateGas(mainAccount, calldata),
+        ]);
 
         this.logger.log(`Deposit: gas without forwarding: ${gas.toString()}`);
 
@@ -294,14 +320,11 @@ export class Transactions {
             gas,
             nonce: await asyncMetaTxUtils.getForwarderNonce(
               mainAccount.address,
-              await this.getForwarder(),
+              forwarder,
               this.evmClients.readClient,
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
-            data: asyncVaultUtils.getDepositTxData(
-              depositParams.depositStruct,
-              depositParams.proof,
-            ),
+            data: calldata,
           } as UnsignedMetaTransaction,
           transactionDetails: {
             type: "deposit",
@@ -310,12 +333,10 @@ export class Transactions {
             from: mainAccount.address,
             to: mainAccount.address,
             value: depositParams.depositStruct.amount,
-            forwarder: await this.getForwarder(),
+            forwarder,
             inputs: [],
-            outputs: await Promise.all(
-              depositParams.depositStruct.depositCommitmentParams.map(
-                (item) => item.poseidonHash,
-              ),
+            outputs: depositParams.depositStruct.depositCommitmentParams.map(
+              (item) => item.poseidonHash,
             ),
           } as TransactionDetails,
         };
@@ -334,8 +355,16 @@ export class Transactions {
         const { asyncVaultUtils, asyncMetaTxUtils } =
           await this.preloadedModulesPromise;
         const mainAccount = this.mainAccount();
-        const gas =
-          await asyncVaultUtils.getDepositWithPermitTxGas(depositParams);
+        const calldata = asyncVaultUtils.getDepositWithPermitTxData(
+          depositParams.depositStruct,
+          depositParams.proof,
+          depositParams.permitSignature,
+          depositParams.deadline,
+        );
+        const [forwarder, gas] = await Promise.all([
+          this.getForwarder(),
+          this.estimateGas(mainAccount, calldata),
+        ]);
 
         this.logger.log(
           `DepositWithPermit: gas without forwarding: ${gas.toString()}`,
@@ -349,16 +378,11 @@ export class Transactions {
             gas,
             nonce: await asyncMetaTxUtils.getForwarderNonce(
               mainAccount.address,
-              await this.getForwarder(),
+              forwarder,
               this.evmClients.readClient,
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
-            data: asyncVaultUtils.getDepositWithPermitTxData(
-              depositParams.depositStruct,
-              depositParams.proof,
-              depositParams.permitSignature,
-              depositParams.deadline,
-            ),
+            data: calldata,
           } as UnsignedMetaTransaction,
           transactionDetails: {
             type: "deposit",
@@ -367,7 +391,7 @@ export class Transactions {
             from: mainAccount.address,
             to: mainAccount.address,
             value: depositParams.depositStruct.amount,
-            forwarder: await this.getForwarder(),
+            forwarder: forwarder,
             inputs: [],
             outputs: await Promise.all(
               depositParams.depositStruct.depositCommitmentParams.map(
@@ -434,13 +458,30 @@ export class Transactions {
           ],
         };
 
-        const gas = await asyncVaultUtils.getWithdrawTxGas(withdrawParams);
+        const calldata = asyncVaultUtils.getWithdrawTxData(withdrawParams);
+
+        const [{ computePoseidon }, forwarder, gas] = await Promise.all([
+          import("@src/utils/poseidon"),
+          this.getForwarder(),
+          this.estimateGas(mainAccount, calldata),
+        ]);
 
         this.logger.log(
           `Withdraw: gas without forwarding: ${gas.toString()}, coveredGas: ${feesData.coveredGas.toString()}`,
         );
 
-        const { computePoseidon } = await import("@src/utils/poseidon");
+        const [nonce, inputs] = await Promise.all([
+          asyncMetaTxUtils.getForwarderNonce(
+            mainAccount.address,
+            forwarder,
+            this.evmClients.readClient,
+          ),
+          Promise.all(
+            withdrawParams.withdrawItems.map((item) =>
+              computePoseidon({ amount: item.amount, entropy: item.sValue }),
+            ),
+          ),
+        ]);
 
         return {
           metaTransaction: {
@@ -448,13 +489,9 @@ export class Transactions {
             to: this.vault,
             value: 0n,
             gas,
-            nonce: await asyncMetaTxUtils.getForwarderNonce(
-              mainAccount.address,
-              await this.getForwarder(),
-              this.evmClients.readClient,
-            ),
+            nonce,
             deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
-            data: asyncVaultUtils.getWithdrawTxData(withdrawParams),
+            data: calldata,
           } as UnsignedMetaTransaction,
           transactionDetails: {
             token: withdrawParams.token,
@@ -463,12 +500,8 @@ export class Transactions {
             from: mainAccount.address,
             to: recipient,
             value: withdrawAmount - feesData.fee - feesData.withdrawFee,
-            forwarder: await this.getForwarder(),
-            inputs: await Promise.all(
-              withdrawParams.withdrawItems.map((item) =>
-                computePoseidon({ amount: item.amount, entropy: item.sValue }),
-              ),
-            ),
+            forwarder: forwarder,
+            inputs,
             outputs: [],
           } as TransactionDetails,
         };
@@ -532,14 +565,14 @@ export class Transactions {
             publicOutputs,
           });
 
-        const partialWithdrawParams = {
+        const calldata = asyncVaultUtils.getSpendTxData(
           transactionStruct,
-          client: this.evmClients.primaryClient()!,
-          contract: this.vault,
-          proof: proofData.calldata_proof,
-        };
-
-        const gas = await asyncVaultUtils.getSpendTxGas(partialWithdrawParams);
+          proofData.calldata_proof,
+        );
+        const [forwarder, gas] = await Promise.all([
+          this.getForwarder(),
+          this.estimateGas(mainAccount, calldata),
+        ]);
 
         this.logger.log(
           `PartialWithdraw: gas without forwarding: ${gas.toString()}, coveredGas: ${feesData.coveredGas.toString()}`,
@@ -553,14 +586,11 @@ export class Transactions {
             gas,
             nonce: await asyncMetaTxUtils.getForwarderNonce(
               mainAccount.address,
-              await this.getForwarder(),
+              forwarder,
               this.evmClients.readClient,
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600,
-            data: asyncVaultUtils.getSpendTxData(
-              transactionStruct,
-              proofData.calldata_proof,
-            ),
+            data: calldata,
           } as UnsignedMetaTransaction,
           transactionDetails: {
             type: "partialWithdraw",
@@ -569,7 +599,7 @@ export class Transactions {
             from: mainAccount.address,
             to: recipient,
             value: value - feesData.fee - feesData.spendFee,
-            forwarder: await this.getForwarder(),
+            forwarder,
             inputs: transactionStruct.inputsPoseidonHashes,
             outputs: transactionStruct.outputsPoseidonHashes,
           } as TransactionDetails,
@@ -650,29 +680,29 @@ export class Transactions {
             messageToReceiver: message,
           });
 
-        const sendParams = {
+        const calldata = asyncVaultUtils.getSpendTxData(
           transactionStruct,
-          client: this.evmClients.primaryClient()!,
-          contract: this.vault,
-          proof: proofData.calldata_proof,
-        };
+          proofData.calldata_proof,
+        );
+
+        const [forwarder, gas] = await Promise.all([
+          this.getForwarder(),
+          this.estimateGas(mainAccount, calldata),
+        ]);
 
         return {
           metaTransaction: {
             from: mainAccount.address,
             to: this.vault,
             value: 0n,
-            gas: await asyncVaultUtils.getSpendTxGas(sendParams),
+            gas,
             nonce: await asyncMetaTxUtils.getForwarderNonce(
               mainAccount.address,
-              await this.getForwarder(),
+              forwarder,
               this.evmClients.readClient,
             ),
             deadline: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
-            data: asyncVaultUtils.getSpendTxData(
-              transactionStruct,
-              proofData.calldata_proof,
-            ),
+            data: calldata,
           } as UnsignedMetaTransaction,
           transactionDetails: {
             type: "send",
@@ -681,7 +711,7 @@ export class Transactions {
             from: mainAccount.address,
             to: recipient,
             value: value - feesData.fee - feesData.spendFee,
-            forwarder: await this.getForwarder(),
+            forwarder,
             inputs: transactionStruct.inputsPoseidonHashes,
             outputs: transactionStruct.outputsPoseidonHashes,
           } as TransactionDetails,
