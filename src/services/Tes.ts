@@ -3,13 +3,7 @@ import {
   deSerializeCommitment,
   serializeCommitment,
 } from "@src/utils/vault/metadata";
-import {
-  type Address,
-  encodeAbiParameters,
-  type Hash,
-  type Hex,
-  parseAbiParameters,
-} from "viem";
+import { type Address, type Hash, type Hex } from "viem";
 import { catchService } from "@src/services/core/catch.service";
 import { backOff } from "exponential-backoff";
 import type { MemoryQueue } from "@src/services/core/queue";
@@ -19,10 +13,6 @@ import type { ViewAccount } from "@src/services/Account";
 import type { DepositCommitmentParamsStruct } from "@src/utils/vault/types";
 import type { Proof } from "@src/utils/prover";
 import { shuffle } from "@src/utils/common";
-
-export const AUTH_TOKEN_ABI = parseAbiParameters(
-  "address authAccount,bytes challengeSignature,address ownerAddr,bytes ownerAccDelegationSignature,bytes encryptionKey",
-);
 
 const backoffOptions = {
   numOfAttempts: 3,
@@ -48,19 +38,22 @@ export class Tes {
     }>(
       `${this.tesUrl}/challenge/init/${this.viewAccount.getViewAccount()!.address}`,
     );
-    const authToken = await this.getAuthToken(random, mainAccountAddress);
-    this.logger.log(`Create auth token $(len: ${authToken.length})`);
+    this.logger.log(`Sign in with user set params`);
     const {
       data: { exp, csrf },
-    } = await this.axios.get<{
+    } = await this.axios.post<{
       exp: number;
       csrf: string;
-    }>(`${this.tesUrl}/challenge/solve`, {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
+    }>(
+      `${this.tesUrl}/challenge/solve`,
+      await this.getSignInParams(random, mainAccountAddress),
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
       },
-      withCredentials: true,
-    });
+    );
     this.csrf = csrf;
     this.timeout = exp * 1000;
     this.logger.log(
@@ -76,15 +69,14 @@ export class Tes {
     });
   }
 
-  private async getAuthToken(random: Hex, mainAccountAddress: Address) {
-    const token = encodeAbiParameters(AUTH_TOKEN_ABI, [
-      this.viewAccount.getViewAccount()!.address,
-      await this.signChallenge(random),
-      mainAccountAddress,
-      this.viewAccount.getDelegationSignature()!,
-      this.viewAccount.getQuantumKeyPair()!.publicKey,
-    ]);
-    return token;
+  private async getSignInParams(random: Hex, mainAccountAddress: Address) {
+    return {
+      authAccount: this.viewAccount.getViewAccount()!.address,
+      challengeSignature: await this.signChallenge(random),
+      owner: mainAccountAddress,
+      ownerAccDelegationSignature: this.viewAccount.getDelegationSignature()!,
+      encryptionKey: this.viewAccount.getQuantumKeyPair()!.publicKey,
+    };
   }
 
   private async manageAuth(mainAccountAddress: Address) {
