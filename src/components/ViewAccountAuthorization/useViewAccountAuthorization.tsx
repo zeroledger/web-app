@@ -40,7 +40,10 @@ export const useViewAccountAuthorization = () => {
   const handleSign = debounce(async () => {
     try {
       setIsSigning(true);
-      await viewAccount?.authorize(evmClients!.primaryClient()!);
+      await viewAccount?.authorize(
+        evmClients!.primaryClient()!,
+        evmClients!.readClient,
+      );
       setAuthorized(true);
       setIsSuccess(true);
       setIsSigning(false);

@@ -4,6 +4,7 @@ import {
   Hash,
   keccak256,
   Address,
+  PublicClient,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import {
@@ -14,6 +15,7 @@ import {
 } from "@zeroledger/vycrypt";
 import { type CustomClient } from "@src/services/Clients";
 import { signTypedData } from "@src/utils/signTypedData";
+import { Logger } from "@src/utils/logger";
 
 export type EncryptedAccountsStore = Record<
   string,
@@ -59,6 +61,8 @@ export class ViewAccount {
   private _viewAccount?: PrivateKeyAccount;
   private _delegationSignature?: Hex;
   private _quantumKeyPair?: QuantumKeyPair;
+
+  private logger = new Logger(ViewAccount.name);
 
   constructor(private readonly appPrefixKey: string) {
     this.PKS_STORE_KEY = `${this.appPrefixKey}.encodedAccountData`;
@@ -131,7 +135,7 @@ export class ViewAccount {
     ) as Hex;
   }
 
-  async authorize(primaryClient: CustomClient) {
+  async authorize(primaryClient: CustomClient, publicClient: PublicClient) {
     if (!this._viewPk || !this._viewAccount || !this._quantumKeyPair) {
       throw new Error("ViewAccount not initialized");
     }
@@ -149,7 +153,7 @@ export class ViewAccount {
       },
     };
     this._delegationSignature = await signTypedData(primaryClient, obj);
-    const isValid = await primaryClient.verifyTypedData({
+    const isValid = await publicClient.verifyTypedData({
       address: primaryClient.account.address,
       domain: obj.domain,
       types: obj.types,
@@ -157,7 +161,7 @@ export class ViewAccount {
       message: obj.message,
       signature: this._delegationSignature,
     });
-    console.log(`signature valid?: ${isValid}`);
+    this.logger.log(`Delegation signature validation result: ${isValid}`);
     if (isValid) {
       localStorage.setItem(
         `${this.PKS_STORE_KEY}.delegation.${primaryClient.account.address}`,
