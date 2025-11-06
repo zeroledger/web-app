@@ -149,10 +149,23 @@ export class ViewAccount {
       },
     };
     this._delegationSignature = await signTypedData(primaryClient, obj);
-    localStorage.setItem(
-      `${this.PKS_STORE_KEY}.delegation.${primaryClient.account.address}`,
-      encrypt(this._delegationSignature, pubK),
-    );
+    const isValid = await primaryClient.verifyTypedData({
+      address: primaryClient.account.address,
+      domain: obj.domain,
+      types: obj.types,
+      primaryType: obj.primaryType,
+      message: obj.message,
+      signature: this._delegationSignature,
+    });
+    console.log(`signature valid?: ${isValid}`);
+    if (isValid) {
+      localStorage.setItem(
+        `${this.PKS_STORE_KEY}.delegation.${primaryClient.account.address}`,
+        encrypt(this._delegationSignature, pubK),
+      );
+    } else {
+      throw new Error("Delegation signature is not valid");
+    }
   }
 
   reset(mainAccountAddress: Address) {

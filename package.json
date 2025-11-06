@@ -33,7 +33,7 @@
   "dependencies": {
     "@headlessui/react": "^2.2.7",
     "@heroicons/react": "^2.2.0",
-    "@privy-io/react-auth": "^3.0.1",
+    "@privy-io/react-auth": "^3.6.0",
     "@solana/spl-token": "^0.4.14",
     "@tailwindcss/vite": "^4.1.12",
     "@zeroledger/vycrypt": "^1.0.0-alpha",
